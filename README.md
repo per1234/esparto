@@ -229,7 +229,7 @@ In summary, “asynchronous” timer tasks (“fire and forget”) are now a one
 
 The ESPARTO library recognises the following mqtt topics:
 
-`{devicename}/cmd/debug`	payload set to ON | OFF -> verbose debugging output to Serial
+`{devicename}/cmd/debug`	payload set to true | false  [verbose debugging output to Serial]
 
 ```
 {devicename}/cmd/info	sample output below:
@@ -280,6 +280,8 @@ bool pinIsLatched(uint8_t pin);
 void publish(String topic,String payload);
 void publish(const char* topic,const char* payload);
 void pulsePin(uint8_t pin,unsigned int ms,bool active=HIGH);
+void queueFunction(ESPARTO_VOID_POINTER_VOID fn);
+void queueFunction(ESPARTO_VOID_POINTER_ARG fn,uint32_t arg);
 void subscribe(const char * topic,ESPARTO_VOID_POINTER_STRING_STRING fn);
 ```
 
