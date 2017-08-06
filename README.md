@@ -53,13 +53,17 @@ c.	Retrigger pin (for e.g. PIR / Audio sensors)
 d.	Latching pin (turn a momentary “tact” button in to latching switch)
 e.	Rotary Encoder pin pair (automatically debounced – no external circuitry required)
 
-## Implementation / Programmers notes
+## Installation Implementation
 
 ESPARTO is implemented as an Arduino library – there are plenty of places which describe how to download and install these. 
 
+It requires the following library, which must be installed before installing ESPARTO:
+
+PubSubClient	https://github.com/knolleary/pubsubclient
+
 ### What you need to know first:
 
-No “setup” or “loop” function is needed (or allowed) in your code, to allow ESPARTO to control the “correct” order of doing things to maintain resilience. You provide a number of “callback” functions (e.g. to subscribe to your own MQTT topics, or when WiFi disconnects) and these will be called at the appropriate time.
+Unlike most other Arduino sketches, no `setup()` or `loop()` function is needed (or allowed) in your code, to allow ESPARTO to control the “correct” order of doing things to maintain resilience. You provide a number of “callback” functions (e.g. to subscribe to your own MQTT topics, or when WiFi disconnects) and these will be called at the appropriate time.
 
 Even so, badly-written code (see Appendix 3) in your callbacks (e.g. long delays, waiting for external resources etc) can still crash the system, but ESPARTO does its best to warn of such things and – in some cases – avoid and/or correct them.
 
