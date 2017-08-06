@@ -1,5 +1,5 @@
-# esparto
-### ESPARTO (ESP All-purpose Runtime Object) Version 0.1 Arduino Library for building MQTT-driven firmware for ESP8266 (SONOFF, Wemos D1, NodeMCU etc)
+# ESPARTO 
+## (ESP All-purpose Runtime Object) v0.1: Arduino Library for building MQTT-driven firmware for ESP8266 (SONOFF, Wemos D1, NodeMCU etc)
 
 Wouldn’t it be nice if this was all it took to build a robust MQTT-capable firmware for SONOFF, WEMOS, NODEMCU etc  to remotely turn the device on or off from you own WiFi network? No cloud APP, no dead device when Internet is down , no unexpected WDT resets…
 ```
@@ -19,9 +19,7 @@ void mqttSwitch(String topic,String payload){
 }
 ```
 And wouldn’t it be nicer if that also already included MQTT support to set / read any pin, to reconnect automatically when the router fails, and to be able to update it via OTA?
-If it could also handle retriggering pins, latching pins and even fully debounced rotary encoder support, it would be pretty easy for newbies to get started…
-
-Well now it is. Introducing Yet Another WiFi Novelty (YAWN…) <drum-roll…> ESPARTO
+If it could also handle retriggering pins, latching pins and even fully debounced rotary encoder support, it would be pretty easy for newbies to get started…Well now it is.
 
 ### Why?
  
@@ -153,9 +151,8 @@ Remember, you can still do your own pin handling in `checkHardware()` if you rea
 
 ## Asychronous task, timers, scheduling etc
 
-ESPARTO contains the following timer functions, which will callback your code after a certain time, either just the once or every n milliseconds. It does so by interfacing with the taskQ and serialising the task when the timer “fires”. Thus your code does not need to worry about locking or resource clashes – no other part of your code will be running at the same time – including other timers, so don’t expect microsecond precision. The loss of precision* is the price you pay for 1) ease of use 2) resilience / robustness 3) not needing to understand/worry what’s going on behind the scenes. The loss is only a few milliseconds either way, if at all – unless you load it up with hundreds of concurrent tasks or dozens of timers that ALL fire at exactly the same time. So if you have two tasks one every 30 seconds and one every 60, there will be an “overlap” every minute when the second 30-second timer fires at almost exactly the same time as the 60 second one. Better to make the first every 29 seconds or the second every 61. ESPARTO copes quite happily with either situation but if one of the tasks does a lot of work, you may notice a “hiccup” in other tasks also running.
+ESPARTO contains the following timer functions, which will callback your code after a certain time, either just the once or every n milliseconds. It does so by interfacing with the taskQ and serialising the task when the timer “fires”. Thus your code does not need to worry about locking or resource clashes – no other part of your code will be running at the same time – including other timers, so don’t expect microsecond precision. The loss of precision is the price you pay for 1) ease of use 2) resilience / robustness 3) not needing to understand/worry what’s going on behind the scenes. The loss is only a few milliseconds either way, if at all – unless you load it up with hundreds of concurrent tasks or dozens of timers that ALL fire at exactly the same time.
 
-The names should hopefully be obvious:
 ```
 Esparto.every(msec,functionA); // run functionA every msec milliseconds
 Esparto.once(msec,functionB); // run function after a delay of msec milliseconds
@@ -232,10 +229,11 @@ In summary, “asynchronous” timer tasks (“fire and forget”) are now a one
 
 The ESPARTO library recognises the following mqtt topics:
 
-{devicename}/cmd/debug	payload set to ON | OFF -> verbose debugging output to Serial
+`{devicename}/cmd/debug`	payload set to ON | OFF -> verbose debugging output to Serial
 
-{devicename}/cmd/info	sample output below:
 ```
+{devicename}/cmd/info	sample output below:
+
 L2 T=119015 H=42264 Q=0 AQL=0 INFO: DEVICE=esparto666
 L2 T=119015 H=42264 Q=0 AQL=0 INFO: CHIPID=17d383
 L2 T=119021 H=42264 Q=0 AQL=0 INFO: BOARD=ESP8266_WEMOS_D1MINI
@@ -251,17 +249,17 @@ L2 T=119083 H=42240 Q=0 AQL=0 INFO: GATEWAY=192.168.1.1
 L2 T=119090 H=42240 Q=0 AQL=0 INFO: LOCAL IP=192.168.1.52
 L2 T=119098 H=42264 Q=0 AQL=0 INFO: CHANNEL=6
 ```
-{devicename}/cmd/reboot	does exactly what it says on the tin
+`{devicename}/cmd/reboot`	does exactly what it says on the tin
 
 It is also able to read / set any digital pin using the following syntax:
 
-{devicename}/pin/n/get	reads pin n e.g. esparto666/pin/12/get
+`{devicename}/pin/*n*/get`	reads pin *n* e.g. esparto666/pin/12/get
 
-{devicename}/pin/n/set	payload = “0” or “1”
+`{devicename}/pin/n/set`	payload = “0” or “1”
 
 Both of the above reply by publishing <devicename>/pinstate/n (where n is the pin number, e.g. esparto666/pinstate/12) with a payload of “0” or “1”
 
-NB both of the above a fairly basic – they simply check for “cmd” or “pin” in the string, thus you cannot use a topic that includes either of those two strings anywhere in them. It’s version 0.1 – things will improve, till then just be aware.
+**N.B.** both of the above a fairly basic – they simply check for “cmd” or “pin” in the string, thus you cannot use a topic that includes either of those two strings anywhere in them. It’s version 0.1 – things will improve, till then just be aware.
 
 # APPENDIX 1 Full interface
 ```
