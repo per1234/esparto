@@ -1,5 +1,5 @@
 # esparto
-## ESPARTO (ESP All-purpose Runtime Object) Version 0.1 Arduino Library for building MQTT-driven firmware for ESP8266 (SONOFF, Wemos D1, NodeMCU etc)
+### ESPARTO (ESP All-purpose Runtime Object) Version 0.1 Arduino Library for building MQTT-driven firmware for ESP8266 (SONOFF, Wemos D1, NodeMCU etc)
 
 Wouldn’t it be nice if this was all it took to build a robust MQTT-capable firmware for SONOFF, WEMOS, NODEMCU etc  to remotely turn the device on or off from you own WiFi network? No cloud APP, no dead device when Internet is down , no unexpected WDT resets…
 ```
@@ -38,17 +38,17 @@ ESPARTO was designed to address all these issues and provide an extremely simple
 ### ESPARTO Main features:
 
 “Industrial strength”:
-*Copes resiliently with WiFi outage or total network loss, reconnecting automatically with reboot
-*Hardware features continue to function at all times irrespective of connection status
-*Never* reboots (*fingers crossed! Except of course after OTA update)
-*Serialises all events into user-mode task queue (mutex-protected), avoiding WDT reset
-*Supports OTA (automatic server updates TBA)
-*MQTT support for get/set any pin 
+* Copes resiliently with WiFi outage or total network loss, reconnecting automatically with reboot
+* Hardware features continue to function at all times irrespective of connection status
+* Never* reboots (*fingers crossed! Except of course after OTA update)
+* Serialises all events into user-mode task queue (mutex-protected), avoiding WDT reset
+* Supports OTA (automatic server updates TBA)
+* MQTT support for get/set any pin 
 
 Ease of use:
-*Incredibly simple user interface for Arduino Environment.
-*Numerous working examples provided, demonstrating features
-*Many flexible input-pin options pre-configured:
+* Incredibly simple user interface for Arduino Environment.
+* Numerous working examples provided, demonstrating features
+* Many flexible input-pin options pre-configured:
 a.	Raw input pin (unfiltered)
 b.	Debounced pin ( for noisy switches)
 c.	Retrigger pin (for e.g. PIR / Audio sensors)
@@ -121,14 +121,14 @@ All the pin functions operate whether your inputs are active HIGH or LOW, pulled
 
 If you really want to do things the hard way, there is a “raw” pin mode which as the name suggests will just give you the transitions as they come, albeit slowed down a little by ESPARTO’s internal scheduling mechanism:
 
-Esparto.pinDefRaw(0,INPUT, myPin0ChangeFunction);
+`Esparto.pinDefRaw(0,INPUT, myPin0ChangeFunction);`
 
 Other useful pins definitions are:
 * pinDefLatch
 * pinDefRetrigger
 * pinDefEncoder
 
-**pinDefLatch turns an ordinary momentary-press “tact” button  into a latching switch. Push it once and it is latched ON. Push it again and it is latched OFF – all the while being automatically debounced, of course. Given that the physical on/off state is not really relevant (again, active HIGH or active LOW work equally well) an additional function is needed to determine the latch state: bool Esparto.pinIsLatched(pin); which returns true when latched and false when not:
+**pinDefLatch** turns an ordinary momentary-press “tact” button  into a latching switch. Push it once and it is latched ON. Push it again and it is latched OFF – all the while being automatically debounced, of course. Given that the physical on/off state is not really relevant (again, active HIGH or active LOW work equally well) an additional function is needed to determine the latch state: bool Esparto.pinIsLatched(pin); which returns true when latched and false when not:
 ```
 Esparto.pinDefLatch(16,INPUT,pin16Change,15); // 15=ms debounce time
 …
@@ -136,11 +136,11 @@ void pin16Change(bool hilo){
 Serial.printf("USER: T=%d PIN 16 %s LATCHED=%s\n",millis(),hilo ? "HIGH":"LOW",Esparto.pinIsLatched(16) ? "TRUE":"FALSE");
 }
 ```
-**pinDefRetrigger will only signal an “off” state after a certain amount of time has elapsed, irrespective of subsequent pin states. If the pin goes “on” during that time, the timer is reset. Think of an outside security light (PIR sensor): while ever you move round in its active zone, the light stays on. Once you leave, it goes off after a certain amount of time. (HINT: if you use a PIR sensor, set the hardware to non-retriggering – usually by removing/replacing a jumper- and set the timeout delay to the minimum, at least less than the value you choose for pinDefRetrigger. This way you can change its behaviour here in the software without having to climb a ladder in the rain. Even better, have it change the timeout value in response to an MQTT message – after all that’s what this whole thing is about, isn’t it?)
+**pinDefRetrigger** will only signal an “off” state after a certain amount of time has elapsed, irrespective of subsequent pin states. If the pin goes “on” during that time, the timer is reset. Think of an outside security light (PIR sensor): while ever you move round in its active zone, the light stays on. Once you leave, it goes off after a certain amount of time. (HINT: if you use a PIR sensor, set the hardware to non-retriggering – usually by removing/replacing a jumper- and set the timeout delay to the minimum, at least less than the value you choose for pinDefRetrigger. This way you can change its behaviour here in the software without having to climb a ladder in the rain. Even better, have it change the timeout value in response to an MQTT message – after all that’s what this whole thing is about, isn’t it?)
 
 `Esparto.pinDefRetrigger(14,INPUT,pin14Change,10000); // stay on until 10 seconds after last retrigger event`
  
-**pinDefEncoder is the piece de resistance in ESPARTO’s toolkit. It manages a rotary encoder – which are notoriously difficult to “get right” – requiring no external hardware components for debouncing. It requires at least two pins (3 if it has a push switch too, for which you’d use pinDefDebounce). Your callback function will be notified on each clean “click” in either direction, with a bool parameter showing HIGH for clockwise and LOW for anti-clockwise. If this appears the “wrong way round”, just swap the two pin numbers in the pindef statement.
+**pinDefEncoder** Manages a rotary encoder requiring no external hardware components for debouncing. It requires at least two pins (3 if it has a push switch too, for which you’d use pinDefDebounce). Your callback function will be notified on each clean “click” in either direction, with a bool parameter showing HIGH for clockwise and LOW for anti-clockwise. If this appears the “wrong way round”, just swap the two pin numbers in the pindef statement.
 ```
 Esparto.pinDefEncoder(0,16,INPUT,encoder); // rotary enc using pins 0 and 16
 Esparto.pinDefEncoder(16,0,INPUT,encoder); // if it turns the “wrong way”
@@ -149,7 +149,7 @@ void encoder(bool hilo){
  Serial.printf("USER: ENCODER 1 STEP %s\n",hilo ? "CLOCKWISE":"ANTICLOCKWISE");
 }
 ```
-What could be simpler? Remember, you can still do your own pin handling in checkHardware if you really want to…
+Remember, you can still do your own pin handling in `checkHardware()` if you really want to…
 
 ## Asychronous task, timers, scheduling etc
 
@@ -198,12 +198,12 @@ Esparto.pinDefEncoder(0,16,INPUT,encoder);
 void encoder(bool hilo){
  if(hilo) {
 	digitalWrite(12,HIGH);
-Esparto.once(100,[]{ digitalWrite(12,LOW); });
-}
-else {
+	Esparto.once(100,[]{ digitalWrite(12,LOW); });
+	}
+ else {
 	digitalWrite(LED_BUILTIN,LOW); // bultin LED is active-low on WEMOS D1
-Esparto.once(100,[]{ digitalWrite(LED_BUILTIN,HIGH); });
-}
+	Esparto.once(100,[]{ digitalWrite(LED_BUILTIN,HIGH); });
+	}
 }
 ```
 As a result of which I then wrote Esparto.pulsePin which – guess what – makes it even easier for you:
@@ -217,18 +217,18 @@ Similarly, while testing the pinDefLatch function, I wanted to see the red LED f
 ```
 Esparto.pinDefLatch(12,INPUT,pin12Change,15);
 …
- void toggle12(){
+  void toggle12(){
   digitalWrite(12,!digitalRead(12));
 }
 …
 void pin12Change(bool hilo){
-if(Esparto.pinIsLatched(12)) Esparto.every(250,toggle12);
-else Esparto.never(toggle12);
+  if(Esparto.pinIsLatched(12)) Esparto.every(250,toggle12);
+  else Esparto.never(toggle12);
 }
 ```
 In summary, “asynchronous” timer tasks (“fire and forget”) are now a one-liner.
 
-Built-in MQTT commands
+## Built-in MQTT commands
 
 The ESPARTO library recognises the following mqtt topics:
 
@@ -263,8 +263,8 @@ Both of the above reply by publishing <devicename>/pinstate/n (where n is the pi
 
 NB both of the above a fairly basic – they simply check for “cmd” or “pin” in the string, thus you cannot use a topic that includes either of those two strings anywhere in them. It’s version 0.1 – things will improve, till then just be aware.
 
-APPENDIX 1 Full interface
-
+# APPENDIX 1 Full interface
+```
 void debugMode(bool torf){debug=torf;};
 void every(int msec,ESPARTO_VOID_POINTER_VOID fn);
 void every(int msec,ESPARTO_VOID_POINTER_ARG fn,uint32_t arg);
@@ -283,11 +283,12 @@ void publish(String topic,String payload);
 void publish(const char* topic,const char* payload);
 void pulsePin(uint8_t pin,unsigned int ms,bool active=HIGH);
 void subscribe(const char * topic,ESPARTO_VOID_POINTER_STRING_STRING fn);
+```
 
-Appendix 2 – Credits
+# Appendix 2 – Credits
 I have to thank Richard A Burton < richardaburton@gmail.com> for the neat and simple mutex code, without which, ESPARTO wouldn’t work at all.
 
-Appendix 3 – ESPARTO recovery mechanism
+# Appendix 3 – ESPARTO recovery mechanism
 
 ESPARTO itself has been tested fairly robustly, but its very purpose is to allow YOUR code (which can do anything) to run. It can never therefore guarantee a totally “bombproof” environment, but it does its best to minimise the risks.
 
