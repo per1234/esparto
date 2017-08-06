@@ -1,0 +1,38 @@
+#######################################
+# Syntax Coloring Map For ESPArto
+#######################################
+
+#######################################
+# Library (KEYWORD1)
+#######################################
+
+ESPArto	KEYWORD1
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+Esparto	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+setup	KEYWORD2
+debugMode	KEYWORD2
+once	KEYWORD2
+every	KEYWORD2
+never	KEYWORD2
+subscribe	KEYWORD2
+publish	KEYWORD2
+pinDefDebounce	KEYWORD2
+pinDefEncoder	KEYWORD2
+pinDefLatch	KEYWORD2
+pinDefRetrigger	KEYWORD2
+pinDefRaw	KEYWORD2
+pinIsLatched	KEYWORD2
+pulsePin	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
