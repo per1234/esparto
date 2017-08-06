@@ -1,5 +1,5 @@
 # esparto
-ESPARTO (ESP All-purpose Runtime Object) Version 0.1 Arduino Library for building MQTT-driven firmware for ESP8266 (SONOFF, Wemos D1, NodeMCU etc)
+## ESPARTO (ESP All-purpose Runtime Object) Version 0.1 Arduino Library for building MQTT-driven firmware for ESP8266 (SONOFF, Wemos D1, NodeMCU etc)
 
 Wouldn’t it be nice if this was all it took to build a robust MQTT-capable firmware for SONOFF, WEMOS, NODEMCU etc  to remotely turn the device on or off from you own WiFi network? No cloud APP, no dead device when Internet is down , no unexpected WDT resets…
 ```
@@ -23,7 +23,7 @@ If it could also handle retriggering pins, latching pins and even fully debounce
 
 Well now it is. Introducing Yet Another WiFi Novelty (YAWN…) <drum-roll…> ESPARTO
 
- Why?
+### Why?
  
 Learning to program the ESP8266 (effectively) can take some time. It certainly did for me,  and I have 40+ years of programming experience. I have seen on many boards (ESP8266.com, Arduino.cc, github.com etc) that beginners often have problems with anything more than simple code found on the net. Often this appears to be due to the lack of experience with multitasking and the way ESP8266 runs a separate process “in the background” which must not be interrupted or delayed for too long. There is little need these days for ordinary or hobby programmers to understand the difference between asynchronous (or event-driven) and synchronous programming. Unfortunately, getting to grips with ESP8266 requires a good understanding of both, especially potential problems when mixing the two. As a result a large number of “newbies” experience Watchdog Timer (WDT) resets, stack crashes and other problems.
 
@@ -35,31 +35,31 @@ What I mean by that is they are generally fine with a permanent, high-quality Wi
 
 ESPARTO was designed to address all these issues and provide an extremely simple interface – the fully working (if limited) example above is only 15 lines of code – and one of those is a comment! ESPARTO masks all the “hard” stuff. It is the basis of all my installed home automation gadgets - “The management eats here”. 
 
-ESPARTO Main features:
+### ESPARTO Main features:
 
 “Industrial strength”:
-•	Copes resiliently with WiFi outage or total network loss, reconnecting automatically with reboot 
-•	Hardware features continue to function at all times irrespective of connection status 
-•	Never* reboots (*fingers crossed! Except of course after OTA update)
-•	Serialises all events into user-mode task queue (mutex-protected), avoiding WDT reset
-•	Supports OTA (automatic server updates TBA)
-•	MQTT support for get/set any pin 
+*Copes resiliently with WiFi outage or total network loss, reconnecting automatically with reboot
+*Hardware features continue to function at all times irrespective of connection status
+*Never* reboots (*fingers crossed! Except of course after OTA update)
+*Serialises all events into user-mode task queue (mutex-protected), avoiding WDT reset
+*Supports OTA (automatic server updates TBA)
+*MQTT support for get/set any pin 
 
 Ease of use:
-•	Incredibly simple user interface for Arduino Environment.
-•	Numerous working examples provided, demonstrating features
-•	Many flexible input-pin options pre-configured:
+*Incredibly simple user interface for Arduino Environment.
+*Numerous working examples provided, demonstrating features
+*Many flexible input-pin options pre-configured:
 a.	Raw input pin (unfiltered)
 b.	Debounced pin ( for noisy switches)
 c.	Retrigger pin (for e.g. PIR / Audio sensors)
 d.	Latching pin (turn a momentary “tact” button in to latching switch)
 e.	Rotary Encoder pin pair (automatically debounced – no external circuitry required)
 
-Implementation / Programmers notes
+## Implementation / Programmers notes
 
 ESPARTO is implemented as an Arduino library – there are plenty of places which describe how to download and install these. 
 
-What you need to know first:
+### What you need to know first:
 
 No “setup” or “loop” function is needed (or allowed) in your code, to allow ESPARTO to control the “correct” order of doing things to maintain resilience. You provide a number of “callback” functions (e.g. to subscribe to your own MQTT topics, or when WiFi disconnects) and these will be called at the appropriate time.
 
@@ -67,7 +67,7 @@ Even so, badly-written code (see Appendix 3) in your callbacks (e.g. long delays
 
 All events e.g. pin activity, timers etc are serialised into a task queue. The main loop pulls the next task from the queue and executes it. The taskQ is protected by a “mutex” meaning that only one event can update it at a time, preventing hidden resource clashes. The general rule is that if your callback does anything more than a few lines of bit-twiddling, you need to separate that code into a function and call ESPARTO’s “queueFunction(your_function)” to put it in the queue. This way, none of the “important” stuff will be delayed for too long and you minimise the risk of a WDT reset or crash.
 
-General interface:
+### General interface:
 ```
 #include <ESPArto.h>
 ESPArto Esparto(“YourSSID”,”WiFiPassword”,”yourdevice”, mqttIP, mqttPort);
@@ -100,16 +100,16 @@ You may be wondering why the topic is passed in when you already know it? ESPART
 
 And that is the basic structure of the ESPARTO model: It does all the hard work and scheduling, and calls you when there is something for your code to do. Thus with as little as 15 lines of code, you have a functional IOT object. The fun starts when we look at input methods, which is why none were shown in the setupHardware section – they are so powerful and flexible, they need a section to themselves.
 
-Input pin methods:
+### Input pin methods:
 
 You are free to do whatever you want with hardware pins about 40,000 times a second (on an 80MHz device like the WemosD1) in the checkHardware routine that you MAY provide if you wish. When you see how easy ESPARTO makes things though, you probably won’t bother.
 Let’s take the simple example of having a very “bouncy” switch on pin 0. Normally you’d need to define the pin in setup, either connect interrupts to pin 0 and define an ISR or have a “polling” routine in loop() to check for change of pin and debounce the changes, and finally…call the appropriate routine to perform some action when a “clean” signal. ESPARTO does that all with one line:
 
-Esparto.pinDefDebounce(0,INPUT,myPin0ChangeFunction,15);
+`Esparto.pinDefDebounce(0,INPUT,myPin0ChangeFunction,15);`
 
 …where 15 is the number of milliseconds to debounce for. (Each different brand of button / switch will need to be calibrated appropriately and sometimes even different examples of the same switch, thus you might also have 
 
-Esparto.pinDefDebounce(1,INPUT_PULLUP,myPin1ChangeFunction,20);
+`Esparto.pinDefDebounce(1,INPUT_PULLUP,myPin1ChangeFunction,20);`
 
 Your function will get called on each clean transition with a single bool parameter indicating whether it was HIGH (true) or LOW (false), thus:
 ```
@@ -124,24 +124,23 @@ If you really want to do things the hard way, there is a “raw” pin mode whic
 Esparto.pinDefRaw(0,INPUT, myPin0ChangeFunction);
 
 Other useful pins definitions are:
-	pinDefLatch
-	pinDefRetrigger
-	pinDefEncoder
+* pinDefLatch
+* pinDefRetrigger
+* pinDefEncoder
 
-pinDefLatch turns an ordinary momentary-press “tact” button  into a latching switch. Push it once and it is latched ON. Push it again and it is latched OFF – all the while being automatically debounced, of course. Given that the physical on/off state is not really relevant (again, active HIGH or active LOW work equally well) an additional function is needed to determine the latch state: bool Esparto.pinIsLatched(pin); which returns true when latched and false when not:
-
+**pinDefLatch turns an ordinary momentary-press “tact” button  into a latching switch. Push it once and it is latched ON. Push it again and it is latched OFF – all the while being automatically debounced, of course. Given that the physical on/off state is not really relevant (again, active HIGH or active LOW work equally well) an additional function is needed to determine the latch state: bool Esparto.pinIsLatched(pin); which returns true when latched and false when not:
+```
 Esparto.pinDefLatch(16,INPUT,pin16Change,15); // 15=ms debounce time
 …
-```
 void pin16Change(bool hilo){
 Serial.printf("USER: T=%d PIN 16 %s LATCHED=%s\n",millis(),hilo ? "HIGH":"LOW",Esparto.pinIsLatched(16) ? "TRUE":"FALSE");
 }
 ```
-pinDefRetrigger will only signal an “off” state after a certain amount of time has elapsed, irrespective of subsequent pin states. If the pin goes “on” during that time, the timer is reset. Think of an outside security light (PIR sensor): while ever you move round in its active zone, the light stays on. Once you leave, it goes off after a certain amount of time. (HINT: if you use a PIR sensor, set the hardware to non-retriggering – usually by removing/replacing a jumper- and set the timeout delay to the minimum, at least less than the value you choose for pinDefRetrigger. This way you can change its behaviour here in the software without having to climb a ladder in the rain. Even better, have it change the timeout value in response to an MQTT message – after all that’s what this whole thing is about, isn’t it?)
+**pinDefRetrigger will only signal an “off” state after a certain amount of time has elapsed, irrespective of subsequent pin states. If the pin goes “on” during that time, the timer is reset. Think of an outside security light (PIR sensor): while ever you move round in its active zone, the light stays on. Once you leave, it goes off after a certain amount of time. (HINT: if you use a PIR sensor, set the hardware to non-retriggering – usually by removing/replacing a jumper- and set the timeout delay to the minimum, at least less than the value you choose for pinDefRetrigger. This way you can change its behaviour here in the software without having to climb a ladder in the rain. Even better, have it change the timeout value in response to an MQTT message – after all that’s what this whole thing is about, isn’t it?)
 
- Esparto.pinDefRetrigger(14,INPUT,pin14Change,10000); // stay on until 10 seconds after last retrigger event
+`Esparto.pinDefRetrigger(14,INPUT,pin14Change,10000); // stay on until 10 seconds after last retrigger event`
  
-pinDefEncoder is the piece de resistance in ESPARTO’s toolkit. It manages a rotary encoder – which are notoriously difficult to “get right” – requiring no external hardware components for debouncing. It requires at least two pins (3 if it has a push switch too, for which you’d use pinDefDebounce). Your callback function will be notified on each clean “click” in either direction, with a bool parameter showing HIGH for clockwise and LOW for anti-clockwise. If this appears the “wrong way round”, just swap the two pin numbers in the pindef statement.
+**pinDefEncoder is the piece de resistance in ESPARTO’s toolkit. It manages a rotary encoder – which are notoriously difficult to “get right” – requiring no external hardware components for debouncing. It requires at least two pins (3 if it has a push switch too, for which you’d use pinDefDebounce). Your callback function will be notified on each clean “click” in either direction, with a bool parameter showing HIGH for clockwise and LOW for anti-clockwise. If this appears the “wrong way round”, just swap the two pin numbers in the pindef statement.
 ```
 Esparto.pinDefEncoder(0,16,INPUT,encoder); // rotary enc using pins 0 and 16
 Esparto.pinDefEncoder(16,0,INPUT,encoder); // if it turns the “wrong way”
@@ -152,11 +151,11 @@ void encoder(bool hilo){
 ```
 What could be simpler? Remember, you can still do your own pin handling in checkHardware if you really want to…
 
-Asychronous task, timers, scheduling etc
+## Asychronous task, timers, scheduling etc
 
 ESPARTO contains the following timer functions, which will callback your code after a certain time, either just the once or every n milliseconds. It does so by interfacing with the taskQ and serialising the task when the timer “fires”. Thus your code does not need to worry about locking or resource clashes – no other part of your code will be running at the same time – including other timers, so don’t expect microsecond precision. The loss of precision* is the price you pay for 1) ease of use 2) resilience / robustness 3) not needing to understand/worry what’s going on behind the scenes. The loss is only a few milliseconds either way, if at all – unless you load it up with hundreds of concurrent tasks or dozens of timers that ALL fire at exactly the same time. So if you have two tasks one every 30 seconds and one every 60, there will be an “overlap” every minute when the second 30-second timer fires at almost exactly the same time as the 60 second one. Better to make the first every 29 seconds or the second every 61. ESPARTO copes quite happily with either situation but if one of the tasks does a lot of work, you may notice a “hiccup” in other tasks also running.
 
-Without further ado, here they are, the names should hopefully be obvious:
+The names should hopefully be obvious:
 ```
 Esparto.every(msec,functionA); // run functionA every msec milliseconds
 Esparto.once(msec,functionB); // run function after a delay of msec milliseconds
@@ -176,13 +175,13 @@ void toggleBuiltin(){
 ```
 Either in setupHardware(), or in response to an MQTT message, or an input event you also have:
 
-Esparto.every(250,toggleBuiltin);
+`Esparto.every(250,toggleBuiltin);`
 
 Now the built-in LED will flash rapidly (4x per second) on its own, without further ado until such time as you call Esparto.never(toggleBuiltin); somewhere else in your code.
 
 If you are happy with C++ “lambda” functions, you can “lose” the separate function, making the code even simpler:
 
-Esparto.every(250,[](){ digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN);} );// job done. 
+`Esparto.every(250,[](){ digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN);} );// job done.`
 
 In this case, you can’t turn it off (Esparto.never([](){digitalWrite… etc won’t work!) but almost as simple and not needing a separate function, this will:
 ```
