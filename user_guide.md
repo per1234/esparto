@@ -92,14 +92,127 @@ What this means for the user is that there are several distinct "phases" to the 
 ---
 # 2 Programming phases and callbacks
 
-## 2.1 Callbacks in general
+## 2.1 Callbacks in general and initial setup
+
+A callback is a function that you write that gets run only when some other part of the system decides it is appropriate - usually in response to an external event. The system defines - in each separate case - what information will be sent and thus the callback has to be defiend in a way that matches. this is its "signature". For example when an input pin changes, your callback will be told simply a) that is has done (by calling you!) and b) whether it is high or low. Your callback's signature then, must be a single bool parameter.
+
+Unless your signature matches exactly with the particular event, the sketch won't compile. You can't just add extra parameters. The overall concept of **ESPARTO** is that you "register" callbacks for the events you want to be notified of and **ESPARTO** calls you when they happen. Your callback must just do what it has to do and return as quickly as possible. Do not call delay(), do NOT wait for other things - register another callback for them or set a timer callback function.
+
+The whole process starts when you create the Esparto object, like so:
+
+`ESPArto Esparto(SSID, password, deviceID, mqttIP, mqttPort);`
+
+From this point onwards, **ESPARTO** is in control. Before you do anything else, it has already set off tasks to connect to the WiFi and MQTT brokers and while those are coming up, you can initialise your hardware so that it's working as soon as possible.
+
+An important aside about choosing a good deviceID
+
+>Every device on your network must have a unique name. Stick to letters numbers and hyphens. Avoid spaces and odd punctuation marks. For example, *lounge-light* is OK but *Jack's bedroom* isn't. You can always change it using the web UI later (see s3). There are some very important points about doing that and the choice of device name that are discussed in detail in the Advanced Topics document. For now, just pick a good one and stick with it.
 
 ## 2.2 Hardware setup
 
+You **must** provide a function named setupHardware() taking no parameters and returning nothing, hence:
+
+```C
+void setupHardware(void){
+...do some stuff
+}
+```
+This is where you will initialise your input and output pins and do anything necessary to get you connected hardware running, for example:
+
+```C
+Serial.begin(74880);
+Serial.println("SETUP HARDWARE");
+Esparto.pinMode(LED_BUILTIN,OUTPUT);
+Esparto.pinMode(12,OUTPUT);
+Esparto.every(1000,[](){ Serial.println("One-second tick"); }); // 1000 mSec - 1 second
+```
+
+You can use the normal pinMode - your hardware will still work, but lots of **ESPARTO**-goodness won't. For example, the Web UI won't allow you to click on the pin to change it if it's an output, nor show it's state in (near) real-time.
+
+What's [](){ ... } ???
+
+>The short answer is a "Lambda function". If you are new to them, read up on the syntax - they are extremely useful in this type of situation and make the code more easy to understand as you you don't need to creat a whole new separate function just to do one or two lines of code. Think of them as "an inline callback with no name" but remember that they won't run *now* - they will run when the function you included them in decides that they will. In this case (no prizes...) it will be every second, irrrespective of what else is going on.
 
 ## 2.3 WiFi connection
+
+If you wan't to be notified when this happnes, include a function in your code thus:
+
+```C
+void onWiFiConnect(){
+...
+}
+```
+
+...but you don't have to - there's not too much you'd want to do as **ESPARTO** takes care of pretty much everything
+
 ## 2.4 MQTT connection
+
+A function called void onMQTTConnect() is where you will subscribe to your particular MQTT topics (see s4 for details of the built-in topics that **ESPARTO** has already subscribed to behind your back).
+
+A simple case might just be:
+
+```C
+void onMQTTConnect(){
+Esparto.subscribe("flash",mqttFlash);
+}
+```
+Don't forget that the actual topic received by MQTT will be autonatically prefixed with your device name. Assuming that you have called your device my-iot, esparto will tell MQTT that you want to subscribe to *my-iot/flash*. This saves you a lot of typing (as well as lots of precious heap space).
+
+Your callback signature needs to be void `mqttFlash(String topic, String payload);` You might wonder why **ESPARTO** send you back the topic name when you already know it, but there are good reasons why it does so, to do with MQTT wildcards.
+
+You can subscribe to # wildcard topics if you wish, but not + wildcards. Subscribing to "flash/#" will allow you to receive *my-iot/flash/slow*, *my-iot/flash/50/times/a/second*, or even *my-iot/flash/i/never/expected/anyone/ever/to/type/that*. If you do choose to use # wildcards, your callback routine will receive everything after the device name in the topic parameter, e.g. in the last example, topic would be set to *flash/i/never/expected/anyone/ever/to/type/that*. Your callback must take the string apart and act accordingly as well as being written to cope with unusual or even unpredicted values.
+
 ## 2.5 Input events
+
+There are only so many things you can do with a digital input pin - mainly be notified when it changes. **ESPARTO** contains some very useful functions to manage your inputs, designed to deal with the most common types of sensor response. It does so in a way that makes the code that you need to write much simpler than it otherwise would be.
+
+As for digital outputs mentioned in s2.2, you can still use the standard Arduino functions of pinMode, digitalRead etc but you will be losing a lot of **ESPARTO**-goodness as well as making a lot of unnecessary work for yourself. By using **ESPARTO** input methods, you gain the following advantages:
+
+* no reinvention of the wheel for age-old problems such as debouncing, rotary decoding
+* UI interface showing (near) real-time pin state
+* event-logging (if required)
+* pin-mapping help / hints in the UI specific to different boards
+* cleaner code, no delay() or timing requirements or global variables
+
+...but you can still do it the hard way too.
+
+What's this "*(near) real-time*" I've now heard twice?
+
+> Nothing in life is free. The advantages above come at a cost: they all take time to process. The richer the UI experience and the simpler *your* code is, the more there is going on behind the scenes. This means that there will be a slight delay (perhaps less than a millisecond) between the pin state actually changing and your callback running. The busier the system is with other tasks,  the greater the delay will be, albeit still very small. As a result, **ESPARTO** is not suitable for life-support machines, space-rocket guidance or nuclear bomb triggering. Any hardware that requires sub-millisecond or even a handful of microseonds precision to operate correctly should not be used. For 99% of home IOT systems, it's more than adequate
+
+**ESPARTO** input methods start with a "pin defintion". This identifies the pin, names the callback and provides other necesssary data for the particular method. For example, pindefDebounce needs a value for the milliseconds to debounce the input pin. Other methods require different values and callabck signatures. They will be described in ascending order of complexity / functionality.
+
+### 2.5.1 pinDefRaw
+
+This does very little other than tie the pin to the UI functionality. When it goes high, the callback is run, when it goes low the same occurs. Ignoring the both the benefits and overheads already discussed, this as close as you can get with **ESPARTO** to doing it yourself.
+
+Example invocation in setupHardware():
+
+`pinDefRaw(4,yourcallback);`
+
+Callback signature: `void yourcallback(bool hilo)`
+
+Simple Example:
+
+```C
+void yourcallback(bool hilo){
+// e.g. ...
+if(hilo) Serial.println("Pin 4 went HIGH");
+else Serial.println("Pin 4 went LOW");
+}
+```
+
+Full code example: [pindefRaw code example](src/examples/ESPArto_pinDefRaw.ino)
+
+
+
+
+
+
+
+
+
+
 ## 2.6 Disconnections
 
 
