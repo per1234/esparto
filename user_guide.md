@@ -6,13 +6,13 @@
   1.2 The **ESPARTO** programming model  
   1.3 The "layered resilience" model  
 2. Programming phases and callbacks  
-	2.1 callbacks in general  
+	2.1 Callbacks in general  
   2.2 Hardware setup  
   2.3 WiFi connection  
   2.4 MQTT connection  
   2.5 Input events  
-  2.5.1 pinDefRaw  
-  2.5.2 pinDefDebounce  
+  	2.5.1 pinDefRaw  
+  	2.5.2 pinDefDebounce  
   2.6 Disconnections  
   2.7 Abnormal events - reboots & factory resets
 3. The Webserver UI  
