@@ -11,6 +11,8 @@
   2.3 WiFi connection  
   2.4 MQTT connection  
   2.5 Input events  
+  2.5.1 pinDefRaw  
+  2.5.2 pinDefDebounce  
   2.6 Disconnections  
   2.7 Abnormal events - reboots & factory resets
 3. The Webserver UI  
@@ -184,13 +186,13 @@ What's this "*(near) real-time*" I've now heard twice?
 
 ### 2.5.1 pinDefRaw
 
-This does very little other than tie the pin to the UI functionality. When it goes high, the callback is run, when it goes low the same occurs. Ignoring the both the benefits and overheads already discussed, this as close as you can get with **ESPARTO** to doing it yourself.
+This does very little other than tie the pin to the UI functionality. When it goes high, the callback is run, when it goes low the same occurs. Ignoring the both the benefits and overheads already discussed, this as close as you can get with **ESPARTO** to doing it yourself. Beware that if the input is electrically noisy a "bouncy" button for example, you may well get called many times on the downstroke and several more on the upstroke. It is up to your code to deal with that.
 
 Example invocation in setupHardware():
 
 `pinDefRaw(4,yourcallback);`
 
-Callback signature: `void yourcallback(bool hilo)`
+Callback signature: `void yourcallback(bool hilo);`
 
 Simple Example:
 
@@ -202,7 +204,29 @@ else Serial.println("Pin 4 went LOW");
 }
 ```
 
-Full code example: [pindefRaw code example](src/examples/ESPArto_pinDefRaw.ino)
+Full code example: [pindefRaw code example](examples/ESPArto_pinDefRaw/ESPArto_pinDefRaw.ino)
+
+### 2.5.1 pinDefDebounce
+
+This performs similarly to pinDefRaw with the exception that the bounces (up to the given number of milliseconds) will be ignored and your callback will get called once only on each transition. Some experimentation may be required to choose the ideal figure between bounce elimiation and responsiveness. The "correct" value is smmallest value that delivers only one call per physical transition. Typical values (each switch / button type will differ - even examples of the same batch) are between 10 and 20 mSec.
+
+Example invocation in setupHardware():
+
+`pinDefDebounce(4,yourcallback,15);			// 15 mSec debounce threshhold, lower it if possible`
+
+Callback signature: `void yourcallback(bool hilo);`
+
+Simple Example:
+
+```C
+void yourcallback(bool hilo){
+// e.g. ...
+if(hilo) Serial.println("Button Pressed");
+else Serial.println("Button Released");
+}
+```
+
+Full code example: [pindefRaw code example](examples/ESPArto_pinDefDebounce/ESPArto_pinDefDebounce.ino)
 
 
 
