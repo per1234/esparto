@@ -3,7 +3,38 @@
 ## Contents
 1. Introduction  
   1.1 Why another ESP8266 Firmware?  
-  1.2 The **ESPARTO** programming model  
+  1.2 The **ESPARTO** programming model
+  1.3 The "layered resilience" model  
+2. Programming phases and callbacks  
+  2.1 Hardware setup  
+  2.2 WiFi connection  
+  2.3 MQTT connection  
+  2.4 Input events  
+  2.5 Disconnections  
+3. The Webserver UI  
+4. Inbuilt MQTT Commands  
+5. Full API reference    
+  5.1 debugMode  
+	5.2 digitalWrite  
+	5.3 every  
+	5.4 factoryReset  
+  5.5 never  
+  5.6 once  
+  5.7 pinDefDebounce  
+	5.8 pinDefEncoder  
+	5.9 pinDefEncoderAuto  
+	5.10 pinDefLatch  
+	5.11 pinDefReporting  
+	5.12 pinDefRetrigger  
+	5.13 pinDefRaw  
+	5.14 pinIsLatched  
+	5.15 pinMode  
+	5.16 publish  
+  5.17 pulsePin  
+	5.18 queueFunction
+  5.19 reboot  
+  5.20 subscribe  
+  
 ---
 # 1. Introduction
 
@@ -44,9 +75,19 @@ If all four happen at exatly the point when the WiFi needs to get a reply within
 
 Golden Rule #2: When in doubt, queue it!
 
-> If any of your own code does more than a few microseconds of bit-twiddling, don't do it "inline" with the event that caused it to run, stick it in the TQ (obviosuly we'll see how to do that later) and let **ESPARTO** handle it. You  * **must** * do this if your code takes a long time or does a lot of work. **ESPARTO** removes much of the need for your code to ever use delay() : your code either registers itself for certain events or sets up an ESPARTO timer and then simply reacts to the event.
+> If any of your own code does more than a few microseconds of bit-twiddling, don't do it "inline" with the event that caused it to run, stick it in the TQ (obviosuly we'll see how to do that later) and let **ESPARTO** handle it. You  ** *must* ** do this if your code takes a long time or does a lot of work. **ESPARTO** removes much of the need for your code to ever use delay() : your code either registers "callbak" routines for certain events or sets up an **ESPARTO timer** and then simply reacts to the event.
 
-Of course ESPARTO also knows how to co-operate with the WiFi code and makes sure it is never "starved" of resources. It does it;s best to make sure the code never has to reboot. It also copes cleanly with disconnection and reconnection of the MQTT broker or even the WiFi connection itself. It is designed to allow the hardware to keep on running (although of course it may not be able to send data) until sucvh time as the net resopurces come back up. That way, anything directly connected to your IOT device will still function. you can still turn the lights on - you may just have to get up out of your chair and press a button...
+Of course, **ESPARTO** also knows how to co-operate with the WiFi code and makes sure it is never "starved" of resources. It does it;s best to make sure the code never has to reboot. It also copes cleanly with disconnection and reconnection of the MQTT broker or even the WiFi connection itself. It is designed to allow the hardware to keep on running (although of course it may not be able to send data) until such time as the 'net resources come back up. That way, anything directly connected to your IOT device will still function. you can still turn the lights on - you may just have to get up out of your chair and press a button...
+
+## 1.3 The "layered resilience" model
+
+This is just a fancy name for a technique or separating lumps of code that do different functions. Most operating systems have a "kernel" at the lowest layer, then "middleware" such as libraries and standard functions then "user code" - your Arduino sketch in this case. **ESPARTO** is a million tmes less complex, but operates on a similar principle: the hardware is managed at "Layer 0" - all the code is separate from anything to do with the WiFi or MQTT and it always gets run first. When there is a valid WiFi connection, its moves up to Layer 1. The websever works and OTA updates work, even if MQTT doesn't. When MQTT is up and running **ESPARTO** is at Layer 2 and all is well with the world. As things disconnect and reconnect **ESPARTO** moves up and down the appropriate levels, notifying you.
+
+Most of the time you might just want to print a debug message e.g. "MQTT disconnected" or "WiFi reconnected". Sometimes you may want to flash an LED. All of my devices flash slowly while they setup Layer 0, faster when the WiFi connects and furiously until MQTT connects. When it does the LED goes solid green. I can tell at a glance at any of them when there is a network problem.
+
+What this means for the user is that there are several distinct "phases" to the programming cycle and your coe neeeds to be structured to fit in with those and react accordingly - hence all the "Esparto." equivalents of "normal" functions and the lack of `setup()` and `loop()`.
+
+
 
 
 
