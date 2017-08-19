@@ -3,14 +3,16 @@
 ## Contents
 1. Introduction  
   1.1 Why another ESP8266 Firmware?  
-  1.2 The **ESPARTO** programming model
+  1.2 The **ESPARTO** programming model  
   1.3 The "layered resilience" model  
 2. Programming phases and callbacks  
-  2.1 Hardware setup  
-  2.2 WiFi connection  
-  2.3 MQTT connection  
-  2.4 Input events  
-  2.5 Disconnections  
+	2.1 callbacks in general  
+  2.2 Hardware setup  
+  2.3 WiFi connection  
+  2.4 MQTT connection  
+  2.5 Input events  
+  2.6 Disconnections  
+  2.7 Abnormal events - reboots & factory resets
 3. The Webserver UI  
 4. Inbuilt MQTT Commands  
 5. Full API reference    
@@ -30,8 +32,8 @@
 	5.14 pinIsLatched  
 	5.15 pinMode  
 	5.16 publish  
-  5.17 pulsePin  
-	5.18 queueFunction
+  	5.17 pulsePin    
+	5.18 queueFunction  
   5.19 reboot  
   5.20 subscribe  
   
@@ -87,7 +89,18 @@ Most of the time you might just want to print a debug message e.g. "MQTT disconn
 
 What this means for the user is that there are several distinct "phases" to the programming cycle and your coe neeeds to be structured to fit in with those and react accordingly - hence all the "Esparto." equivalents of "normal" functions and the lack of `setup()` and `loop()`.
 
+---
+# 2 Programming phases and callbacks
 
+## 2.1 Callbacks in general
+
+## 2.2 Hardware setup
+
+
+## 2.3 WiFi connection
+## 2.4 MQTT connection
+## 2.5 Input events
+## 2.6 Disconnections
 
 
 
