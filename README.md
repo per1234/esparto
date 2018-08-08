@@ -94,7 +94,6 @@ Expring timers have a chain paramter to allow extended. complex, ordered events 
 *   Morse Code pure, for those of the above who like things tough and can still "fist" 140WPM
 
 © 2018 Phil Bowles
-philbowles2012@gmail.com
-http://www.github.com/philbowles
-https://8266iot.blogspot.com
-
+* philbowles2012@gmail.com
+* http://www.github.com/philbowles
+* https://8266iot.blogspot.com
