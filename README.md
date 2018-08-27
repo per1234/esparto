@@ -27,6 +27,9 @@ void setupHardware() {
   Esparto.Latching(PUSHBUTTON,INPUT,15,buttonPress); // 15ms of debouncing
 }
 ```
+### Wot? No ```setup()``` or ```loop()```?
+
+Correct. All your code runs when Esparto decides it is safe to do so, and "calls it back". This is to ensure smooth running of multiple simultaneous events. You could just as easily have five LEDs all flashing at different rates, or a rotary encoder adjusting the flash rate and Esparto needs to ensure those concurrent* tasks don't interefere with each other of stop the WiFi code from running which will cause a WDT reset. Most of your sketches will be short "callback" routines while Esparto does all the "heavy lifting".
 
 # SUMMARY OF ESPARTO MAIN FEATURES
 
