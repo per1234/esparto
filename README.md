@@ -171,14 +171,14 @@ The examples fall broadly into 4 groups
 ## Group 1 Mainly timing, scheduling, workflow:
 	
 ### 01_Simple	
-    	Output
+    Output
 	flashLED
 	every
 	onceRandom
 	cancel
 
 ### 02_Lambdas	
-    	Output
+    Output
 	flashLED
 	queueFunction
 	everyRandom
@@ -187,7 +187,7 @@ The examples fall broadly into 4 groups
 	onceRandom
 
 ### 03_Chaining	
-    	Output
+    Output
 	flashLED
 	onceRandom
 	once
@@ -203,7 +203,7 @@ The examples fall broadly into 4 groups
 	cancelAll
 
 ### 05_Whenever
-    	Output
+    Output
 	every
 	onceRandom
 	cancel
@@ -214,7 +214,7 @@ The examples fall broadly into 4 groups
 	Whenever
 
 ### 06_Mayhem	
-   	 Output
+   Output
 	flashLED
 	onceRandom
 	once
@@ -224,7 +224,7 @@ The examples fall broadly into 4 groups
 	nTimesRandom
 
 ### 07_Timer_Roundup	
-    	Output
+    Output
 	flashLED
 	setHookHeapThrottle
 	setHookQueueThrottle
@@ -238,31 +238,31 @@ The examples fall broadly into 4 groups
 ## Group 2 Mainly flashing functions:
 
 ### 08_Blinky_OnOff	
-    	Output
+    Output
 	Latching
 	flashLED
 	stopLED
 
 ### 09_Blinky_ButtonDown	
-    	Output
+    Output
 	Debounced
 	flashLED
 	stopLED
 
 ### 10_Blinky_PWM	
-    	Output
+    Output
 	Latching
 	flashLED(pwm)
 	stopLED
 
 ### 11_Blinky_Pattern	
-    	Output
+    Output
 	Latching
 	flashLED(pattern)
 	stopLED
 
 ### 12_BlinkyConfig	
-    	onConfigItemChange
+    onConfigItemChange
 	addConfig
 	flashLED
 	incConfigInt
@@ -274,17 +274,17 @@ The examples fall broadly into 4 groups
 	Latching
 
 ### 15_VeryUselessMeter	
-    	Raw
+    Raw
 	Output
 	pulseLED
 
 ### 16_VeryUselessMeter_Variable	
-    	Output
+    Output
 	Raw
 	EncoderAuto
 
 ### 17_VeryUselessMeter_Throttling	
-    	throttlePin
+    throttlePin
 	Output
 	Raw
 	EncoderAuto
@@ -292,46 +292,46 @@ The examples fall broadly into 4 groups
 ## Group 3 Specialised pin input types
 
 ### 18_RawFilter	
-    	Filtered
+    Filtered
 
 ### 19_Polled	
-    	Polled
+    Polled
 	once
 	reconfigurePin
 
 ### 20_Reporting	
-   	Reporting
+   Reporting
 	reconfigurePin
 	onceRandom
 
 ### 21_ThreeStage	
-    	flashLED
+    flashLED
 	stopLED
 	Output
 	ThreeStage
 
 ### 22_standardThreeStage	
-    	Output
+    Output
 	std3StageButton
 	flashLED
 	stopLED
 	isFlashing
 
 ### 23_Retriggering	
-    	Retriggering
+    Retriggering
 	onceRandom
 	reconfigurePin
 
 ### 24_Encoder	
-    	every
+    every
 	Encoder
 
 ### 25_Encoder_Binding	
-    	every
+    every
 	Encoder(Binding)
 
 ### 26_EncoderAuto	
-    	EncoderAuto
+    EncoderAuto
 	Debounced
 	everyRandom
 	once
@@ -342,7 +342,7 @@ The examples fall broadly into 4 groups
 	ea->setPercent
 
 ### 27_EncoderAuto_Binding	
-    	EncoderAuto(binding)
+    EncoderAuto(binding)
 	Debounced
 	everyRandom
 	once
@@ -353,23 +353,23 @@ The examples fall broadly into 4 groups
 	ea->setPercent
 
 ### 28_EncoderAuto_Variable_Blinky	
-    	flashLED
+    flashLED
 	EncoderAuto
 	Output
 
 ### 29_Interrupt	
-    	Output
+    Output
 	Interrupt
 
 ### 30_Timed	
-    	Timed
+    Timed
 	onceRandom
 	reconfigurePin
 
 ## Group 4 fully functional programs:
 
 ### 31_WiFiBlinky	
-    	flashLED
+    flashLED
 	stopLED
 	getConfigInt
 	onAlexaCommand
@@ -380,7 +380,7 @@ The examples fall broadly into 4 groups
 	std3StageButton
 
 ### 32_MQTTBlinky	
-    	flashLED
+    flashLED
 	stopLED
 	getConfigInt
 	onAlexaCommand
@@ -393,7 +393,7 @@ The examples fall broadly into 4 groups
 	Subscribe
 
 ### 33_MQTTWildcards	
-    	flashLED
+    flashLED
 	stopLED
 	getConfigInt
 	onAlexaCommand
@@ -409,7 +409,7 @@ The examples fall broadly into 4 groups
 	onMqttDisconnect
 
 ### 34_SONOFF_Basic	
-    	digitalWrite
+    digitalWrite
 	onAlexaCommand
 	setAlexaDeviceName
 	publish
@@ -466,146 +466,223 @@ whenever		5
 ### GPIO handling / flashing:
 
 Debounced	9,26,27
+
 digitalWrite	34
+
 Encoder	24
+
 Encoder(bound)	25
+
 EncoderAuto	16,17,26,28
+
 EncoderAuto(bound)	27
+
 ea->center	26,27
+
 ea->reconfigure	26,27
+
 ea->setPercent	26,27
+
 ea->setValue	26,27
+
 Filtered	18
+
 flashLED	1,2,3,8,9,21,22,28,31,32,33
+
 flashLED(pwm)	10,12
+
 flashLED(pattern)	11
+
 getValue	17
+
 Interrupt	29
+
 isFlashing	22,31,32,33
+
 Latching	8,10,11,12
+
 Output	1,2,3,4,5,8,9,10,11,12,15,16,17,21,22,28,29,31,32,33,34
+
 Polled	19
+
 pulseLED	15
+
 Raw	15,16,17
+
 reconfigurePin	19,20,23,30
+
 Reporting	20
+
 Retriggering	23
+
 stopLED	8,9,10,11,12,21,22,31,32,33
+
 ThreeStage	21
+
 throttlePin	17
+
 Timed	30
 
 ### Esparto direct API:
 
 addConfig	12,31,32,33
-addWebHandler	
-decConfigInt	
-factoryReset	
-getConfig	
+
 getConfigInt	12,31,32,33
+
 getConfigstring	12
-getConfigString	
+
 incConfigInt	12
-invokeCmd	
-minusEqualsConfigInt	
+
 onAlexaCommand	31,32,33,34
+
 onConfigItemChange	12,31,32,33
+
 onFactoryReset	33
+
 onMqttConnect	32,33,34
+
 onMqttDisconnect	33
+
 onReboot	33
-onWiFiConnect	
-onWiFiDisconnect	
-plusEqualsConfigInt	
+
 publish	34
-reboot	
+
 setAlexaDeviceName	34
+
 setConfigInt	12
-setConfigstring	
-setConfigString	
+
 std3StageButton	22,31,32,33,34
+
 subscribe	32,33,34
-userLoop	
 
 ## Simple Alphabetic List
 
 addConfig	12,31,32,33
-addWebHandler	
+
 asyncQueueFunction	7
+
 cancel	1,2,4,5
+
 cancelAll	4,5
+
 Debounced	9,26,27
-decConfigInt	
+
 digitalWrite	34
+
 ea->center	26,27
+
 ea->reconfigure	26,27
+
 ea->setPercent	26,27
+
 ea->setValue	26,27
+
 Encoder	24
+
 Encoder(bound)	25
+
 EncoderAuto	16,17,26,28
+
 EncoderAuto(bound)	27
+
 every	1,2,4,5,7,24,25
+
 everyRandom	2,7,26,27
-factoryReset	
+
 Filtered	18
+
 flashLED	1,2,3,8,9,21,22,28,31,32,33
+
 flashLED(pattern)	11
+
 flashLED(pwm)	10,12
+
 getCapacity	7
-getConfig	
+
 getConfigInt	12,31,32,33
+
 getConfigstring	12
-getConfigString	
+
 getHWarn	7
+
 getQSize	7
+
 getValue	17
+
 incConfigInt	12
+
 Interrupt	29
-invokeCmd	
+
 isFlashing	22,31,32,33
+
 Latching	8,10,11,12
-minusEqualsConfigInt	
+
 nTimes	3,4,5,6
+
 nTimesRandom	6
+
 onAlexaCommand	31,32,33,34
+
 once	3,6,19,26,27
+
 onceRandom	1,2,3,4,5,6,20,23,30
+
 onConfigItemChange	12,31,32,33
+
 onFactoryReset	33
+
 onMqttConnect	32,33,34
+
 onMqttDisconnect	33
+
 onReboot	33
-onWiFiConnect	
-onWiFiDisconnect	
+
 Output	1,2,3,4,5,8,9,10,11,12,15,16,17,21,22,28,29,31,32,33,34
-plusEqualsConfigInt	
+
 Polled	19
+
 publish	34
+
 pulseLED	15
+
 queueFunction	2,4,5
+
 randomTimes	6
+
 randomTimesRandom	6
+
 Raw	15,16,17
-reboot	
+
 reconfigurePin	19,20,23,30
+
 Reporting	20
+
 Retriggering	23
+
 setAlexaDeviceName	34
+
 setConfigInt	12
-setConfigstring	
-setConfigString	
+
 setHookHeapThrottle	7
+
 setHookQueueThrottle	7
+
 std3StageButton	22,31,32,33,34
+
 stopLED	8,9,10,11,12,21,22,31,32,33
+
 subscribe	32,33,34
+
 ThreeStage	21
+
 throttlePin	17
+
 Timed	30
-userLoop	
+
 when	5
+
 whenever	5
+
 
 © 2018 Phil Bowles
 * philbowles2012@gmail.com
