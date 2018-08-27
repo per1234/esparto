@@ -1,7 +1,7 @@
 /*
  MIT License
 
-Copyright (c) 2017 Phil Bowles
+Copyright (c) 2018 Phil Bowles <esparto8266@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,454 +22,248 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #include <ESPArto.h>
-
-volatile 		int 			ESPArto::avgQLength=0;
-volatile 		int 			ESPArto::avgQCount=0;
-volatile 		int 			ESPArto::avgQSigma=0;
-
-				PubSubClient*	ESPArto::mqttClient;
-volatile 		bool			ESPArto::linked=false;
-volatile 		uint8_t			ESPArto::Layer=0;
-				vMap 			ESPArto::topicFn;
-				taskQueue		ESPArto::taskQ;
-				mutex_t			ESPArto::tqMutex;
-				std::string		ESPArto::device;
-				tickerList		ESPArto::tickers;
-				bool			ESPArto::debug=true;
-				pinList			ESPArto::hwPins;
+#include "stats.h"
 //
 //	Caller MAY override:
 //
-void __attribute__((weak)) onWiFiConnect(void){}
-void __attribute__((weak)) onWiFiDisconnect(void){}
-void __attribute__((weak)) onMqttDisconnect(void){}
-void __attribute__((weak)) checkHardware(void){}
+CFG_MAP& 			__attribute__((weak)) addConfig(){static CFG_MAP empty; return empty;}
+void 					__attribute__((weak)) onConfigItemChange(const char* id,const char* value){}
+void 					__attribute__((weak)) onFactoryReset(void){}
+void 					__attribute__((weak)) onReboot(void){}
+void 					__attribute__((weak)) setupHardware(void){}
+void 					__attribute__((weak)) userLoop(void){}
 
-void ESPArto::say(const char *fmt, ... ){
-	if(debug){
-		char buf[256]; // resulting string limited to 128 chars
-		va_list args;
-		va_start (args, fmt );
-		vsnprintf(buf, 256, fmt, args);
-		strcat(buf,"\n");
-		va_end (args);
-		Serial.printf("L%d T=%d H=%d Q=%d AQL=%d ",Layer,millis(),ESP.getFreeHeap(),taskQ.size(),avgQLength);
-		Serial.print(buf);
+CMD_MAP						ESPArto::cmds={
+#ifdef ESPARTO_DEBUG_PORT
+		{"7dump",			{2,0,0,nullptr}},
+		{"2config",		{0,0,0,CMD_LAMBDA( _info(); )}},
+		{"2topics",		{0,0,0,CMD_LAMBDA( _forEachTopic([](string t,int i){ publish("topic", CSTR(t)); }); )}},
+#endif
+		{"cmd",				{7,0,0,nullptr}},			
+		{"7config",		{3,0,0,nullptr}},
+		{"3get",			{0,0,0,CMD_LAMBDA( _configGet(tokens); )}},
+		{"3set",			{0,0,0,CMD_LAMBDA( _configSet(tokens); )}},
+		{"7factory",	{0,0,0,CMD_LAMBDA( factoryReset(); )}},
+		{"7pin", 			{1,0,0,nullptr}},
+		{"1cfg",			{0,0,0,CMD_LAMBDA( _cfgPin(tokens); )  }},
+		{"1get",			{0,0,0,CMD_LAMBDA( _getPin(tokens); )}},
+		{"1choke",		{0,0,0,CMD_LAMBDA( _chokePin(tokens); )}},
+		{"1set",			{0,0,0,CMD_LAMBDA( _setPin(tokens); )}},
+		{"1flash",		{0,0,0,CMD_LAMBDA( _flashPin(tokens); )}},
+		{"1stop",			{0,0,0,CMD_LAMBDA( _stopPin(tokens); )}},
+		{"1pattern",	{0,0,0,CMD_LAMBDA( _patternPin(tokens); )}},
+		{"1pwm",			{0,0,0,CMD_LAMBDA( _pwmPin(tokens); )}},
+		{"7reboot", 	{0,0,0,CMD_LAMBDA( reboot(ESPARTO_BOOT_MQTT); )}},
+		{"7rename", 	{0,0,0,CMD_LAMBDA( _changeDevice(CSTR(tokens[0]), CSTR(WiFi.SSID()), CSTR(WiFi.psk()) ); )}} //, // validation!!!!!!!!!!!		
+	};
+//
+//	prefix legend:
+//	<none> = mutable {USER}
+//	~ = mutable {sys} change at your peril!
+//	$ = immutable
+//
+//	<none> = mutable {USER}
+//	~ = mutable {sys} change at your peril!
+const char* SYS_AP_FALLBACK			="~fb2AP";
+const char* SYS_MQTT_RETRY			="~mqRetry";
+// $ = immutable
+const char* SYS_BOOT_COUNT			="$bc";
+const char* SYS_BOOT_REASON			="$br";
+const char* SYS_CHIP_ID					="$chp";
+const char* SYS_DEVICE_NAME			="$dev";
+const char* SYS_ESPARTO_VERSION	="$evn";
+const char* SYS_FAIL_CODE				="$fc";
+const char* SYS_ALEXA_NAME			="$lex";
+const char* SYS_STATE						="$on";
+const char* SYS_PSK							="$psk";
+const char* SYS_ROOTWEB					="$root";
+const char* SYS_SPIFFS_VERSION	="$SPIFFS";
+const char* SYS_SSID						="$ssid";
+// memory savers
+const char*	SYS_CMD_HASH				="cmd/#";
+const char* SYS_TXT_HTM					="text/html";
+//
+CFG_MAP 							ESPArto::config={
+												{SYS_ESPARTO_VERSION,ESPARTO_VERSION},
+												{SYS_BOOT_COUNT,"0"}
+												};
+											
+std::map<string,int>	ESPArto::srcStats;
+vector<autoStats*>		ESPArto::statistics(ESPARTO_N_STATS);
+//														
+function<void(const char*,const char*)>
+											ESPArto::_cicHandler=[](const char* id,const char* value){ onConfigItemChange(id,value); };		// => deflt = let caller do it													
+//
+VFN										ESPArto::NOOP=[]{};
+
+VFN										ESPArto::_connected=nullptr;			// "manual virtual" upcall on WiFi connect - default is public onWiFi...
+VFN										ESPArto::_disconnected=nullptr;  	// overriden by MQTT to get those notifications BEFORE user
+WiFiEventHandler			ESPArto::_disconnectedEventHandler;									
+WiFiEventHandler    	ESPArto::_gotIpEventHandler;
+VFN										ESPArto::_handleCaptive=NOOP;
+VFN										ESPArto::_handleMQTT=NOOP;		// NOOP while MQTT disconnected, =event loop function while connected	
+VFN										ESPArto::_handleWiFi=NOOP;	// NOOP while WiFi disconnected, =event loop function while connected
+VFN										ESPArto::_mqttUiExtras=NOOP;
+VFN										ESPArto::_setupFunction=NOOP;
+
+bool									ESPArto::discoNotified=false;	
+DNSServer*						ESPArto::dnsServer;
+ESPARTO_TIMER					ESPArto::fallbackToAP=0;
+Ticker								ESPArto::heartbeatTicker;	
+PubSubClient*					ESPArto::mqttClient=nullptr;
+uint32_t							ESPArto::sigmaPins;
+AsyncUDP 							ESPArto::udp;
+WiFiClient     				ESPArto::wifiClient;
+simpleAsyncWebSocket*	ESPArto::ws;
+//
+//		U T I L I T Y
+//
+//	_uptime TODO get REAL time from MQTT and adjust base offset...etc
+//
+char* ESPArto::_uptime(){
+	static char tmp[24];
+	int input_seconds=millis()/1000;
+    int days = input_seconds / 86400;
+    long hours = (input_seconds % 86400) / 3600;
+    long minutes = ((input_seconds % 86400) % 3600) / 60;
+    long seconds = (((input_seconds % 86400) % 3600) % 60);
+	sprintf_P(tmp,PSTR("%dd %dh %dm %ds"),days,hours,minutes,seconds);
+	return tmp;
+}
+//
+//	_pinRaw / _pinCooked
+//
+void ESPArto::_pinRaw(int p,int v) {
+	SOCKSEND(ESPARTO_AP_NONE,"%d,%d,%d",p,v,millis());
+	sigmaPins++;
 	}
-}
-//
-//  _wifiEvent:
-//
-void ESPArto::_wifiEvent(WiFiEvent_t event) {
-    switch(event) {
-        case WIFI_EVENT_STAMODE_CONNECTED:
-            say("[WiFi-event] WiFi Connected SSID=%s",CSTR(WiFi.SSID()));
-            break;
-        case WIFI_EVENT_STAMODE_GOT_IP:
-            say("[WiFi-event] WiFi got IP %s",CSTR(WiFi.localIP().toString()));
-            break;
-        case WIFI_EVENT_STAMODE_DISCONNECTED:
-            say("[WiFi-event] WiFi lost connection");
-            break;        
-        case WIFI_EVENT_SOFTAPMODE_STADISCONNECTED:
-            say("[WiFi-event] WIFI_EVENT_SOFTAPMODE_STADISCONNECTED");
-            break;        
-        case WIFI_EVENT_SOFTAPMODE_PROBEREQRECVED:
-            say("[WiFi-event] WIFI_EVENT_SOFTAPMODE_PROBEREQRECVED");
-            break;
-        default:
-            say("[WiFi-event] some weird code %d",event);
-            break;
-    }
-}	
-//
-//    _wifiGotIPHandler, _wifiDisconnectHandler
-//
-void ESPArto::_wifiDisconnectHandler(const WiFiEventStationModeDisconnected& event){
-	say("Station disconnected %d",event.reason);
-	linked=false;
-	Layer=0;
-}
-void ESPArto::_wifiGotIPHandler(const WiFiEventStationModeGotIP& event){
-	say("Connected to %s (%s) as %s (ch: %d) with hostname %s",CSTR(WiFi.SSID()),TXTIP(WiFi.gatewayIP()),TXTIP(WiFi.localIP()),WiFi.channel(),CSTR(WiFi.hostname()));
-	linked=true;
-	Layer=0;
-}
-//
-//  _L1SetupSTA:
-//    perform post-connection actions in preparation for further Elevate to _L2
-//
-void ESPArto::_L1SetupSTA(){
-	say("_L1SetupSTA");
-	ArduinoOTA.setHostname(device.c_str());
-	ArduinoOTA.begin();
-	say("Listen for OTA updates on port 8266");
-	Layer++; 
-	say("Promote to Layer %d",Layer);
-	onWiFiConnect();
-	_L2Setup();
-}
-//
-//  _L1Elevate
-//
-void ESPArto::_L1Elevate(){
-	if(linked) _L1SetupSTA();
-	else if(WiFi.SSID()!=SSID){
-		WiFi.mode(WIFI_STA);
-		WiFi.begin(SSID,pwd);
-		WiFi.waitForConnectResult();
+void ESPArto::_pinCooked(int p,int v) {
+	SOCKSEND(ESPARTO_AP_NONE,"%d,%d,%d",p+SP_MAX_PIN,v,millis());
 	}
-}
 //
-//    _L1SynchHandler:
+//	C O N F I G
 //
-void ESPArto::_L1SynchHandler(){
-	if(!linked) {
-		Layer=0; // demote with prejudice: stop ALL higher layers
-		say("_L1SynchHandler Demote to %d",Layer);
-		onWiFiDisconnect();
-	}
-	else ArduinoOTA.handle();   
-}
-//
-//  pinDefxxxx
-//
-void ESPArto::pinDefDebounce(uint8_t p,uint8_t mode,ESPARTO_VOID_POINTER_BOOL fn,unsigned int ms){
-	pPin_t pp(new debouncePin(p,mode,reinterpret_cast<ESPARTO_VOID_POINTER_ARG>(fn),ms));
-	hwPins.push_back(std::move(pp));
-}
-
-void ESPArto::pinDefEncoder(uint8_t pinA,uint8_t pinB,uint8_t mode,ESPARTO_VOID_POINTER_BOOL fn){
-	pPin_t pp(new encoderPinPair(pinA,pinB,mode,reinterpret_cast<ESPARTO_VOID_POINTER_ARG>(fn)));
-	hwPins.push_back(std::move(pp));	
-}
-
-void ESPArto::pinDefLatch(uint8_t p,uint8_t mode,ESPARTO_VOID_POINTER_BOOL fn,unsigned int ms){
-	pPin_t pp(new latchPin(p,mode,reinterpret_cast<ESPARTO_VOID_POINTER_ARG>(fn),ms));
-	hwPins.push_back(std::move(pp));
-}
-
-void ESPArto::pinDefRaw(uint8_t p,uint8_t mode,ESPARTO_VOID_POINTER_BOOL fn){
-	pPin_t pp(new rawPin(p,mode,reinterpret_cast<ESPARTO_VOID_POINTER_ARG>(fn)));
-	hwPins.push_back(std::move(pp));
-}
-
-void ESPArto::pinDefRetrigger(uint8_t p,uint8_t mode,ESPARTO_VOID_POINTER_BOOL fn,unsigned int ms){
-	pPin_t pp(new retriggerPin(p,mode,reinterpret_cast<ESPARTO_VOID_POINTER_ARG>(fn),ms));
-	hwPins.push_back(std::move(pp));
-}
-
-bool ESPArto::pinIsLatched(uint8_t pin){
-	auto x=std::find_if(hwPins.begin(), hwPins.end(),[&](const pPin_t& p) {	return pin==p.get()->getPin(); });
-	if(x!=hwPins.end()) return (*x).get()->isLatched();
-	return false;
-}
-//
-//	_waitMutex
-//
-void ESPArto::_waitMutex(){
-	while(!GetMutex(&tqMutex)){
-		ESP.wdtFeed(); // shouldn't need this: one or two ms should be enough, but just in case...
-		delay(0);
-	}	
-}
-//
-//	_queueTask
-//
-void ESPArto::_queueTask(task* t){
-	if(avgQLength < 20){  // make this more scientific...
-		_waitMutex();
-		taskQ.push_back(t);
-		ReleaseMutex(&tqMutex);		
-	}
-//	else say("TASK %08x (fn %08x) THROTTLED",t,t->getFn());
-
-}
-//
-//	every
-//
-void ESPArto::never(ESPARTO_VOID_POINTER_ARG fn){
-	say("NEVER RUN %08x",fn);
-	_waitMutex();
-	int n=taskQ.size();
-	taskQ.erase( std::remove_if(taskQ.begin(), taskQ.end(),
-								[&](task* tp) { return fn==tp->getFn(); }),
-								taskQ.end());
-//	say("NRTQB4: %d after %d",n,taskQ.size());
-	
-	tickers.erase( std::remove_if(tickers.begin(),tickers.end(),
-								  [&](const tickerPair& tp) {
-//									auto x=tp.second.get();
-//									auto f=tp.second.get()->getFn();
-//									say("TIKKAS ERASE: %08x Trying %08x %s",x,f,fn==f ? "** HIT **":"");
-									return fn==tp.second.get()->getFn();
-									}),
-								  tickers.end() );
-	ReleaseMutex(&tqMutex);
-}
-void ESPArto::never(ESPARTO_VOID_POINTER_VOID fn){
-	never(reinterpret_cast<ESPARTO_VOID_POINTER_ARG>(fn));
-}
-//
-// _timerCore
-//
-void ESPArto::_timerCore(int msec,ESPARTO_VOID_POINTER_ARG fn,bool once,uint32_t arg){
-	pTicker_t t(new smartTicker());
-	pTask_t tTask(new timerTaskArg(fn,once ? 0:msec,arg));
-	say("%s %d TIK=%08x t=%08x fn=%08x",once ? "ONCE":"EVERY",msec,t.get(),tTask.get(),fn)	;
-	if(once) t->once_ms(msec,ESPArto::_queueTask,static_cast<task *>(tTask.get()));   // send task pointer to get queue
-	else t->attach_ms(msec,ESPArto::_queueTask,static_cast<task *>(tTask.get()));   // send task pointer to get queue
-	tickers.push_back(tickerPair(std::move(t),std::move(tTask))); // but keep hold of it!!!
-}
-//
-//	once / every
-//
-void ESPArto::once(int msec,ESPARTO_VOID_POINTER_VOID fn){
-	_timerCore(msec,reinterpret_cast<ESPARTO_VOID_POINTER_ARG>(fn),true);
-}
-void ESPArto::once(int msec,ESPARTO_VOID_POINTER_ARG fn,uint32_t arg){
-	_timerCore(msec,fn,true,arg);
-}
-void ESPArto::every(int msec,ESPARTO_VOID_POINTER_VOID fn){
-	_timerCore(msec,reinterpret_cast<ESPARTO_VOID_POINTER_ARG>(fn),false);
-}
-void ESPArto::every(int msec,ESPARTO_VOID_POINTER_ARG fn,uint32_t arg){
-	_timerCore(msec,fn,false,arg);
-}
-//
-//	queueFunction
-//
-void ESPArto::queueFunction(ESPARTO_VOID_POINTER_VOID fn){
-	_queueTask(new timerTaskArg(reinterpret_cast<ESPARTO_VOID_POINTER_ARG>(fn)));
-}
-void ESPArto::queueFunction(ESPARTO_VOID_POINTER_ARG fn,uint32_t arg){
-	_queueTask(new timerTaskArg(fn,0,arg));
-}
-//
-// _split
-//
-void ESPArto::_split(const std::string& s, char delim,std::vector<std::string>& v) {
-    auto i = 0;
-    auto pos = s.find(delim);
-    while (pos != std::string::npos) {
-      v.push_back(s.substr(i, pos-i));
-      i = ++pos;
-      pos = s.find(delim, pos);
-
-      if (pos == std::string::npos) v.push_back(s.substr(i, s.length()));
-    }
-}
-//
-//	_mqttCallback
-//
-void ESPArto::_mqttCallback(char* topic, byte* payload, unsigned int length){
-	String cmd(topic);
-	byte* p = (byte*)malloc(length+1);
-	memcpy(p,payload,length);
-	p[length]='\0';
-	String spload(reinterpret_cast<char *>(p));
-	free(p);
-	  
-	say("callback: %s payload=%s ",topic,CSTR(spload));
-	if(cmd.indexOf("pin")!=-1){
-		std::string top(topic);
-		std::vector<std::string> tokens;
-		_split(top,'/',tokens);
-		if(tokens.size()==4 && (tokens[3]=="get" || tokens[3] == "set")){
-			uint8_t pin=atoi(tokens[2].c_str());
-			say("PIN %d",pin);
-			digitalWrite(pin,spload=="1" ? HIGH:LOW);
-			char temp[2];
-			temp[0]=digitalRead(pin)+0x30;
-			temp[1]='\0';
-			say("OP STRING %s",temp);
-			_queueTask(new pubTask((std::string("pinstate/"+tokens[2]).c_str()),temp));
-		} else say("malformed pin command");
-	}
-	else {
-		if(cmd.indexOf("cmd")!=-1){
-		if (cmd.endsWith("reboot")) ESP.restart(); //reboot(REBOOT_CMD);
-		else if (cmd.endsWith("debug")) _queueTask(new subTask(SUBTASK_DEBUG,CSTR(spload)));
-		else if (cmd.endsWith("info")) _queueTask(new subTask(SUBTASK_INFO,CSTR(spload)));
-		else say("unknown cmd");
-		} else {
-			std::string sub=topic;
-			std::string srch=device + "/";
-			size_t start_pos = sub.find(srch);
-			if(start_pos == std::string::npos) say("no such topic %s",topic);
-			else {
-				sub.replace(start_pos, srch.length(), "");
-				start_pos=sub.find("/");
-				if(start_pos != std::string::npos) sub.erase(start_pos,std::string::npos);
-				cmd.replace(srch.c_str(),"");
-				topicFn[sub](String(cmd),spload);
-				}
-			}
+void ESPArto::_readConfig(){
+	if(SPIFFS.exists(ESPARTO_CONFIG)){
+		String data=readSPIFFS(ESPARTO_CONFIG);
+		vector<string>    params;
+		split(CSTR(data),'\n',params);
+		for(auto const& t: params){
+			vector<string> nvp;
+			split(CSTR(t),'=',nvp);
+			config[nvp[0]]=nvp[1];
 		}
-}
-//
-//	_asynchPublish / publish
-//
-void ESPArto::_asynchPublish(const char* topic,const char* payload){
-	say("_asynchPublish %s %s",topic,payload);
-	if(Layer>1) mqttClient->publish(TOPIC(topic), payload);
-}
-void ESPArto::publish(const char * topic, const char * payload){
-	say("publish: %s payload=%s",TOPIC(topic),payload);
-	_queueTask(new pubTask(topic,payload));
+		if(config.count(SYS_FAIL_CODE)) setConfigInt(SYS_BOOT_REASON,getConfigInt(SYS_FAIL_CODE));
 	}
-void ESPArto::publish(String topic, String payload){
-	publish(CSTR(topic),CSTR(payload));	
+}
+void ESPArto::_saveConfig(){
+  string data;
+  for(auto const& c: config) data+=c.first+"="+c.second+"\n";    
+  data.pop_back();
+  writeSPIFFS(ESPARTO_CONFIG,CSTR(data));
 }
 //
-//  pulsePin
+// set / notify
 //
-void ESPArto::pulsePin(uint8_t pin,unsigned int ms,bool active){
-	pinMode(pin, OUTPUT);
-	digitalWrite(pin,active);
-	once(ms,active ? ([](uint32_t pin){digitalWrite(pin,LOW);}) : ([](uint32_t pin){digitalWrite(pin,HIGH);}),pin);
+void ESPArto::setConfigstring(const char* c,string value){
+	if(config[c]!=value){
+		config[c]=value;
+		_saveConfig();	
+		_cicHandler(c,CSTR(value));
+	}
 }
+void ESPArto::setConfigInt(const char* c,int value,const char* fmt){	setConfigstring(c,stringFromInt(value,fmt)); }
+
+void ESPArto::setConfigString(const char* c,String value){ setConfigstring(c,CSTR(value)); }
 //
-//	subscribe
+// Int manipulation
 //
-void ESPArto::subscribe(const char * topic,ESPARTO_VOID_POINTER_STRING_STRING fn){
-	say("subscribe %s %08x",topic,fn);
-	String top2(topic);
-	top2.replace("/#","");
-	topicFn[std::string(String(top2).c_str())]=fn;
-	mqttClient->subscribe(std::string(device + "/" + topic).c_str());	
+int ESPArto::plusEqualsConfigInt(const char* c, int value){
+	int newValue=getConfigInt(c)+value;
+	setConfigInt(c,newValue);
+	return newValue;
 }
+int ESPArto::minusEqualsConfigInt(const char* c, int value){	return plusEqualsConfigInt(c,-1*value); }
+
+int ESPArto::decConfigInt(const char* c){	return plusEqualsConfigInt(c,-1); }
+
+int ESPArto::incConfigInt(const char* c){	return plusEqualsConfigInt(c,1); }
 //
-//	_L2Setup
+//	C O N S T R U C T O R + B O O T S T R A P
 //
-void ESPArto::_L2Setup(){
-	say("_L2Setup");
-	mqttClient->setCallback(ESPArto::_mqttCallback);		
-    if(mqttClient->connect(device.c_str())){      
-		mqttClient->subscribe(std::string(device + "/cmd/#").c_str());
-		mqttClient->subscribe(std::string(device + "/pin/#").c_str());
-		onMqttConnect();
-		say("FULLY OPERATIONAL");	
-    }
-	Layer++;
-}
-//
-//	_L2SynchHandler
-//
-void ESPArto::_L2SynchHandler(){
-  if(!mqttClient->loop()){
-    Layer--;
-    say("_L2SynchHandler: MQTT connection lost - Demote to %d",Layer);
-	onMqttDisconnect();
-	once(5000,_L2Setup);
-    }
-}
-//
-//  Constructor
-//
-ESPArto::ESPArto(const char* _SSID,const char* _pwd, const char* _device, const char* _mqttIP, int _mqttPort,bool _debug) {
+ESPArto::ESPArto(
+				uint32_t nSlots,
+				uint32_t hWarn,
+				SP_STATE_VALUE _cookedHook,
+				SP_STATE_VALUE _rawHook,
+				SP_STATE_VALUE _chokeHook
+				): SmartPins(nSlots, hWarn, _cookedHook, _rawHook, _chokeHook), AsyncWebServer(ESPARTO_WEB_PORT) {	SYNC_FUNCTION(_bootstrap);	}
+
+void ESPArto::_bootstrap(){
+	SPIFFS.begin();
+	CFG_MAP userDefaults=addConfig();													// get defaults from caller
+	config.insert(userDefaults.begin(),userDefaults.end());		// add to any we have already e.g. version
+	_readConfig(); 																						// overwrite any defaults with SPIFFS-saved equivalents
+	incConfigInt(SYS_BOOT_COUNT);
+	setConfigInt(SYS_FAIL_CODE,ESPARTO_BOOT_UNCONTROLLED); 		// guilty of failure until proven innocent, e.g. by reboot for a good(controlled) reason
+	config["$brd"]=ARDUINO_BOARD;
+	config[SYS_ESPARTO_VERSION]=ESPARTO_VERSION;
+	config["$h4v"]=H4_VERSION;
+	config["$spv"]=SMARTPINS_VERSION;
+  config[SYS_ROOTWEB]=ESPARTO_ROOTWEB;
+	setConfigInt(SYS_CHIP_ID,ESP.getChipId(),"%06X");
+	setConfigInt("$mem",ESP.getFlashChipSize());
+	srcStats["invoke"]=0;
+	heartbeatTicker.attach(1,[](){
+		SOCKSEND(ESPARTO_AP_NONE,"beat");
+		SOCKSEND(ESPARTO_AP_NONE,"ibi|upt|%s", _uptime());
+		});
 	setupHardware();
-	SSID=_SSID;
-	pwd=_pwd;
-	device=_device;
-	WiFi.hostname(_device);
-	CreateMutex(&tqMutex);
-	debug=_debug;
-//
-	say("DEVICE=%s",device.c_str());
-	WiFi.onEvent(ESPArto::_wifiEvent);
-	
-	avgQLengthTicker.attach_ms(100,[](){
-		avgQSigma+=taskQ.size();
-		avgQCount++;
-		avgQLength=avgQSigma/avgQCount;
-		if(!(avgQLength)) {
-			avgQSigma=0;
-			avgQCount=0;
-		}
-	});
+	setConfigInt("$tHup",millis());
+	_setupFunction(); // NOOP in "lite" case, overriden by wifi + mqtt constructors
+}
 
-	hbTicker.attach(60,[](){say("Heartbeat");});
+[[noreturn]] void ESPArto::factoryReset(){
+	onFactoryReset();
+	SPIFFS.remove(ESPARTO_CONFIG);
+	WiFi.disconnect(true); // Won't hurt in lite mode
+	ESP.eraseConfig();
+	WiFi.mode(WIFI_STA);
+	WiFi.setAutoConnect(true);
+	while(1);// deliberate crash (restart doesn't properly clear config!)
+}
 
-	_gotIpEventHandler = WiFi.onStationModeGotIP(ESPArto::_wifiGotIPHandler);
-	_disconnectedEventHandler = WiFi.onStationModeDisconnected(ESPArto::_wifiDisconnectHandler);
-	mqttClient=new PubSubClient(wifiClient);
-	mqttClient->setServer(_mqttIP,_mqttPort);
-	}
-//
-//  _cleanTask
-//
-void ESPArto::_cleanTask(task* tsk,bool clrQ){
-	say("_cleanTask %08x",tsk);
-	_waitMutex();
-	auto x=std::find_if(tickers.begin(), tickers.end(),[&](const tickerPair& tp) { return tsk==tp.second.get(); });
-	if(x==tickers.end()) delete tsk;
-	else tickers.erase(x); // auto deletes task via unique_ptr in tickerPair
-
-	if(clrQ){
-		int n=taskQ.size();
-		taskQ.erase( std::remove_if(taskQ.begin(),taskQ.end(),
-								  [&](const task* t) {
-//									say("TQ ERASE: Trying %08x %s",t,t==tsk ? "** HIT **":"");
-									ESP.wdtFeed();
-									return t==tsk;
-									}),
-								  taskQ.end() );
-		say("Task Queue Cleaned: before=%d after=%d",n,taskQ.size());
-	}
-	ReleaseMutex(&tqMutex);
+[[noreturn]] void ESPArto::reboot(uint32_t reason){
+	setConfigInt(SYS_BOOT_REASON,reason);
+	config.erase(SYS_FAIL_CODE); // make boot reason valid
+	_saveConfig();
+	// I don't like this, but...force STA mode if rebooting out of AP recovery mode
+	if(WiFi.getMode() & WIFI_AP) _initiateWiFi(config[SYS_SSID],config[SYS_PSK],config[SYS_DEVICE_NAME]);
+	onReboot();
+	ESP.restart(); // exception(2)??
 }
 //
-//	_runTasks
+//  std3StageButton: default action < 2sec REBOOT < 5sec FACTORY RESET
 //
-void ESPArto::_runTasks(){
-	if(GetMutex(&tqMutex)){
-		auto temp=std::move(taskQ);
-		ReleaseMutex(&tqMutex);
-		while(!temp.empty()){
-			auto tsk=temp.front();
-			int start=millis();
-			tsk->runTask();
-			temp.pop_front();
-			if(int freq=tsk->getFreq()){	
-				int delta=millis()-start;
-				if(delta > freq){
-					say("PANIC: fn %08x (task %08x) took %dms but is scheduled every %dms!",tsk->getFn(),tsk,delta,freq);
-					_cleanTask(tsk,true); // true cleans Q, also have to clean temp!
-					temp.erase( std::remove_if(temp.begin(),temp.end(),
-											  [&](const task* t) {
-//												say("TEMP ERASE: Trying %08x %s",t,t==tsk ? "** HIT **":"");
-												ESP.wdtFeed();
-												return t==tsk;
-												}),
-											  temp.end() );
-				}
-			}
-			else _cleanTask(tsk); // just kills tsk + one-shot timer
-		}
-	}
-//	else say("unable to get mutex during task loop"); // no big deal, will clear Q on next iteration
+void ESPArto::std3StageButton(SP_STATE shorty,uint8_t p,uint32_t db){
+	Esparto.ThreeStage(p,INPUT,db,100, // notify every 100ms
+			[](int v) {
+				if(v>1)flashLED(50);	// stage 2 (fastest)
+				else if(v) flashLED(100); // stage 1 (medium)
+				},
+			shorty, // short click (default action) is anything up to....
+			2000, // mSec, after that we got a medium click, all the way up to....
+			[](int ignore){	ESPArto::reboot(ESPARTO_BOOT_BUTTON); },
+			5000, // mSec and anything after that is LONG
+			[](int ignore){	ESPArto::factoryReset(); });	
 }
-void ESPArto::_L0SynchHandler(){
-	for(const auto& p: hwPins) p->run();
-	checkHardware();		// give caller a chance to screw things up :)
-}
-//
-//	loop
-//
+
 void ESPArto::loop(){
-	_L0SynchHandler();
-	if(Layer > 0){
-	  _L1SynchHandler(); 
-	  if(Layer > 1){
-		_L2SynchHandler();
-		if(Layer > 2) ESP.restart();
-		}
-	  }
-	else _L1Elevate();
-	_runTasks();
-	yield();
+	SmartPins::loop();
+	_handleWiFi(); 
+	userLoop();
 }
 
 void setup(){}
-void loop(){Esparto.loop();}
+
+void loop(){ Esparto.loop(); }
