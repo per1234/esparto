@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<root>
+  <device>
+    <deviceType>urn:ChezToiioT:device:controllee:1</deviceType>
+    <friendlyName>%$lex%</friendlyName>
+    <manufacturer>Belkin International Inc.</manufacturer>
+    <modelName>Esparto</modelName>
+    <modelNumber>%$evn%</modelNumber>
+    <UDN>uuid:Socket-1_0-esparto-%$chp%</UDN>
+  </device>
+</root>
