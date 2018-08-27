@@ -17,22 +17,41 @@ Esparto	KEYWORD1
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
-
-setup	KEYWORD2
-debugMode	KEYWORD2
-once	KEYWORD2
-every	KEYWORD2
-never	KEYWORD2
-subscribe	KEYWORD2
+addConfig	KEYWORD2
+addWebHandler	KEYWORD2
+decConfigInt	KEYWORD2
+factoryReset	KEYWORD2
+getConfig	KEYWORD2
+getConfigInt	KEYWORD2
+getConfigstring	KEYWORD2
+getConfigString	KEYWORD2
+incConfigInt	KEYWORD2
+invokeCmd	KEYWORD2
+minusEqualsConfigInt	KEYWORD2
+onAlexaCommand	KEYWORD2
+onConfigItemChange	KEYWORD2
+onFactoryReset	KEYWORD2
+onMqttConnect	KEYWORD2
+onMqttDisconnect	KEYWORD2
+onReboot	KEYWORD2
+onWiFiConnect	KEYWORD2
+onWiFiDisconnect	KEYWORD2
+plusEqualsConfigInt	KEYWORD2
 publish	KEYWORD2
-pinDefDebounce	KEYWORD2
-pinDefEncoder	KEYWORD2
-pinDefLatch	KEYWORD2
-pinDefRetrigger	KEYWORD2
-pinDefRaw	KEYWORD2
-pinIsLatched	KEYWORD2
-pulsePin	KEYWORD2
+reboot	KEYWORD2
+setAlexaDeviceName	KEYWORD2
+setConfigInt	KEYWORD2
+setConfigstring	KEYWORD2
+setConfigString	KEYWORD2
+std3StageButton	KEYWORD2
+subscribe	KEYWORD2
+userLoop	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
 #######################################
+
+ESPARTO_STD_FN	LITERAL1
+ESPARTO_TIMER	LITERAL1
+ESPARTO_MAX_PIN	LITERAL1
+ESPARTO_ENC_AUTO 	LITERAL1
