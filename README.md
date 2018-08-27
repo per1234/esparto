@@ -103,10 +103,15 @@ Esparto contains sufficient functionality to create replacement firmware for e.g
 ## (more detail can be found on my blog: https://8266iot.blogspot.com/)
 
 ![Esparto webUI 1](/assets/ev2sonoff2.PNG)
+
 ![Esparto webUI 2](/assets/ev2sonoff.PNG)
+
 ![Esparto webUI 3](/assets/ev2sonoff3.PNG)
+
 ![Esparto webUI 4](/assets/ev2sonoff4.PNG)
-![Esparto webUI 5](/assets/ev2sonoff5.PNG)
+
+![Esparto webUI 5](/assets/ev2.sonoff5.PNG)
+
 
 # Installation
 
