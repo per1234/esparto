@@ -18,7 +18,7 @@ ESPArto  Esparto;
 const int PUSHBUTTON=0;
 
 void buttonPress(bool hilo){
-  if(!hilo) Esparto.flashLED(250);            		// start flashing every 250ms (4x per second) defauls to BUILTIN_LED, LOW
+  if(!hilo) Esparto.flashLED(250);            		// flash every 250ms (4x per second)
   else Esparto.stopLED();                      					
 }
 
