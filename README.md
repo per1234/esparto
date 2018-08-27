@@ -163,8 +163,11 @@ I’m very interested to hear of anybody getting it running on any other platfor
 
 # Examples
 
-Rather than produce a dry, dull alphabetical list of the API calls, I have included a cross reference between the 32 code examples and which Esparto APIs they call. It is far easier to just "play" with the examples and learn the API that way.
 Esparto v2.0 comes with 32 example programs demonstrating its features. To get the best out of Esparto and smooth out the learning curve, it is recommended that they are followed in order. Often they will depend upon, or make a slight change to, a previous example to demonstrate the usefulness of the next feature.
+
+Rather than produce a dry, dull alphabetical list of the API calls, I have included a cross reference between the examples and which Esparto APIs they call. It is far easier to just "play" with the examples and learn the API that way. Most are only a few lines, and the usage of the API should be pretty obvious.
+
+A "formal" API list with all parameters and types etc *will* be produced at some point in the future...probably
 
 The examples fall broadly into 4 groups
 
@@ -214,7 +217,7 @@ The examples fall broadly into 4 groups
 	Whenever
 
 ### 06_Mayhem	
-   Output
+	Output
 	flashLED
 	onceRandom
 	once
@@ -300,7 +303,7 @@ The examples fall broadly into 4 groups
 	reconfigurePin
 
 ### 20_Reporting	
-   Reporting
+	Reporting
 	reconfigurePin
 	onceRandom
 
@@ -416,7 +419,7 @@ The examples fall broadly into 4 groups
 	std3StageButton
 	Output
 	onMqttConnect
-    	subscribe
+    subscribe
         
 ## Examples / API cross-reference:
 
