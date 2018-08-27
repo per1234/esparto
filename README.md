@@ -1,6 +1,5 @@
-# Esparto v2.0
-
-## Esparto v2.0 is a rapid development framework for ESP8266 devices.
+![Esparto Logo](/assets/espartotitle.png)
+# Esparto v2.0 is a rapid development framework for ESP8266 devices.
 
 It makes short work of creating anything from a simple "blinky" right through to alternative firmware for e.g. SONOFF switches. "Out of the box" it allows control via:
 
