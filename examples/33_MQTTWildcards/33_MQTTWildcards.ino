@@ -56,8 +56,8 @@ SOFTWARE.
 //
 const   int PUSHBUTTON=0;
 
-const char* yourSSID="NordNet-18F0";
-const char* yourPWD="DR7ECHEE";
+const char* yourSSID="********";
+const char* yourPWD="********";
 const char* yourDevice="testbed";
 const char* yourMQTTIP="192.168.1.4";
 const int   yourMQTTPort=1883;
