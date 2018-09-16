@@ -38,15 +38,15 @@ class simpleAsyncWebSocket: public AsyncWebSocket {
 						
 				void 			handleEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len);
 	protected:					
-		static	bool			alive;
+				bool			alive=false;
 	public:
 		
 		simpleAsyncWebSocket(const char* _url,SAWS_DATA_FN _data,H4_STD_FN _connect=nullptr,H4_STD_FN _disconnect=nullptr);
 		~simpleAsyncWebSocket(){}
 		
 				void			sockSend_P(int,PGM_P, ...);
-		static	bool			isAlive(){ return alive; }
+				bool			isAlive(){ return alive; }
 				void			setActivePane(int p){ activePane=p;	}	
-				int				getActivePane(){ return activePane; }
+				int				getActivePane(){ return activePane;	}
 };
 #endif

@@ -31,6 +31,7 @@ void 					__attribute__((weak)) onConfigItemChange(const char* id,const char* va
 void 					__attribute__((weak)) onFactoryReset(void){}
 void 					__attribute__((weak)) onReboot(void){}
 void 					__attribute__((weak)) setupHardware(void){}
+void 					__attribute__((weak)) userBoot(void){}
 void 					__attribute__((weak)) userLoop(void){}
 
 CMD_MAP						ESPArto::cmds={
@@ -66,6 +67,8 @@ CMD_MAP						ESPArto::cmds={
 //	~ = mutable {sys} change at your peril!
 const char* SYS_AP_FALLBACK			="~fb2AP";
 const char* SYS_MQTT_RETRY			="~mqRetry";
+const char* SYS_MQTT_USER				="~mqUser";
+const char* SYS_MQTT_PASS				="~mqPass";
 // $ = immutable
 const char* SYS_BOOT_COUNT			="$bc";
 const char* SYS_BOOT_REASON			="$br";
@@ -111,7 +114,7 @@ DNSServer*						ESPArto::dnsServer;
 ESPARTO_TIMER					ESPArto::fallbackToAP=0;
 Ticker								ESPArto::heartbeatTicker;	
 PubSubClient*					ESPArto::mqttClient=nullptr;
-uint32_t							ESPArto::sigmaPins;
+uint32_t							ESPArto::sigmaPins=0;
 AsyncUDP 							ESPArto::udp;
 WiFiClient     				ESPArto::wifiClient;
 simpleAsyncWebSocket*	ESPArto::ws;
@@ -156,11 +159,12 @@ void ESPArto::_readConfig(){
 		if(config.count(SYS_FAIL_CODE)) setConfigInt(SYS_BOOT_REASON,getConfigInt(SYS_FAIL_CODE));
 	}
 }
+
 void ESPArto::_saveConfig(){
   string data;
   for(auto const& c: config) data+=c.first+"="+c.second+"\n";    
   data.pop_back();
-  writeSPIFFS(ESPARTO_CONFIG,CSTR(data));
+	writeSPIFFS(ESPARTO_CONFIG,CSTR(data));
 }
 //
 // set / notify
@@ -197,13 +201,17 @@ ESPArto::ESPArto(
 				SP_STATE_VALUE _cookedHook,
 				SP_STATE_VALUE _rawHook,
 				SP_STATE_VALUE _chokeHook
-				): SmartPins(nSlots, hWarn, _cookedHook, _rawHook, _chokeHook), AsyncWebServer(ESPARTO_WEB_PORT) {	SYNC_FUNCTION(_bootstrap);	}
+				): SmartPins(nSlots, hWarn, _cookedHook, _rawHook, _chokeHook), AsyncWebServer(ESPARTO_WEB_PORT) {
+	
+	Serial.begin(74880);
+	SYNC_FUNCTION(_bootstrap);
+	}
 
 void ESPArto::_bootstrap(){
 	SPIFFS.begin();
 	CFG_MAP userDefaults=addConfig();													// get defaults from caller
 	config.insert(userDefaults.begin(),userDefaults.end());		// add to any we have already e.g. version
-	_readConfig(); 																						// overwrite any defaults with SPIFFS-saved equivalents
+	_readConfig();
 	incConfigInt(SYS_BOOT_COUNT);
 	setConfigInt(SYS_FAIL_CODE,ESPARTO_BOOT_UNCONTROLLED); 		// guilty of failure until proven innocent, e.g. by reboot for a good(controlled) reason
 	config["$brd"]=ARDUINO_BOARD;
@@ -215,13 +223,13 @@ void ESPArto::_bootstrap(){
 	setConfigInt("$mem",ESP.getFlashChipSize());
 	srcStats["invoke"]=0;
 	heartbeatTicker.attach(1,[](){
-		SOCKSEND(ESPARTO_AP_NONE,"beat");
-		SOCKSEND(ESPARTO_AP_NONE,"ibi|upt|%s", _uptime());
+			SOCKSEND(ESPARTO_AP_NONE,"beat");
+			SOCKSEND(ESPARTO_AP_NONE,"ibi|upt|%s", _uptime());
 		});
+	_setupFunction();
 	setupHardware();
 	setConfigInt("$tHup",millis());
-	_setupFunction(); // NOOP in "lite" case, overriden by wifi + mqtt constructors
-}
+	}
 
 [[noreturn]] void ESPArto::factoryReset(){
 	onFactoryReset();
@@ -235,7 +243,7 @@ void ESPArto::_bootstrap(){
 
 [[noreturn]] void ESPArto::reboot(uint32_t reason){
 	setConfigInt(SYS_BOOT_REASON,reason);
-	config.erase(SYS_FAIL_CODE); // make boot reason valid
+	config.erase(SYS_FAIL_CODE); // make boot reason valid	
 	_saveConfig();
 	// I don't like this, but...force STA mode if rebooting out of AP recovery mode
 	if(WiFi.getMode() & WIFI_AP) _initiateWiFi(config[SYS_SSID],config[SYS_PSK],config[SYS_DEVICE_NAME]);
@@ -264,6 +272,6 @@ void ESPArto::loop(){
 	userLoop();
 }
 
-void setup(){}
+void setup(){ userBoot(); }
 
 void loop(){ Esparto.loop(); }

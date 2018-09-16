@@ -23,9 +23,9 @@ SOFTWARE.
 */
 #ifndef ESPArto_H
 #define ESPArto_H
-//
+
 #include "changelog.h"
-// duino esp
+
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
@@ -34,7 +34,6 @@ SOFTWARE.
 #include <ESPAsyncUDP.h>
 #include <DNSServer.h>
 #include <Ticker.h>
-// stdlib
 #include <map>
 #include <vector>
 #include <string>
@@ -83,16 +82,14 @@ const int ESPARTO_DNS_PORT	= 53;
 #define ESPARTO_CONFIG "/cfg"
 #define ESPARTO_ROOTWEB "/ws.htm"
 
-//void  onConfigItemChange(const char* id,const char* value); // stored in _cicHandler, fwd needed here
-//
 enum{
 	ESPARTO_BOOT_USERCODE, 		//0
 	ESPARTO_BOOT_UI,			//1
 	ESPARTO_BOOT_MQTT,			//2	
 	ESPARTO_BOOT_BUTTON,
-	ESPARTO_FACTORY_RESET,		//3
-	ESPARTO_BOOT_UPGRADE,		//4
-	ESPARTO_BOOT_UNCONTROLLED,	//5
+	ESPARTO_FACTORY_RESET,		
+	ESPARTO_BOOT_UPGRADE,		
+	ESPARTO_BOOT_UNCONTROLLED
 };
 
 enum ESPARTO_STATS {
@@ -127,7 +124,7 @@ using UI_MAP		=std::map<string,uiPanel>;
 #define CSTR(x) x.c_str()
 #define TXTIP(x) CSTR(x.toString())
 #define CMD_LAMBDA(x) [](vector<string> tokens){ x }
-#define SOCKSEND(i,f, ...) ws->sockSend_P(i,PSTR(f), ##__VA_ARGS__);
+#define SOCKSEND(i,f, ...) if(ws) ws->sockSend_P(i,PSTR(f), ##__VA_ARGS__);
 #define SYNC_FUNCTION(x, ...) queueFunction(bind(x, ##__VA_ARGS__))
 #define ASYNC_FUNCTION(x, ...) asyncQueueFunction(bind(x, ##__VA_ARGS__))
 //
@@ -154,25 +151,20 @@ class ESPArto: public SmartPins, AsyncWebServer{
 //
 //  general-purpose private data
 //
+//		static	uint32_t							ssEpoch;			// seconds since Epoch - for real dates
 		static	uint32_t							sigmaPins;
 		static	CFG_MAP								config;
-		static	simpleAsyncWebSocket*				ws;
 		static	Ticker								heartbeatTicker;				
 		static	VFN									NOOP;				// no-operation: do nothing - default state of numerous functors until overriden								
 		static	VFN									_setupFunction;		// => NOOP when lite, overridden by wif or mqtt setup function
 		static	vector<autoStats*>					statistics;
-
-//		static	stat								getStats(int which); // needed?
-//		static	uint32_t							getInstant(int which);
-//		static	stat								dumpStats(int which);
-
+		static	vector<string> 						reasons;	
 //
 // 	wifi-related private data
 //
 		static	DNSServer*							dnsServer;
-		static	VFN									_handleCaptive;			// NOOP except in AP mode
-
-		static	VFN									_handleWiFi;	// NOOP while WiFi disconnected, =event loop function while connected
+		static	VFN									_handleCaptive;		// NOOP except in AP mode
+		static	VFN									_handleWiFi;		// NOOP while WiFi disconnected, =event loop function while connected
 		static 	VFN									_connected;			// "manual virtual" upcall on WiFi connect - default is public onWiFi...
 		static	VFN									_disconnected;  	// overriden by MQTT to get those notifications BEFORE user
 		static	VFN									_mqttUiExtras;				
@@ -187,21 +179,19 @@ class ESPArto: public SmartPins, AsyncWebServer{
 		static	WiFiEventHandler    				_gotIpEventHandler,
 													_disconnectedEventHandler;
 		static	function<void(const char*,const char*)>	_cicHandler;		// => deflt = let caller do it													
-//
-		static		ESPARTO_TIMER						fallbackToAP;
-		static		ESPARTO_TIMER						heapLog;
+
+		static	ESPARTO_TIMER						fallbackToAP;
+		static	ESPARTO_TIMER						heapLog;
 //
 // mqtt-related private data
 //					
-		static		WiFiClient     						wifiClient;
-		static		std::map<string,int>				srcStats;
-				
-		static		VFN									_handleMQTT;		// NOOP while MQTT disconnected, =event loop function while connected
+		static		WiFiClient     					wifiClient;
+		static		std::map<string,int>			srcStats;				
+		static		VFN								_handleMQTT;		// NOOP while MQTT disconnected, =event loop function while connected
 //
 //				utility
 //
-		static	char* 	_uptime();
-					
+		static	char* 	_uptime();					
 //
 //				config-related
 //
@@ -228,20 +218,20 @@ class ESPArto: public SmartPins, AsyncWebServer{
 		static void		_pinCooked(int p,int v);						
 		static void 	_pinRaw(int p,int v);
 		static void 	_pinLabels(int i,int offset=0);
-		static void		_pinLabelsCooked(int i,int style);
+		static void		_pinLabelsCooked(int i);
 		static void 	_setAPFallbackTimer();
 		static void		_udpServer();
 		static void 	_webServerInit();
 		static void		_wsGearPane();
 		static void		_wsRunPane();
 		static void		_wsToolPane();
+		static String	uiTemplateConfigItem(String var);
 //
 //				mqtt-related 
 //
 		static void 	_internalWiFiConnect();				// override targets of wifi's connect / disconnect
 		static void 	_internalWiFiDisconnect();			//	
-
-		static void		_setupMQTT(const char* _SSID,const char* _psk, const char* _device,const char * _mqttIP,int _mqttPort);
+		static void		_setupMQTT(const char* _SSID,const char* _psk, const char* _device,const char * _mqttIP,int _mqttPort,const char* _mqu="", const char* _mqp="");
 		static void 	_mqttConnect();
 		static void 	_mqttDisconnect();
 //					cmd handling
@@ -255,6 +245,7 @@ class ESPArto: public SmartPins, AsyncWebServer{
 		static void 	_guardPin(vector<string>,function<void(uint8_t,vector<string>)>);
 		static void 	_cfgPin(vector<string>);				
 		static void 	_getPin(vector<string>);								
+//		static void 	_getTime(vector<string>);								
 		static void 	_chokePin(vector<string>);					
 		static void 	_setPin(vector<string>);					
 		static void 	_flashPin(vector<string>);
@@ -264,10 +255,10 @@ class ESPArto: public SmartPins, AsyncWebServer{
 //					cmds: other					
 		static void 	_info();
 		static void		_stats();
-//					utility					
-		static void 	_publish(String topic,String payload,bool retained=false);
 		static void		_flattenCmds(string,string,function<void(string,int)>);					
 		static void		_forEachTopic(function<void(string,int)>);
+//					utility					
+		static void 	_publish(String topic,String payload,bool retained=false);
 		static void 	_publishPin(uint8_t p,uint8_t v);
 //
 	public:
@@ -289,7 +280,8 @@ class ESPArto: public SmartPins, AsyncWebServer{
 				SP_STATE_VALUE _chokeHook=nullptr
 				);
 		
-		ESPArto(const char* _SSID,const char* _psk, const char* _device, const char * _mqttIP,	int _mqttPort,
+		ESPArto(const char* _SSID,const char* _psk, const char* _device,
+				const char * _mqttIP,	int _mqttPort, const char* mqu="", const char* mqp="",
 				uint32_t nSlots=H4_Q_CAPACITY,
 				uint32_t hWarn=H4_H_WARN_PCENT,
 				SP_STATE_VALUE _cookedHook=nullptr,
@@ -331,10 +323,12 @@ class ESPArto: public SmartPins, AsyncWebServer{
 //
 //				wifi-related
 //
-		static String 		uiTemplateConfigItem(String var); // async ws template system each %var% replaced by config iem of same name // privatise!!!!!!!!!!!
 		static void			webRoot(const char *); // only call from inside addWebHandler callback
 //				left-field: do NOT USE!!!
 		static void			_rawAddCmdMap(string c,command cmd){ cmds[c]=cmd; }
+		static void			_rawPublish(string topic,string payload="",bool retained=false);
+		static	simpleAsyncWebSocket*	ws;
+
 };
 
 class autoStats: public statistic, public Ticker{

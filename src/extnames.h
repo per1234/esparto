@@ -26,9 +26,10 @@ SOFTWARE.
 extern const char* SYS_ROOTWEB;
 extern const char* SYS_DEVICE_NAME;
 extern const char* SYS_AP_FALLBACK;
+extern const char* SYS_MQTT_PASS;
 extern const char* SYS_MQTT_RETRY;
+extern const char* SYS_MQTT_USER;
 extern const char* SYS_SPIFFS_VERSION;
-extern const char* SYS_RESTART;
 extern const char* SYS_PURPOSE;
 extern const char* SYS_ZONE;
 extern const char* SYS_ALEXA_NAME;
@@ -37,12 +38,8 @@ extern const char* SYS_BOOT_COUNT;
 extern const char* SYS_BOOT_REASON;
 extern const char* SYS_FAIL_CODE;
 extern const char* SYS_ESPARTO_VERSION;
-extern const char* SYS_FB_SSID;
-extern const char* SYS_FB_PSK;
 extern const char* SYS_TXT_HTM;
 extern const char* SYS_SSID;
 extern const char* SYS_PSK;
-extern const char* SYS_LOG_HEAP;
-extern const char* SYS_STATE;
 extern const char* SYS_CMD_HASH;
 #endif // extnames_H

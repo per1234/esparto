@@ -54,9 +54,11 @@ void ESPArto::_wsToolPane(){
 	for(auto const &c: config){	if(c.first[0]!='$') SOCKSEND(ESPARTO_AP_TOOL,"tool|%s|%s",CSTR(c.first),CSTR(c.second));	}
 }
 
-void ESPArto::_pinLabels(int i,int offset){	SOCKSEND(ESPARTO_AP_NONE,"%d:%d %d %d",i+offset,getDno(i),getType(i),getStyle(i)); }
+void ESPArto::_pinLabels(int i,int offset){
+	SOCKSEND(ESPARTO_AP_NONE,"%d:%d %d %d",i+offset,getDno(i),getType(i),getStyle(i));
+	}
 
-void ESPArto::_pinLabelsCooked(int i,int style){
+void ESPArto::_pinLabelsCooked(int i){
 	_pinCooked(i,digitalRead(i));
 	_pinLabels(i,SP_MAX_PIN);	
 }
@@ -73,13 +75,19 @@ void ESPArto::_stats(){
 //
 void ESPArto::_initialPins(){	
 	_mqttUiExtras(); // set on/off if running in MQTT mode
-	Esparto.once(250,[](){ for(int i=0;i<SP_MAX_PIN;i++) _pinLabelsCooked(i,getStyle(i)); });
+	Esparto.once(250,[](){
+		for(int i=0;i<SP_MAX_PIN;i++){
+			if(isSmartPin(i)) _pinLabelsCooked(i);
+		}
+	});
 	
 	Esparto.once(250,[](){
 		for(int i=0;i < SP_MAX_PIN;i++){
-			if(isUsablePin(i)) _pinRaw(i,digitalRead(i));
-			_pinLabels(i);
-			if(isThrottledPin(i)) SOCKSEND(ESPARTO_AP_NONE,"chk|%d",i);
+			if(isSmartPin(i)){
+				_pinRaw(i,digitalRead(i));
+				_pinLabels(i);
+				if(isThrottledPin(i)) SOCKSEND(ESPARTO_AP_NONE,"chk|%d",i);
+			}
 		}
 	});
 	
@@ -135,10 +143,7 @@ void ESPArto::_handleWebSocketTXT(string data){
 						ws->setActivePane(u.pane);
 						u.f();
 					}
-					else {
-						ws->setActivePane(ESPARTO_AP_NONE);
-						DIAG("dodgy pane %s\n",CSTR(pane));
-					}
+					else ws->setActivePane(ESPARTO_AP_NONE);
 				}
 				else {
 					uint8_t pin=atoi(CSTR(data));
@@ -189,27 +194,24 @@ void ESPArto::_webServerInit(){
 	AsyncWebHandler* override=addWebHandler();
 	if(override) Esparto.addHandler(override);
 	
-	Esparto.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-		if(ws->isAlive()) request->send(200,"text/html","TOO BUSY!!!!");
-		else request->send(SPIFFS,CSTR(config[SYS_ROOTWEB]), String(), false, uiTemplateConfigItem );	
-		});
-	
+	function<void(AsyncWebServerRequest *)> webRoot=[](AsyncWebServerRequest *request){
+		ASYNC_FUNCTION([](AsyncWebServerRequest *request){ request->send(SPIFFS,CSTR(config[SYS_ROOTWEB]), String(), false, uiTemplateConfigItem );	},request);
+		};
+		
+	Esparto.on("/", HTTP_GET, webRoot);
+	Esparto.on("/generate_204", HTTP_GET, webRoot);	
 	Esparto.on("/arto", HTTP_GET, [](AsyncWebServerRequest *request){
 		ASYNC_FUNCTION([](AsyncWebServerRequest *request){ request->send(SPIFFS,ESPARTO_ROOTWEB, SYS_TXT_HTM, false, uiTemplateConfigItem ); },request);
 		});
 
 	Esparto.serveStatic("/", SPIFFS, "/");
-	Esparto.on("/generate_204", HTTP_GET,[](AsyncWebServerRequest *request){
-		if(ws->isAlive()) request->send(200,"text/html","TOO BUSY!!!!"); // refactor
-		else request->send(SPIFFS,CSTR(config[SYS_ROOTWEB]), String(), false, uiTemplateConfigItem );
-		}); 
-
+	
 	Esparto.begin();
 	_udpServer();
 }
 //
 #ifdef ESPARTO_DEBUG_PORT
-vector<string> reasons={
+vector<string> ESPArto::reasons={
 	"ESPARTO_BOOT_USERCODE",
 	"ESPARTO_BOOT_UI",
 	"ESPARTO_BOOT_MQTT",

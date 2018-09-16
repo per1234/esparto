@@ -64,15 +64,20 @@ ESPArto::ESPArto(
 //
 //	_setupWiFi 1x @ startup
 //
-void ICACHE_FLASH_ATTR ESPArto::_setupWiFi(const char* _SSID,const char* _psk, const char* _device){
+void ESPArto::_setupWiFi(const char* _SSID,const char* _psk, const char* _device){
 	_cicHandler=[](const char* i,const char* v){
 		SOCKSEND(ESPARTO_AP_TOOL,"ibi|%s|%s",i,v);
 		if(i[0]!='$') onConfigItemChange(i,v); // this is the default, call it too! uswer gets LAST bite of cherry
 		else {
-			DIAG("CIC: %s changed to %s\n",i,v);
-			if(!strcmp(i,SYS_BOOT_COUNT) && !strcmp(v,"1"))	setConfigInt(SYS_BOOT_REASON,ESPARTO_FACTORY_RESET);
+			if(!strcmp(i,SYS_BOOT_COUNT) && !strcmp(v,"1")) setConfigInt(SYS_BOOT_REASON,ESPARTO_FACTORY_RESET);
 		}
 	};
+	
+	if(!config.count(SYS_DEVICE_NAME) ){
+		if(strcmp(_device,"")) config[SYS_DEVICE_NAME]=_device;
+		else config[SYS_DEVICE_NAME]="ESPARTO-"+stringFromInt(ESP.getChipId(),"%06X");
+	}
+	WiFi.hostname(CSTR(config[SYS_DEVICE_NAME]));
 //	
 	config[SYS_AP_FALLBACK]="180000";
 	config[SYS_SPIFFS_VERSION]="0_0_0";
@@ -87,23 +92,17 @@ void ICACHE_FLASH_ATTR ESPArto::_setupWiFi(const char* _SSID,const char* _psk, c
 	statistics[ESPARTO_STATS_PINS]=new autoStats("sps",40,[](){ return ESPArto::sigmaPins; });
 	statistics[ESPARTO_STATS_ADC]=new autoStats("adc",1024,bind(analogRead,A0));
 //
-	if(!config.count(SYS_DEVICE_NAME) ){
-		if(strcmp(_device,""))	config[SYS_DEVICE_NAME]=_device;
-		else config[SYS_DEVICE_NAME]="ESPARTO-"+stringFromInt(ESP.getChipId(),"%06X");
-	}
-	
-	WiFi.hostname(CSTR(config[SYS_DEVICE_NAME]));
-
-	if(WiFi.SSID()!="")	_setAPFallbackTimer();
-	else _initiateWiFi(_SSID,_psk,config[SYS_DEVICE_NAME]);// new machine or post factory reset - NO SSID and no chance of connecting	
+	if(WiFi.SSID()=="")	{ // new machine or post factory reset - NO SSID and no chance of connecting
+		if(_SSID=="") _fallbackToAP();
+		else _initiateWiFi(_SSID,_psk,config[SYS_DEVICE_NAME]);// new machine or post factory reset - NO SSID and no chance of connecting			
+	} // let well alone
 }
 //
 //	Attempt connection
 //
 //	_initiateWiFi
 //
-void ICACHE_FLASH_ATTR ESPArto::_initiateWiFi(string ssid,string psk,string device){
-//	DIAG("_initiateWiFi to %s[%s] DEVICE=%s (dns=%08x)\n",CSTR(ssid),CSTR(psk),CSTR(device),dnsServer);
+void ESPArto::_initiateWiFi(string ssid,string psk,string device){
 	WiFi.mode(WIFI_STA);
 	WiFi.setAutoConnect(true);
 	WiFi.hostname(CSTR(device));
@@ -118,27 +117,27 @@ void ICACHE_FLASH_ATTR ESPArto::_initiateWiFi(string ssid,string psk,string devi
 //
 //	Manage connection: event loop xN rapidly @ main loop speed
 //
-void ICACHE_FLASH_ATTR ESPArto::_wifiHandler(){
+void ESPArto::_wifiHandler(){
 	ArduinoOTA.handle();
 	_handleMQTT();
 	_handleCaptive();
 }
 
-void ICACHE_FLASH_ATTR ESPArto::_wifiGotIPEvent(const WiFiEventStationModeGotIP& event){ if(WiFi.localIP().toString()!="0.0.0.0") ASYNC_FUNCTION(_sync_wifiGotIP); }
+void ESPArto::_wifiGotIPEvent(const WiFiEventStationModeGotIP& event){
+	if(WiFi.localIP().toString()!="0.0.0.0") ASYNC_FUNCTION(_sync_wifiGotIP);
+}
 
-void ICACHE_FLASH_ATTR ESPArto::_sync_wifiGotIP(){
+void ESPArto::_sync_wifiGotIP(){
+	_cancelAPFallbackTimer();
 	DIAG("Connected to %s (%s) [psk=%s] as %s (ch: %d) hostname=%s\n",CSTR(WiFi.SSID()),TXTIP(WiFi.gatewayIP()),CSTR(WiFi.psk()),TXTIP(WiFi.localIP()),WiFi.channel(),CSTR(WiFi.hostname()));
 	discoNotified=false;
 	config["$ip"]=TXTIP(WiFi.localIP());
 	setConfigInt("$tWup",millis());	
-//	these now are the "Last Known Good" connection params
 	config[SYS_DEVICE_NAME]=CSTR(WiFi.hostname());
 	config[SYS_SSID]=CSTR(WiFi.SSID());
 	config[SYS_PSK]=CSTR(WiFi.psk());
-	_saveConfig(); // so make sure they are saved! (will become fallback values)
-//	cancel any fallback jobs
-	_cancelAPFallbackTimer();
-
+	_saveConfig();
+	
 	ArduinoOTA.setHostname(CSTR(WiFi.hostname()));
 	ArduinoOTA.begin();
 		
@@ -153,15 +152,14 @@ void ICACHE_FLASH_ATTR ESPArto::_sync_wifiGotIP(){
 //
 //	disconnect
 //
-void ICACHE_FLASH_ATTR ESPArto::_setAPFallbackTimer(){ fallbackToAP=once(getConfigInt(SYS_AP_FALLBACK),[](){ SYNC_FUNCTION(_fallbackToAP); });	}
+void ESPArto::_setAPFallbackTimer(){ fallbackToAP=once(getConfigInt(SYS_AP_FALLBACK),[](){ SYNC_FUNCTION(_fallbackToAP); });	}
 
-void ICACHE_FLASH_ATTR ESPArto::_cancelAPFallbackTimer(){ cancel(fallbackToAP); }
+void ESPArto::_cancelAPFallbackTimer(){ cancel(fallbackToAP); }
 
-void ICACHE_FLASH_ATTR ESPArto::_wifiDisconnectEvent(const WiFiEventStationModeDisconnected& event){ ASYNC_FUNCTION(_sync_wifiDisconnect,event.reason); }
+void ESPArto::_wifiDisconnectEvent(const WiFiEventStationModeDisconnected& event){ ASYNC_FUNCTION(_sync_wifiDisconnect,event.reason); }
 
-void ICACHE_FLASH_ATTR ESPArto::_sync_wifiDisconnect(int r){
-//	DIAG("Disconnected (reason=%d)\n",r);
-	WiFi.printDiag(Serial);
+void ESPArto::_sync_wifiDisconnect(int r){
+//	WiFi.printDiag(Serial);
 	if(!discoNotified){
 		discoNotified=true;
 		_handleWiFi=NOOP;	// stop event loop
@@ -171,7 +169,7 @@ void ICACHE_FLASH_ATTR ESPArto::_sync_wifiDisconnect(int r){
 //
 //	_fallbackToAP
 //
-void ICACHE_FLASH_ATTR ESPArto::_fallbackToAP(){
+void ESPArto::_fallbackToAP(){
 	String dev=getConfigString(SYS_DEVICE_NAME);
 	DIAG("ANTI LOCKOUT: now in AP mode as %s\n",CSTR(dev));
 	dnsServer=new DNSServer;
@@ -187,16 +185,17 @@ void ICACHE_FLASH_ATTR ESPArto::_fallbackToAP(){
 //
 //	_changeDevice
 //
-void ICACHE_FLASH_ATTR ESPArto::_changeDevice(const char* device,const char* ssid,const char* psk){
-//	DIAG("_changeDevice: dev=%s ssid=%s psk=%s\n",device,ssid,psk);
+void ESPArto::_changeDevice(const char* device,const char* ssid,const char* psk){
 	WiFi.disconnect(true);
 	ESP.eraseConfig();
+	config[SYS_DEVICE_NAME]=device;
+	_saveConfig();
 	_initiateWiFi(string(ssid),string(psk),string(device));
 }
 //
 //	_currentSPIFFSVersion
 //
-void ICACHE_FLASH_ATTR ESPArto::_currentSPIFFSVersion(){
+void ESPArto::_currentSPIFFSVersion(){
 	if(SPIFFS.exists(ESPARTO_ROOTWEB)){
 		String tmpdevice;
 		tmpdevice=readSPIFFS(ESPARTO_ROOTWEB);
@@ -211,7 +210,7 @@ void ICACHE_FLASH_ATTR ESPArto::_currentSPIFFSVersion(){
 //
 //  _wifiEvent:
 //
-void ICACHE_FLASH_ATTR ESPArto::_wifiEvent(WiFiEvent_t event) {
+void ESPArto::_wifiEvent(WiFiEvent_t event) {
     switch(event) {
         case WIFI_EVENT_STAMODE_CONNECTED:
            DIAG("WiFi Connected SSID=%s\n",CSTR(WiFi.SSID()));

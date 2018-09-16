@@ -23,6 +23,7 @@ SOFTWARE.
 */
 #include <ESPArto.h>
 #include <extnames.h>
+#include <time.h>
 //
 //	Caller MAY override:
 //
@@ -36,36 +37,39 @@ extern void onWiFiDisconnect();
 //
 ESPArto::ESPArto(
 					const char* _SSID,	const char* _psk, const char* _device,
-					const char * _mqttIP, int _mqttPort,
+					const char * _mqttIP, int _mqttPort,const char* _mqu,const char* _mqp,
 					uint32_t nSlots,
 					uint32_t hWarn,
 					SP_STATE_VALUE _cookedHook,
 					SP_STATE_VALUE _rawHook,
 					SP_STATE_VALUE _chokeHook
-					): ESPArto(_SSID, _psk, _device, nSlots, hWarn){	
-
+					): ESPArto(_SSID, _psk, _device, nSlots, hWarn){
+	
 	_connected=_internalWiFiConnect;
 	_disconnected=_internalWiFiDisconnect;
-		
+
 	config[SYS_MQTT_RETRY]="5000";
 	_mqttUiExtras=[](){
 		SOCKSEND(ESPARTO_AP_NONE,"vis|mqtt0");
 		SOCKSEND(ESPARTO_AP_NONE,"cbi|mqtt|ld led-%s",mqttClient->loop()  ? "green":"red");		
 		};
-
-	_setupFunction=bind(_setupMQTT,_SSID,_psk,_device,_mqttIP,_mqttPort);
+	_setupFunction=bind(_setupMQTT,_SSID,_psk,_device,_mqttIP,_mqttPort,_mqu,_mqp);
 }
 //
 //	_setupMQTT	1x @ startup
 //
-void ESPArto::_setupMQTT(const char* _SSID,const char* _psk, const char* _device,const char * _mqttIP,int _mqttPort){
+void ESPArto::_setupMQTT(const char* _SSID,const char* _psk, const char* _device,const char * _mqttIP,int _mqttPort,const char* _mqu, const char* _mqp) {
+//void ESPArto::_setupMQTT(const char* _SSID,const char* _psk, const char* _device,const char * _mqttIP,int _mqttPort){
+	setConfigString("~mqUser",_mqu);
+	setConfigString("~mqPass",_mqp);
+
 	setConfigString("~mqIP",_mqttIP);
 	setConfigInt("~mqPort",_mqttPort);
 
 	mqttClient=new PubSubClient(wifiClient);
 	mqttClient->setServer(_mqttIP,_mqttPort);
 	mqttClient->setCallback(_mqttMessageEvent);
-
+		
 	_setupWiFi(_SSID,_psk,_device);
 }
 //
@@ -87,7 +91,11 @@ void ESPArto::_internalWiFiDisconnect(){
 }
 void ESPArto::_mqttConnect(){	
 	string hostname=getConfigstring(SYS_DEVICE_NAME);
-	if(mqttClient->connect(CSTR(hostname),string(hostname + "/lwt").c_str(),0,false,"offline")){		
+	string user=getConfigstring(SYS_MQTT_USER);
+	string pass=getConfigstring(SYS_MQTT_PASS);
+	// connect(const char* id, const char* user, const char* pass, const char* willTopic, uint8_t willQos, boolean willRetain, const char* willMessage);
+	if(mqttClient->connect(CSTR(hostname),CSTR(user),CSTR(pass),string(hostname + "/lwt").c_str(),0,false,"offline")){	
+//	if(mqttClient->connect(CSTR(hostname),string(hostname + "/lwt").c_str(),0,false,"offline")){		
 		DIAG("MQTT Connected as %s FH=%d\n",CSTR(hostname),ESP.getFreeHeap());
 		SOCKSEND(ESPARTO_AP_NONE,"cbi|mqtt|ld led-green");
 		setConfigInt("$tMup",millis());	
@@ -96,9 +104,6 @@ void ESPArto::_mqttConnect(){
 		srcStats["all"]=0;
 		mqttClient->subscribe(string(hostname + "/" + SYS_CMD_HASH).c_str());
 		srcStats[hostname]=0;
-		// doing this here allows caller to add cmd/??? subcommands even in a tree (as long as he roots it off 7)
-		// also allows subscription to all/cmd, <device type>/cmd anyoldstuff/cmd etc. In those cases, callers inital "tld" fn is ignored
-		// user's tree struct will be navigated (as long as its rooted @ 7) and his leaf nodes will be executed
 		cmds["cmd"]={7,0,0,nullptr}; // pop "cmd" and re-dispatch, alows cmd/a cmd/b etc all in same table
 		_handleMQTT=_mqttHandler;
 		_info();
@@ -114,13 +119,14 @@ void ESPArto::_mqttDisconnect(){
 //
 //	_publish
 //
-void ESPArto::_publish(String topic,String payload,bool retained){ // rationalise
+void ESPArto::_rawPublish(string topic,string payload,bool retained){
 	if(mqttClient && mqttClient->loop()){
-		string full=config[SYS_DEVICE_NAME]+"/" + CSTR(topic);
-//		DIAG("_publish [%d] %s %s\n",retained,CSTR(full),CSTR(payload));
-		mqttClient->publish(CSTR(full),CSTR(payload),retained);
-	}
-
+		mqttClient->publish(CSTR(topic),CSTR(payload),retained);
+	}	
+}
+void ESPArto::_publish(String topic,String payload,bool retained){ // rationalise
+	string full=config[SYS_DEVICE_NAME]+"/" + CSTR(topic);
+	_rawPublish(CSTR(full),CSTR(payload),retained);
 }
 void ESPArto::publish(const char * topic, const char * payload,bool retained){
 	_publish(String(topic),String(payload),retained);
@@ -184,7 +190,7 @@ void ESPArto::invokeCmd(String topic,String payload,string src){ _sync_mqttMessa
 //	payload is pushed as last item
 //
 void ESPArto::_sync_mqttMessage(string topic, string spload){
-	DIAG("_sync_mqttMessage RAW INPUT '%s' pl=[%s]\n",CSTR(topic),CSTR(spload));
+//	DIAG("_sync_mqttMessage %s[%s]\n",CSTR(topic),CSTR(spload));
 	vector<string> tokens;
 	split(CSTR(topic),'/',tokens);
 
@@ -193,8 +199,6 @@ void ESPArto::_sync_mqttMessage(string topic, string spload){
 	
 	string flat=join(vs);
 	vs.push_back(spload);
-//	for(auto const& t:vs) DIAG("TOK: %s\n",CSTR(t));
-//	DIAG("_sync_mqttMessage '%s' source='%s' flat='%s' pl='%s'\n",CSTR(topic),CSTR(source),CSTR(flat),CSTR(spload));
 	srcStats[source]++;
 	SOCKSEND(ESPARTO_AP_RUN,"tsel|dups|%s|%d",CSTR(source),srcStats[source]); // ONLY IF etc
 	if(cmds.count(flat)) _execute(flat,flat,vs);
@@ -205,37 +209,30 @@ void ESPArto::_sync_mqttMessage(string topic, string spload){
 //  which get passed to the matching handler (if there is one)
 //
 void ESPArto::_execute(string c,string f,vector<string> vs){
-///	DIAG("EXECUTE %s DYNUP=%s pl='%s'\n",CSTR(c),CSTR(f),CSTR(vs.back()));
 	if(cmds[c].fn){
 		cmds[c].count++;
 		cmds[c].fn(vs);
 		SOCKSEND(ESPARTO_AP_RUN,"tsel|dupc|%s|%d",CSTR(f),cmds[c].count); // ONLY IF etc
-	} else DIAG("??????????\n");
+	}
 }
 
 void ESPArto::_mqttDispatch(vector<string> tokens,string flat){
 	if(tokens.size()){		
 		string cmd=tokens[0];
-//		DIAG("DISPATCH %s n=%d incoming=%s\n",CSTR(cmd),tokens.size(),CSTR(flat));
 		if(cmds.count(cmd)){
-//			DIAG("WE HAVE A %s\n",CSTR(cmd));
 			vector<string> vs(++tokens.begin(),tokens.end()); // pop front
 			string tail=flat=="" ? cmd:flat;
 			tail+="/"+vs[0];
-//			DIAG("TAIL=%s\n",CSTR(tail));
 			if(cmds[cmd].levID){	// dont prefix payload! == if(cmds[cmd].levID) ?
 				string l{ (char) cmds[cmd].levID+0x30};			
 				vs[0]=l+vs[0];
 			}
 			if(cmds[cmd].fn){
 				if(cmds[cmd].wild){
-//					DIAG("the wild ones! cmd=%s tail=%s flat=%s\n",CSTR(cmd),CSTR(tail),CSTR(flat));
 					if(!cmds.count(tail)){
-//						DIAG("1st time!! add %s\n",CSTR(tail));
 						SOCKSEND(ESPARTO_AP_RUN,"tsel|add|%s|%d\n",CSTR(tail),0); /// ONLY if...?
 						SOCKSEND(ESPARTO_AP_RUN,"aso|csel|%s|%s",CSTR(tail),CSTR(tail));
 						MSG_HANDLER m=bind([](vector<string> vs,string cmd,MSG_HANDLER old){
-//							DIAG("SUBSEQUENT %s COUNT=%d\n",CSTR(cmd),cmds[cmd].count);
 							if(cmds[cmd].count > 1) vs.erase(vs.begin());
 							old(vs);
 							},_1,tail,cmds[cmd].fn);
@@ -255,7 +252,6 @@ void ESPArto::_mqttDispatch(vector<string> tokens,string flat){
 #define PARAM(x) atoi(CSTR(tokens[x]))
 
 void ESPArto::_guardPin(vector<string> tokens,function<void(uint8_t,vector<string>)> handle){
-	for(auto const& t:tokens) DIAG("T %s\n",CSTR(t));
 	if(tokens.size()>1){
 		uint8_t pin=PARAM(0);
 		if(isUsablePin(pin)) handle(pin,tokens);
@@ -286,7 +282,7 @@ void ESPArto::_getPin(vector<string> tokens){
 }
 
 void ESPArto::_chokePin(vector<string> tokens){
-	for(auto const& t:tokens) DIAG("T %s\n",CSTR(t));
+
 	_guardPin(tokens,[](uint8_t pin,vector<string> tokens){	
 		if(tokens.size()>1)	throttlePin(pin,PARAM(1));
 	});
@@ -324,9 +320,10 @@ void ESPArto::_flashPin(vector<string> tokens){
 void ESPArto::_stopPin(vector<string> tokens){
 	_guardPin(tokens,[](uint8_t pin,vector<string> tokens){	stopLED(pin); });
 }
+
 void ESPArto::_publishPin(uint8_t p,uint8_t v){ publish_v("pin/%d",CSTR(stringFromInt(v)),p); }
 
-void ESPArto::_info(){ for(const auto& i: config) _publish(string("data/" + i.first).c_str(),CSTR(i.second));	}
+void ESPArto::_info(){ for(const auto& i: config) _publish(string("data/" + i.first).c_str(),CSTR(i.second)); }
 
 void ESPArto::_forEachTopic(function<void(string,int)> fn){
 	for(auto const& c: cmds){

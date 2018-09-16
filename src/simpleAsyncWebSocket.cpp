@@ -23,7 +23,6 @@ SOFTWARE.
 */
 #include<simpleAsyncWebSocket.h>
 
-bool				simpleAsyncWebSocket::alive=false;
 uint32_t			simpleAsyncWebSocket::heapGuard;
 //
 //	simpleAsyncWebSocket constructor
@@ -37,20 +36,18 @@ simpleAsyncWebSocket::simpleAsyncWebSocket(const char* _url,SAWS_DATA_FN _data,H
 }
 
 void simpleAsyncWebSocket::sockSend_P(int filter,PGM_P fmt, ...){
-	if(ESPArto::ws){
-		if(ESPArto::ws->isAlive()) {
-			if((!filter) || filter==ESPArto::ws->getActivePane() ) {
-				if(ESP.getFreeHeap() > heapGuard){		
-					char buf[256];
-					va_list args;
-					va_start(args, fmt);
-					vsnprintf_P(buf, 255,fmt, args);
-					printfAll(buf);
-					va_end (args);
-				} // else DIAG("SOCKET THROTTLED BY HEAP @ %d\n",heapGuard);								
-			} //else DIAG("SOCK FILTER EXCLUDED f=%d AP=%d\n",filter,	ESPArto::ws->getActivePane());
-		} // else DIAG("no-one watching\n"); //find & fix
-	} // else DIAG("sockSend_P NO SOCKET\n");
+	if(this->isAlive()) {
+		if((!filter) || filter==this->getActivePane() ) {
+			if(ESP.getFreeHeap() > heapGuard){		
+				char buf[256];
+				va_list args;
+				va_start(args, fmt);
+				vsnprintf_P(buf, 255,fmt, args);
+				printfAll(buf);
+				va_end (args);
+			} // else DIAG("SOCKET THROTTLED BY HEAP @ %d\n",heapGuard);								
+		} //else DIAG("SOCK FILTER EXCLUDED f=%d AP=%d\n",filter,	ESPArto::ws->getActivePane());
+	} // else DIAG("no-one watching\n"); //find & fix
 }
 //
 //	handleEvent
@@ -63,6 +60,7 @@ void simpleAsyncWebSocket::handleEvent(AsyncWebSocket* server, AsyncWebSocketCli
 			break;
         case WS_EVT_CONNECT:
 			alive=true;
+            setActivePane(ESPARTO_AP_WIFI);
 			if(onConnect) onConnect();
 			break;
 		case WS_EVT_DATA:		
