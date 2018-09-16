@@ -59,8 +59,10 @@ const char* yourPWD="********";
 const char* yourDevice="testbed";
 const char* yourMQTTIP="192.168.1.4";
 const int   yourMQTTPort=1883;
+const char* yourMQTTUser="*********";
+const char* yourMQTTPass="*********";
 
-ESPArto Esparto(yourSSID,yourPWD,yourDevice,yourMQTTIP,yourMQTTPort);
+ESPArto Esparto(yourSSID,yourPWD,yourDevice,yourMQTTIP,yourMQTTPort,yourMQTTUser,yourMQTTPass);
 //
 void flash(bool onoff){
   if(onoff) Esparto.flashLED(Esparto.getConfigInt("blinkrate"));

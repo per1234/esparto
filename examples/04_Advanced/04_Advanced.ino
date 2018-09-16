@@ -172,7 +172,7 @@ void setupHardware() {
     // and FINALLY(?) after a couple of minutes silence, let's run this whole thing again....
       Esparto.cancelAll([](){ 
         j=10; // or Edwin Starr will be walking backwards!
-        Esparto.once(90000,setup); 
+        Esparto.once(90000,setupHardware); 
         });
   });
 }
