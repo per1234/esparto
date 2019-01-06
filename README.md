@@ -1,4 +1,16 @@
 ![Esparto Logo](/assets/espartotitle.png)
+# v3.0 coming soon!
+![Esparto Logo](/assets/espartolifecycle.jpg)
+# What's new:
+
+* MUCH simpler installation. Now 1 single library incorporating all functionality.
+* Dynamic pin creation / assignment (no coding!)
+* webUI can assign a variety of functions to dynamic pins
+* "grid" functionality: multiple devices "see" each other and "talk" direct via...
+* ..."REST"-like additon to webUI http://ip address/mqtt?cmd=[ any valid mqtt command ] Thus no broker required!
+* more fully-working examples
+* tasks have "spooled" output buffer @ end can be sent to 1 / any / many destinations, e.g. Serial, log, mqtt , remote MySQL
+
 # Esparto v2.0 is a rapid development framework for ESP8266 devices.
 
 It makes short work of creating anything from a simple "blinky" right through to alternative firmware for e.g. SONOFF switches. "Out of the box" it allows control via:
@@ -40,13 +52,13 @@ Correct. All your code runs when Esparto decides it is safe to do so, and "calls
 *	Flexibility: create apps from simple "blinky" to fully-featured, complex, resilient IOT / home automation firmware
 *	Tested on a wide variety of hardware: ESP-01, SONOFF, Wemos D1, NodeMCU etc
 ## Rapid development
-*	Most common errors and ìgotchasî avoided
+*	Most common errors and ‚Äúgotchas‚Äù avoided
 *	Many flexible input-pin options pre-configured e.g. fully debounced rotary encoder support with a single line of code
 *	Create MQTT controlled firmware in only 15 lines of code
 *	User code hugely simplified, consisting mainly of short callback functions
 *	Several flexible asynchronous LED flashing functions including slow PWM, arbitrary pattern e.g. "... --- ..." for SOS, 
-*	Modular: Esparto ìLiteî / Esparto WiFi / Esparto MQTT: use only what you need / your experience matches
-## ìIndustrial strengthî
+*	Modular: Esparto ‚ÄúLite‚Äù / Esparto WiFi / Esparto MQTT: use only what you need / your experience matches
+## ‚ÄúIndustrial strength‚Äù
 *	Voice-driven compatibility with Amazon Alexa (via Belkin Wemo emulation)
 *	Copes resiliently with WiFi outage or total network loss, reconnecting automatically without requiring reboot
 *	Hardware features continue to function at all times irrespective of connection status
@@ -132,13 +144,13 @@ You must make sure your environment is at least as up-to-date as these versions.
 *	ESPAsyncUDP  1.0.0 https://github.com/me-no-dev/ESPAsyncUDP
 *	ESPAsyncWebserver  1.1.0 https://github.com/me-no-dev/ESPAsyncWebserver
 
-The developer ìme-no-devî (ironic understatement of the decade) needs special praise for these gems: Esparto could not work without them. Iíd even go as far as to say that *no* robust ESP8266 firmware could. 
+The developer ‚Äúme-no-dev‚Äù (ironic understatement of the decade) needs special praise for these gems: Esparto could not work without them. I‚Äôd even go as far as to say that *no* robust ESP8266 firmware could. 
 
 *	PubSubClient v2.6 https://github.com/knolleary/pubsubclient
 
-Be careful: there are two or three MQTT client libraries out there for Arduino ñ do not be tempted to use any other than the above: they simply wonít work.
+Be careful: there are two or three MQTT client libraries out there for Arduino ‚Äì do not be tempted to use any other than the above: they simply won‚Äôt work.
 
-Arduinoís own site has a good tutorial on adding 3rd-party libraries: https://www.arduino.cc/en/Guide/Libraries
+Arduino‚Äôs own site has a good tutorial on adding 3rd-party libraries: https://www.arduino.cc/en/Guide/Libraries
 
 ## Next, install Esparto's own libraries
 
@@ -156,7 +168,7 @@ Also make sure you choose 1M SPIFFS option for any 4MB device (e.g. Wemos D1 min
 # Hardware Compatibility
 
 Esparto has been tested on a variety of hardware. It will probably run on anything with an ESP-12 in it, but the official at-a-glance list is:
-*	ESP-01 (but why would you bother when thereísÖ)
+*	ESP-01 (but why would you bother when there‚Äôs‚Ä¶)
 *	ESP-01S
 *	Wemos D1
 *	Wemos D1 mini 
@@ -166,7 +178,7 @@ Esparto has been tested on a variety of hardware. It will probably run on anythi
 *	SONOFF Basic
 *	SONOFF S20
 *	SONOFF SV
-Iím very interested to hear of anybody getting it running on any other platform e.g. NodeMCU 1.0 will probably work, as will (I expect) other SONOFFs
+I‚Äôm very interested to hear of anybody getting it running on any other platform e.g. NodeMCU 1.0 will probably work, as will (I expect) other SONOFFs
 
 # Examples
 
@@ -694,7 +706,7 @@ when	5
 whenever	5
 
 
-© 2018 Phil Bowles
+¬© 2019 Phil Bowles
 * philbowles2012@gmail.com
 * http://www.github.com/philbowles
 * https://8266iot.blogspot.com
