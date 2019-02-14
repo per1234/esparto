@@ -242,533 +242,257 @@ Much of the "traditonal" description for these API calls and advice on how / whe
 To get the best out of Esparto and smooth out the learning curve, you need to follow the examples in that order. Often they will depend upon, or make a slight change to, a previous example to demonstrate the usefulness of the next feature.
 So while there will be a formal definiton of each API call and its parameters (grouped by functionality) it will be very brief. Details on how to use the call and where / when / why will be found in the cross-reference list of example programs that use the call.
 
-## Support / issues
+## Support / Resolution of issues
 
-First a brutal truth: This is open-source. It's free. Do not "look a gift horse in the mouth". I do this out of the goodness of my heart, and the simple truth it if you annoy, alienate or antagonise me (the three As) then I am not going to help you. Things that will cause the "three A"s are:
-* Not reading the documentation
-* Asking any question that clearly shows you have not read the documentation e.g what does X do? I may not even reply at all to those messages. Every API call is included in at least one example that will answer those types of question. There is both a forward and reverse cross-reference. If yoi are too lazy to read the documentation then why should I put in any effort to help you?
+First the brutal truth: Esparto is open-source: it's free, so do not "look a gift horse in the mouth". This is a hobby I do out of the goodness of my heart, so if you annoy, alienate, antagonise or argue with me (the four As) then I am not going to help you. Things that I consider to be covered by the "four A"s include (but are not limited to):
+
+* Asking any question that clearly shows you have not read the documentation. Every API call is included in at least one example sketch. Read it. There is both a forward and reverse cross-reference. If you cannot be bothered to read the documentation then I cannot be bothered to help you.
+* Asking any question that clearly falls into one of the categories in the section entitled "Common Causes of Errors"
 * Asking if it supports ESP32 (that question already failed points 1 and 2) See "Hardware Compatibility". Does it have ESP32 in the list? Exactly.
+* Telling me "but this code works on Arduino UNO" the answer will be - without fail - "Run it on an Arduino UNO then".
+* Telling me "I can't send the code , it's closed-source / proprietary / confidential". Let's let that sink in for a bit: YOU are writing code that YOU are making money off, using MY code that you got FOR FREE, and you want ME to fix YOUR problem FOR FREE and without looking at the code...? If you really are in that situation, I am happy to sign any NDA / disclaimer you wish and get paid market rate for my time. All other cases will receive a reply containing two words.
+* Not reading the documentation
+* Statements such as "My sketch doesn't work" will be met - without fail - with "Mine all do" unless sufficient information is also supplied for me to diagnose the problem. This will always include: the *FULL* source code of an MCVE and *ALL* Serial output messages plus a circuit diagram / schematic of any non-standard board / hardware.
+* I am not an agent for Arduino, Espressif or any other company, nor am I a free electronics or programming consultant. I will answer only issues relating to the use of Esparto v3.0 on supported hardware.
+
+What's an "MCVE"? It's a *M*inimum *C*orrect *V*erified *E*xample - the smallest amount of code that demonstrates the problem. Do NOT confuse that with sending one function saying: "the problem is in here". Only *full* code of working sketches will be accepted. Also, if you use any non-standrd libraries, I need the full URL of where to find / download them. I cannot fix your code if I can't compile it!
+What I don't have time for (and will not accept) is 3000 lines of code, where 2900 of them are nothing to do with the problem.
+
+Support checklist: If you cannot complete it fully, don't initiate contact. If you persist anyway (why?) the reply will be simply "AAAA" or "4A" or "RTFD" if there is any at all.
+
+* Esparto correctly installed with correct library versions of 3rd party libraries?
+* Hardware described / schematic provided?
+* Documentation has been read, example sketch run for API call in question?
+* Problem not in "Common Causes of Errors"?
+* Full source of MCVE attached? (properly formatted code only, no screen photographs!)
+* Full text of all error messages and/or Serial output (text only, no screen photographs!)
+* Decoded stack dump in cases of crash / reboot / wdt reset etc?
+* List of things you have already tried, other research already performed?
+
+In summary I am happy to try to help, provided you show willing by reading the documentation first and at least *trying* to solve the problem yourself. If that fails, give me everything I ask for and together we will fix it. Anything less and you are on your own. To any reader who thinks this a little "strong" or "harsh": I have had to deal with every single one of the above on various support froums, FB groups etc hundreds of times, and I just do not have any time left in my life for lazy people.
+
+# Esparto v3.0 API
+
+## Introduction
+
+The API is broken down by functional area, corresponding broadly with the example skecth folders. They are laid out in the order a beginner might start experimentation, but certainly in a "ground up" order as far as understanding Esprto. Try as far as possible to adhere to that order while "getting used" to it.
+
+## The areas are:
+### Simple Flashing functions
+
+Everyone Loves a "Blinky": it's the "Hello World" of IOT / embedded systems. Just to get you into the Esparto sing of things, eher are some somple Flashinf routines. Technically they are "out of order" and we shouldn't rellay look at them till later, but doing it this way gets you actually *doing* things straight away.
+
+Common parameters: ```cpp uint8_t pin ``` : The GPIO pin number to be flashed. This must have previously been the subject of an ```cpp Output ``` call.
+
+```cpp
+void flashPWM(int period,int duty,uint8_t pin=LED_BUILTIN);
+```
+*period*: Total time of flashign cycle in milliseconds
+*duty*:  duty cycle from 1 to 100 as a percentage
+Example: ```cpp Esparto.flashPWM(1000,10); // will flash the BUILTIN_LED ON: 100ms OFF 900ms continuously (100 = 10% of 1000, 900ms is the remaning 90%) ```
+
+```cpp
+void flashLED(int rate,uint8_t pin=LED_BUILTIN);
+```
+*rate*: the symmetric on/off flash rate in milliseconds
+Example: Esparto.flashPWM(1000); // will flash the BUILTIN_LED ON: 1000ms (1sec),  OFF 1000ms (1sec) continuously
+
+```cpp
+void flashPattern(const char * pattern,int timebase,uint8_t pin=LED_BUILTIN);
+```
+*pattern*: is string of "dots" . and "dashes" - much like Morse code. The . is a short blip (a "dit" in Morse) and the - is a long blip (a "dah") A space represents a quiet spot with no flash. The pattern is abitrary: it does not have to be valid Morse code.
+*timebase*: a figure in milliseconds which the dots, dashes and spaces are "clocked at". A smaller value makes the pattern cycle faster. A good starting point is 300. Any less (quicker) tends to make the dots and dashes blend into each other while larger values (slower) tend require more concentration and patience to "read".
+Example: Esparto.flashPattern("   ... --- ...",300,D1); // flashes Morse S-O-S on digital pin D1 (GPIO5 on a Wemos D1) at a apttern cycle rate of 300ms. Note the leading three spaces to "separate" each occurrence of the pattern. Without these the followint pattern will run directy on from the last and perhaps be confusing.
+Sometimes this may be what you want: Esparto.flashPattern(".-",300); will flash short/long/short/long/short/long...etc with no discernible gaps.
+
+```cpp
+bool isFlashing(uint8_t pin=LED_BUILTIN); // returns true if pin is Flashing
+```
+Example: if(Esparto.isFlashing(D2)) Serial.println("D2 (GPIO4) is flashing");
+
+```cpp
+void pulseLED(int period,uint8_t pin=LED_BUILTIN);
+```
+*period*: Total time of single flash pulse
+Example: Esparto.pulseLED(50); // flashes a 50ms "blip" on the BUILTIN_LED. Should be kept very short
+
+```cpp
+void stopLED(uint8_t pin=LED_BUILTIN);
+```
+Example: Esparto.stopLED(D2); // Immediately ceases all flashing on D2 and sets it OFF. It it not necessary to check first if is flashing: no harm will be done if it is already stopped
+
+### Timers, task scheduling and the configuration system
+### GPIO handling
+### WiFI, webUI, web REST
+### MQTT
+### Advanced / complex topics / expert diagnostics
+### A bit of fun - some fripperies that I built along the way to test various things)
 
 
-The examples fall broadly into 6 groups
+# Examples / API cross-reference:
 
-## Group 1 Mainly timing, scheduling, workflow:
-	
-### 01_Simple	
-    Output
-	flashLED
-	every
-	onceRandom
-	cancel
+## basics\A_HelloWorld
+Demonstrates most fundamental usage of the Esparto libarary and introduces the concept of working without traditional setup() and loop() functions. Contains no Esparto API calls.
 
-### 02_Lambdas	
-    Output
-	flashLED
-	queueFunction
-	everyRandom
-	cancel
-	every
-	onceRandom
+## basics\Blinky
+Demonstrates simple LED flashing (symmetric on / off)
+*calls*
+```cpp
+flashLED
+Output
+```
 
-### 03_Chaining	
-    Output
-	flashLED
-	onceRandom
-	once
-	nTimes
+## basics\Blinky_Pattern
+Demonstrates LED flashing with dot-dash pattern, similar in concept to Morse code
+* "." is a short pulse
+* "-" is a long pulse
+* " " is a gap
+So "   ... --- ..." would be S-O-S in Morse Code
+note ^              start with 3 gaps to break up repeating pattern up stop one running into the next 
+note      ^   ^     same idea here to make the groups distinct from each other  
 
-### 04_Advanced	
-    Output
-	every
-	onceRandom
-	cancel
-	queueFunction
-	nTimes
-	cancelAll
+Flashing the pattern requires a "timebase" (in mSec)  - this is just the speed @ which each dot/dash/space is acted upon. Lower values make the whole ppattern repeat faster, larger values make it slower
+300 is a good choice to start, try varying it to get the exact "feel" that works for you
+*calls*
+```cpp
+flashPattern
+Output
+```
 
-### 05_Whenever
-    Output
-	every
-	onceRandom
-	cancel
-	queueFunction
-	nTimes
-	cancelAll
-	when
-	Whenever
+## basics\Blinky_PWM
+Demonstrates LED flashing with PWM-style period / duty cycle
+*calls*
+```cpp
+flashPWM
+Output
+```
 
-### 06_Mayhem	
-	Output
-	flashLED
-	onceRandom
-	once
-	nTimes
-	randomTimes
-	randomTimesRandom
-	nTimesRandom
+## basics\Blinky_Xmas_Tree
+ Demonstrates LED flashing simultaneously on multiple pins at different rates / different patterns
+ Hardware required: LED plus current limiting resistor on each pin used:
+ connect Vcc ------^V^V^--------D|----> GPIOx
+                  resistor     LED
+                abt 220 Ohm
+*calls*
+```cpp
+flashLED
+flashPattern
+flashPWM
+Output
+```
 
-### 07_Timer_Roundup	
-    Output
-	flashLED
-	setHookHeapThrottle
-	setHookQueueThrottle
-	asyncQueueFunction
-	every
-	everyRandom
-	getQSize
-	getHWarn
-	getCapacity
+## core\Basic_Features
+Demonstrates Basic 3-stage GPIO features of Esparto and elementary use of "lifecycle" callbacks
+Hardware Required:  
+This and many subsequent examples assume a simple "tact"  switch on GPIO  which pulls directly to GND when pressed
 
-## Group 2 Mainly flashing functions:
+First we see the "three-stage" functionality of this button.
+if pressed for a "short" period, a user defined function is called
+if held down for a "medium" period the built-in LED starts to flash and device will reboot when released
+if held down for a "long" period the built-in LED flashes rapidly and device will "Factory Reset" when released
 
-### 08_Blinky_OnOff	
-    Output
-	Latching
-	flashLED
-	stopLED
+"short" is up to 2 seconds
+"medium" is 2-5secs **WARNING! Will reboot the device!**
+"long" is over 5s **WARNING will reset device, erase all configuration data and WiFI credentials!**
+*calls*
+```cpp
+onFactoryReset
+onReboot
+Output
+std3StageButton
+```
 
-### 09_Blinky_ButtonDown	
-    Output
-	Debounced
-	flashLED
-	stopLED
+core\Config
+*calls*
+core\Timers1_simple
+*calls*
+core\Timers2_lambda
+*calls*
+core\Timers3_classy
+*calls*
+core\Timers4_chaining
+*calls*
+core\Timers5_advanced
+*calls*
+core\Timers6_whenever
+*calls*
+core\Timers7_mayhem
+*calls*
+gpio\Pins0_digital_vs_logical
+*calls*
+gpio\Pins1_Raw
+*calls*
+gpio\Pins10_Encoder
+*calls*
+gpio\Pins11_EncoderBound
+*calls*
+gpio\Pins12_EncoderAuto
+*calls*
+gpio\Pins13_EncoderAutoBound
+*calls*
+gpio\Pins14_Throttling
+*calls*
+gpio\Pins15_DefaultOutput
+*calls*
+gpio\Pins2_Filtered
+*calls*
+gpio\Pins3_Polled
+*calls*
+gpio\Pins4_Retriggering
+*calls*
+gpio\Pins5_Debounced
+*calls*
+gpio\Pins6_Latching
+*calls*
+gpio\Pins7_Timed
+*calls*
+gpio\Pins8_Reporting
+*calls*
+gpio\Pins9_ThreeStage
+*calls*
+wifi\WiFi_Blinky
+*calls*
+wifi\WiFi_DefaultOutput
+*calls*
+wifi\WiFi_Warning
+*calls*
+wifi_mqtt\MQTT_DefaultOutput
+*calls*
+wifi_mqtt\MQTT_Wildcards
+*calls*
+wifi_mqtt\SONOFF_BASIC_Firmware
+*calls*
+xpert\Tasks_Spoolers
+*calls*
+zz_fun\BareMinimum
+*calls*
+zz_fun\BareMinimum_SONOFF_BASIC
+*calls*
+zz_fun\BareMinimum_wifi
+*calls*
+zz_fun\BareMinimum_wifiMQTT
+*calls*
+zz_fun\EncoderAuto_Variable_Blinky
+*calls*
+zz_fun\VeryUselessMeter_1
+*calls*
+zz_fun\VeryUselessMeter_2
+*calls*
+zz_fun\VeryUselessMeter_2_Variable
+*calls*
+zz_fun\VeryUselessMeter_3
+*calls*
+wifi_mqtt\MQTT_Blinky
+*calls*
 
-### 10_Blinky_PWM	
-    Output
-	Latching
-	flashLED(pwm)
-	stopLED
 
-### 11_Blinky_Pattern	
-    Output
-	Latching
-	flashLED(pattern)
-	stopLED
-
-### 12_BlinkyConfig	
-    onConfigItemChange
-	addConfig
-	flashLED
-	incConfigInt
-	stopLED
-	getConfigstring
-	getConfigInt
-	Output
-	setConfigInt
-	Latching
-
-### 15_VeryUselessMeter	
-    Raw
-	Output
-	pulseLED
-
-### 16_VeryUselessMeter_Variable	
-    Output
-	Raw
-	EncoderAuto
-
-### 17_VeryUselessMeter_Throttling	
-    throttlePin
-	Output
-	Raw
-	EncoderAuto
-
-## Group 3 Specialised pin input types
-
-### 18_RawFilter	
-    Filtered
-
-### 19_Polled	
-    Polled
-	once
-	reconfigurePin
-
-### 20_Reporting	
-	Reporting
-	reconfigurePin
-	onceRandom
-
-### 21_ThreeStage	
-    flashLED
-	stopLED
-	Output
-	ThreeStage
-
-### 22_standardThreeStage	
-    Output
-	std3StageButton
-	flashLED
-	stopLED
-	isFlashing
-
-### 23_Retriggering	
-    Retriggering
-	onceRandom
-	reconfigurePin
-
-### 24_Encoder	
-    every
-	Encoder
-
-### 25_Encoder_Binding	
-    every
-	Encoder(Binding)
-
-### 26_EncoderAuto	
-    EncoderAuto
-	Debounced
-	everyRandom
-	once
-	ea->reconfigure
-	ea->setValue
-	ea->center
-	ea->getValue
-	ea->setPercent
-
-### 27_EncoderAuto_Binding	
-    EncoderAuto(binding)
-	Debounced
-	everyRandom
-	once
-	ea->reconfigure
-	ea->setValue
-	ea->center
-	ea->getValue
-	ea->setPercent
-
-### 28_EncoderAuto_Variable_Blinky	
-    flashLED
-	EncoderAuto
-	Output
-
-### 29_Interrupt	
-    Output
-	Interrupt
-
-### 30_Timed	
-    Timed
-	onceRandom
-	reconfigurePin
-
-## Group 4 fully functional programs:
-
-### 31_WiFiBlinky	
-    flashLED
-	stopLED
-	getConfigInt
-	onAlexaCommand
-	addConfig
-	onConfigItemChange
-	isFlashing
-	Output
-	std3StageButton
-
-### 32_MQTTBlinky	
-    flashLED
-	stopLED
-	getConfigInt
-	onAlexaCommand
-	addConfig
-	onConfigItemChange
-	isFlashing
-	Output
-	std3StageButton
-	onMQTTConnect
-	Subscribe
-
-### 33_MQTTWildcards	
-    flashLED
-	stopLED
-	getConfigInt
-	onAlexaCommand
-	addConfig
-	onConfigItemChange
-	isFlashing
-	Output
-	std3StageButton
-	onMQTTConnect
-	subscribe
-	onReboot
-	onFactoryReset
-	onMqttDisconnect
-
-### 34_SONOFF_Basic	
-    digitalWrite
-	onAlexaCommand
-	setAlexaDeviceName
-	publish
-	std3StageButton
-	Output
-	onMqttConnect
-    subscribe
-        
-## Examples / API cross-reference:
 
 The API calls are again broken up by group, showing which (by number) of the above examples they are used in.
 
-### Timing / scheduling / workflow:
 
-asyncQueueFunction	7
 
-cancel	1,2,4,5
 
-cancelAll	4,5
-
-every			1,2,4,5,7,24,25
-
-everyRandom		2,7,26,27
-
-getCapacity		7
-
-getHWarn		7
-
-getQSize		7
-
-nTimes			3,4,5,6
-
-nTimesRandom		6
-
-once			3,6,19,26,27
-
-onceRandom		1,2,3,4,5,6,20,23,30
-
-queueFunction		2,4,5
-
-randomTimes		6
-
-randomTimesRandom	6
-
-setHookHeapThrottle	7
-
-setHookQueueThrottle	7
-
-when			5
-
-whenever		5
-
-
-### GPIO handling / flashing:
-
-Debounced	9,26,27
-
-digitalWrite	34
-
-Encoder	24
-
-Encoder(bound)	25
-
-EncoderAuto	16,17,26,28
-
-EncoderAuto(bound)	27
-
-ea->center	26,27
-
-ea->reconfigure	26,27
-
-ea->setPercent	26,27
-
-ea->setValue	26,27
-
-Filtered	18
-
-flashLED	1,2,3,8,9,21,22,28,31,32,33
-
-flashLED(pwm)	10,12
-
-flashLED(pattern)	11
-
-getValue	17
-
-Interrupt	29
-
-isFlashing	22,31,32,33
-
-Latching	8,10,11,12
-
-Output	1,2,3,4,5,8,9,10,11,12,15,16,17,21,22,28,29,31,32,33,34
-
-Polled	19
-
-pulseLED	15
-
-Raw	15,16,17
-
-reconfigurePin	19,20,23,30
-
-Reporting	20
-
-Retriggering	23
-
-stopLED	8,9,10,11,12,21,22,31,32,33
-
-ThreeStage	21
-
-throttlePin	17
-
-Timed	30
-
-### Esparto direct API:
-
-addConfig	12,31,32,33
-
-getConfigInt	12,31,32,33
-
-getConfigstring	12
-
-incConfigInt	12
-
-onAlexaCommand	31,32,33,34
-
-onConfigItemChange	12,31,32,33
-
-onFactoryReset	33
-
-onMqttConnect	32,33,34
-
-onMqttDisconnect	33
-
-onReboot	33
-
-publish	34
-
-setAlexaDeviceName	34
-
-setConfigInt	12
-
-std3StageButton	22,31,32,33,34
-
-subscribe	32,33,34
-
-## Simple Alphabetic List
-
-addConfig	12,31,32,33
-
-asyncQueueFunction	7
-
-cancel	1,2,4,5
-
-cancelAll	4,5
-
-Debounced	9,26,27
-
-digitalWrite	34
-
-ea->center	26,27
-
-ea->reconfigure	26,27
-
-ea->setPercent	26,27
-
-ea->setValue	26,27
-
-Encoder	24
-
-Encoder(bound)	25
-
-EncoderAuto	16,17,26,28
-
-EncoderAuto(bound)	27
-
-every	1,2,4,5,7,24,25
-
-everyRandom	2,7,26,27
-
-Filtered	18
-
-flashLED	1,2,3,8,9,21,22,28,31,32,33
-
-flashLED(pattern)	11
-
-flashLED(pwm)	10,12
-
-getCapacity	7
-
-getConfigInt	12,31,32,33
-
-getConfigstring	12
-
-getHWarn	7
-
-getQSize	7
-
-getValue	17
-
-incConfigInt	12
-
-Interrupt	29
-
-isFlashing	22,31,32,33
-
-Latching	8,10,11,12
-
-nTimes	3,4,5,6
-
-nTimesRandom	6
-
-onAlexaCommand	31,32,33,34
-
-once	3,6,19,26,27
-
-onceRandom	1,2,3,4,5,6,20,23,30
-
-onConfigItemChange	12,31,32,33
-
-onFactoryReset	33
-
-onMqttConnect	32,33,34
-
-onMqttDisconnect	33
-
-onReboot	33
-
-Output	1,2,3,4,5,8,9,10,11,12,15,16,17,21,22,28,29,31,32,33,34
-
-Polled	19
-
-publish	34
-
-pulseLED	15
-
-queueFunction	2,4,5
-
-randomTimes	6
-
-randomTimesRandom	6
-
-Raw	15,16,17
-
-reconfigurePin	19,20,23,30
-
-Reporting	20
-
-Retriggering	23
-
-setAlexaDeviceName	34
-
-setConfigInt	12
-
-setHookHeapThrottle	7
-
-setHookQueueThrottle	7
-
-std3StageButton	22,31,32,33,34
-
-stopLED	8,9,10,11,12,21,22,31,32,33
-
-subscribe	32,33,34
-
-ThreeStage	21
-
-throttlePin	17
-
-Timed	30
-
-when	5
-
-whenever	5
-
-
-© 2018 Phil Bowles
+© 2019 Phil Bowles
 * philbowles2012@gmail.com
 * http://www.github.com/philbowles
 * https://8266iot.blogspot.com
