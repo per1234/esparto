@@ -59,13 +59,13 @@ Correct. All your code runs when Esparto decides it is safe to do so (within the
 | onMqttConnect      | When a successful connection is made to an MQTT broker                                                              | None                                            | You must subscribe here to any topics of interest. This is the only place where it makes sense to do so                                                                           |
 | onMqttDisconnect   | When connection to MQTT broker is lost                                                                              | None                                            |                                                                                                                                                                                   |
 | setAlexaDeviceName | During startup or when device name is changed                                                                       | None, but see notes                             | You must return a const char* containing the name Alexa will know your device as                                                                                                  |
-| onAlexaCommand     | When an â€œonâ€ or â€œoffâ€ voice command is received                                                                     | A bool set to true for â€œonâ€ and false for â€œoffâ€ |                                                                                                                                                                                   |
-| onReboot           | Badly named, should be â€œjustBeforeRebootâ€ can be initiated by webUi, MQTT command, physical hardware on GPIO0       | None                                            | On exit from your code, the device will reboot (soft reset)                                                                                                                       |
-| onFactoryReset     | Badly named, should be â€œjustBeforeFactoryResetâ€ can be initiated by webUi, MQTT command, physical hardware on GPIO0 | None                                            | On exit from your code, the device will â€œhard resetâ€ to factory settings, i.e. all configuration data and saved WiFI connections will be lost                                     |
+| onAlexaCommand     | When an “on” or “off” voice command is received                                                                     | A bool set to true for “on” and false for “off” |                                                                                                                                                                                   |
+| onReboot           | Badly named, should be “justBeforeReboot” can be initiated by webUi, MQTT command, physical hardware on GPIO0       | None                                            | On exit from your code, the device will reboot (soft reset)                                                                                                                       |
+| onFactoryReset     | Badly named, should be “justBeforeFactoryReset” can be initiated by webUi, MQTT command, physical hardware on GPIO0 | None                                            | On exit from your code, the device will “hard reset” to factory settings, i.e. all configuration data and saved WiFI connections will be lost                                     |
 | addConfig          | During startup, to allow the user to add his/her own configuration Items                                            | None                                            | You must return a CFG_MAP containing your config items. See example xxx                                                                                                           |
-| onConfigItemChange | Whenever any config item changes value webUI, MQTT etc either through code,                                         | Item name, new value                            | You will â€œseeâ€ changes to system values as well as your own â€“ see example xxx                                                                                                     |
+| onConfigItemChange | Whenever any config item changes value webUI, MQTT etc either through code,                                         | Item name, new value                            | You will “see” changes to system values as well as your own – see example xxx                                                                                                     |
 | onPinChange        | A defined GPIO pin has had its config values changed                                                                | Pin number, 1st value, 2nd value                | He values depend on the type of pin, see the relevant pin documentation                                                                                                           |
-| addWebHandler      | During setup, this is the userâ€™s chance to override the default web UI page handler                                 | None                                            | You must return an AsyncWebHandler* this is a very advanced topic, see section 5.xxx                                                                                              |
+| addWebHandler      | During setup, this is the user’s chance to override the default web UI page handler                                 | None                                            | You must return an AsyncWebHandler* this is a very advanced topic, see section 5.xxx                                                                                              |
 | userLoop           | Once per main loop cycle, after all other actions complete                                                          | None                                            | This is included merely for future expansion. If you think you need to use it, you are almost certainly wrong: contact the author.                                                |
 
 Most commonly you will define GPIOs for input and output in setupHardware. Each of these may have its own callback for when activity occurs on the pin, though many pin types have a great amount of automatic functionality already built-in. In many common scenarios, there will be little for your code to do.
@@ -105,13 +105,13 @@ This enables extremely rapid development of "bomb-proof" code using mutiple simu
 *	Flexibility: create apps from simple "blinky" to fully-featured, complex, resilient IOT / home automation firmware
 *	Tested on a wide variety of hardware: ESP-01, SONOFF, Wemos D1, NodeMCU etc
 ## Rapid development
-*	Most common errors and â€œgotchasâ€ avoided
+*	Most common errors and “gotchas” avoided
 *	Many flexible input-pin options pre-configured e.g. fully debounced rotary encoder support with a single line of code
 *	Create MQTT controlled firmware in only 15 lines of code
 *	User code hugely simplified, consisting mainly of short callback functions
 *	Several flexible asynchronous LED flashing functions including slow PWM, arbitrary pattern e.g. "... --- ..." for SOS, 
-*	Modular: Esparto â€œLiteâ€ / Esparto WiFi / Esparto MQTT: use only what you need / your experience matches
-## â€œIndustrial strengthâ€
+*	Modular: Esparto “Lite” / Esparto WiFi / Esparto MQTT: use only what you need / your experience matches
+## “Industrial strength”
 *	Voice-driven compatibility with Amazon Alexa (via Belkin Wemo emulation)
 *	Copes resiliently with WiFi outage or total network loss, reconnecting automatically without requiring reboot
 *	Hardware features continue to function at all times irrespective of connection status
@@ -197,13 +197,13 @@ You must make sure your environment is at least as up-to-date as these versions.
 *	ESPAsyncUDP  1.0.0 https://github.com/me-no-dev/ESPAsyncUDP
 *	ESPAsyncWebserver  1.1.0 https://github.com/me-no-dev/ESPAsyncWebserver
 
-The developer â€œme-no-devâ€ (ironic understatement of the decade) needs special praise for these gems: Esparto could not work without them. Iâ€™d even go as far as to say that *no* robust ESP8266 firmware could. 
+The developer “me-no-dev” (ironic understatement of the decade) needs special praise for these gems: Esparto could not work without them. I’d even go as far as to say that *no* robust ESP8266 firmware could. 
 
 *	PubSubClient v2.6 https://github.com/knolleary/pubsubclient
 
-Be careful: there are two or three MQTT client libraries out there for Arduino â€“ do not be tempted to use any other than the above: they simply wonâ€™t work.
+Be careful: there are two or three MQTT client libraries out there for Arduino – do not be tempted to use any other than the above: they simply won’t work.
 
-Arduinoâ€™s own site has a good tutorial on adding 3rd-party libraries: https://www.arduino.cc/en/Guide/Libraries
+Arduino’s own site has a good tutorial on adding 3rd-party libraries: https://www.arduino.cc/en/Guide/Libraries
 
 ## Next, install Esparto's own libraries
 
@@ -221,7 +221,7 @@ Also make sure you choose 1M SPIFFS option for any 4MB device (e.g. Wemos D1 min
 # Hardware Compatibility
 
 Esparto has been tested on a variety of hardware. It will probably run on anything with an ESP-12 in it, but the official at-a-glance list is:
-*	ESP-01 (but why would you bother when thereâ€™sâ€¦)
+*	ESP-01 (but why would you bother when there’s…)
 *	ESP-01S
 *	Wemos D1
 *	Wemos D1 mini 
@@ -231,7 +231,7 @@ Esparto has been tested on a variety of hardware. It will probably run on anythi
 *	SONOFF Basic
 *	SONOFF S20
 *	SONOFF SV
-Iâ€™m very interested to hear of anybody getting it running on any other platform e.g. NodeMCU 1.0 will probably work, as will (I expect) other SONOFFs
+I’m very interested to hear of anybody getting it running on any other platform e.g. NodeMCU 1.0 will probably work, as will (I expect) other SONOFFs
 
 # The techniccal stuff - how to use it
 ## YOU NEED TO READ THIS FIRST
@@ -300,6 +300,7 @@ void flashPWM(int period,int duty,uint8_t pin=LED_BUILTIN);
 ```
 * *period*: Total time of flashing cycle in milliseconds
 * *duty*:  duty cycle from 1 to 100 as a percentage
+
 **Example:**  ```Esparto.flashPWM(1000,10); ```// will flash the BUILTIN_LED ON: 100ms OFF 900ms continuously (100 = 10% of 1000, 900ms is the remaning 90%)
 
 ### flashLED: 
@@ -308,6 +309,7 @@ flash GPIO pin in simple symmetric on / off fashion
 void flashLED(int rate,uint8_t pin=LED_BUILTIN);
 ```
 * *rate*: the symmetric on/off flash rate in milliseconds
+
 **Example:**  Esparto.flashPWM(1000); // will flash the BUILTIN_LED ON: 1000ms (1sec),  OFF 1000ms (1sec) continuously
 
 ### flashPattern: 
@@ -317,32 +319,216 @@ void flashPattern(const char * pattern,int timebase,uint8_t pin=LED_BUILTIN);
 ```
 * *pattern*: is string of "dots" . and "dashes" - much like Morse code. The . is a short blip (a "dit" in Morse) and the - is a long blip (a "dah") A space represents a quiet spot with no flash. The pattern is abitrary: it does not have to be valid Morse code.
 * *timebase*: a figure in milliseconds which the dots, dashes and spaces are "clocked at". A smaller value makes the pattern cycle faster. A good starting point is 300. Any less (quicker) tends to make the dots and dashes blend into each other while larger values (slower) tend require more concentration and patience to "read".
+
 **Example:** ```Esparto.flashPattern("   ... --- ...",300,D1);```// flashes Morse S-O-S on digital pin D1 (GPIO5 on a Wemos D1) at a pattern cycle rate of 300ms. Note the leading three spaces to "separate" each occurrence of the pattern. Without these the followint pattern will run directy on from the last and perhaps be confusing.
 Sometimes this may be what you want: Esparto.flashPattern(".-",300); will flash short/long/short/long/short/long...etc with no discernible gaps.
 
-### isFlashing: tests whether GPIO is currently flashing
+### isFlashing:
+tests whether GPIO is currently flashing
 ```cpp
 bool isFlashing(uint8_t pin=LED_BUILTIN); // returns true if pin is Flashing
 ```
+**Example:** ```if(Esparto.isFlashing(D2)) Serial.println("D2 (GPIO4) is flashing");```
 
-Example: if(Esparto.isFlashing(D2)) Serial.println("D2 (GPIO4) is flashing");
-
-### pulseLED: send a single timed pulse to GPIO
+### pulseLED:
+send a single timed pulse to GPIO
 ```cpp
 void pulseLED(int period,uint8_t pin=LED_BUILTIN);
 ```
 *period*: Total time of single flash pulse
 
-Example: Esparto.pulseLED(50); // flashes a 50ms "blip" on the BUILTIN_LED. Should be kept very short
+**Example:** ```Esparto.pulseLED(50); ```// flashes a 50ms "blip" on the BUILTIN_LED. Should be kept very short
 
-### stopLED: stop flashing on GPIO and set it to "OFF" (unlit) state
+### stopLED:
+stop flashing on GPIO and set it to "OFF" (unlit) state
 ```cpp
 void stopLED(uint8_t pin=LED_BUILTIN);
 ```
-Example: Esparto.stopLED(D2); // Immediately ceases all flashing on D2 and sets it OFF. It it not necessary to check first if is flashing: no harm will be done if it is already stopped
+**Example:** ```Esparto.stopLED(D2);``` // Immediately ceases all flashing on D2 and sets it OFF. It it not necessary to check first if is flashing: no harm will be done if it is already stopped
 
 ## Timers, task scheduling and the configuration system
 
+Esparto's main strength is in making everything "synchronous" - It takes the randomness of the real-world and smooths it out into an orderly queue of task to be peformed. Often these will be things like:
+
+* MQTT messages
+* GPIO activity from sensors, buttons etc
+* HTTP requests
+
+But you are also able to add your own tasks to the queue, either directly of as a results of a timer "tick". The timer functions are a way of avoiding the use of ```delay()``` function. This is a much misunderstood and much misused function which is the source of many problems to beginners. You don't need to use it with Esparto. In fact , if you  **do** you won't get any support, so: don't use it, use the timer functions instead
+
+The timers callback your function according to a variety of schedules, but fall into two classes:
+* continuous or "free-running" which, once started, will never stop unless you manually cancel them e.g. every, everyRandom
+* finite which will stop naturally at some point, e.g. once, nTimes etc. These *may* also be cancelled, but you may have to get in quickly
+Either way, each of the calls returns a value of type ESPARTO_TIMER. If you will never cancel a timer prematurely, you can safely discard or even ignore this value. If however there is a chance you may need to cancel the timer in future, you must hold on to this value and use it in the call to cancel at a later stage. Cancellation usually makes more sense with free-running timers
+
+The major difference though is that finite timers all have the ability to "chain" in another function when they complete. This allows you to build up complex pattern of time-dependent behaviour. For example, imagine you want to send some data according to a clocked scheme which consist of 8 bits then a stop bit. You could set an 8xtimes timer to the clock rate, then "chain in" a short function to send the stop bit, all in a single logical call
+
+**Common parameters**:
+
+Many calls have src, name as the final two parameters
+
+* ```ESPARTO_SOURCE src:``` A special code, used mainly in diagnostics. It indicates the "layer" of code where the call originated. It defaults to ESPARTO_SRC_USER i.e. your code, and is best left alone until you know more about Esparto
+* ```char * name:``` A "tag", used to identify this task in diagnostics. As with src, just leave it to the default, it makes no difference to the way the timer operates.
+**N.B.** src / name are likely to be removed in future releases and are omitted from the definitions below for reasons of clarity
+
+The "real"  parameters are one or more of these types:
+
+* ```ESPARTO_FN_VOID fn:``` The name of a callback function you provide, taking no parameters with no return value: ```void yourCallback(){ do something }``` which is the main target of the timer.
+* ```ESPARTO_FN_VOID chain:``` The name of a callback function you provide, taking no parameters with no return value: ```void yourCallback(){ do something }``` which is optionally called when the timer completes
+* ```uint32_t ms:``` The value in milliseconds before the callback function is executed
+* ```uint32_t n:``` For finite timers, the number of times callback function is executed
+* ```uint32_t Rmin:``` For random timers, The minimum random value
+* ```uint32_t Rmax:``` For random timers, The maximum random value
+
+### asyncQueueFunction: 
+**N.B.** You almost certainly need ```queueFunction``` and NOT this, but...From an asynchronous context, insert a task into the queue to run fn at the next schedule. This is the basis upon which Esparto does most of its "magic". It is 99.9% certain you should not be using it. If you don't understand what "From an asynchronous context" means, that's a 100% certainty you should NOT call this function. It is included here mainly for completeness.
+```cpp
+void asyncQueueFunction(fn,src,name="async");
+```
+**Example:** ```Esparto.asyncQueueFunction([](){ Serial.print("Unknown Command\n"); },ESPARTO_SRC_ALEXA,"notOnorOff");``` Runs the Lambda function to print "Unknown Command" at the next schedule, citing ALEXA as its source and will appear in diagnostic task dump tagged with the legend ""notOnorOff"
+
+### cancel: 
+Cancels a timer with immediate effect
+```cpp
+void cancel(ESPARTO_TIMER t);
+```
+*t*: The previously saved return value of a timer call
+
+**Example:** ```Esparto.cancel(myTimer);``` Immediately cancels the timer whose id was previously saved in myTimer. No harm will be done if the timer has already expired, or indeed if an invalid timer ID is provided in error
+
+### cancelAll: 
+Unilaterally cancels *all* timers with immediate effect. There are very few scenarios where you might need this. Use with great care, yours are not the only timers, Esparto has a few of its own - this may stop the system working and / or evev crash it.
+```cpp
+void cancelAll(fn=nullptr);
+```
+*fn*: The optional function to run once all timers are cancelled
+
+**Example:** ```Esparto.cancelAll();``` Immediately cancels all timers (Including any essential Esparto timers required for correct system function!) **USE WITH CAUTION**
+
+### every: 
+Continous repeated callback, Returns unique ID which can be used to subsequently cancel the timer
+```cpp
+ESPARTO_TIMER every(ms,fn);
+```
+**Example:** ```Esparto.every(1000,[](){ Serial.print("Tick\n"); });``` Print "Tick" every second
+
+### everyRandom: 
+Continous callback repeated at random intervals, Returns unique ID which can be used to subsequently cancel the timer
+```cpp
+ESPARTO_TIMER everyRandom(Rmin,Rmax,fn);
+```
+**Example:** ```Esparto.everyRandom(1000,5000,[](){ Serial.print("Tick\n"); });``` Print "Tick" continuously between 1s and 5s apart
+
+### nTimes: 
+Callback a finite number of times optionally chaining on completion, Returns unique ID which can be used to subsequently cancel the timer
+```cpp
+ESPARTO_TIMER nTimes(n,ms,fn,chain=nullptr);
+```
+**Example:** ```Esparto.nTimes(2,500,[](){ Serial.print("Hip!\n"); },[](){ Serial.print("Hooray!\n"); });``` Print "Hip!", "Hip!" and  "Hooray!"  1/2sec apart
+
+**Example:** ```Esparto.nTimes(3,250,[](){ Serial.print("Oggy!\n"); },[](){ Esparto.nTimes(3,500,[](){ Serial.print("Oi!\n"); }); });``` Print three emphatic "Oggy!"s followed by three slower "Oi!"s. The chain function calls nTimes again - it can call anything - thus very complex sequences can be constructed, but the syntax becomes very tricky very quickly, even when free-standing functions are used instead of lambdas.
+Helpful reference for those who do not understand the last example: https://en.wikipedia.org/wiki/Oggy_Oggy_Oggy
+
+### nTimesRandom: 
+Callback a finite number of times - randomly spaced - optionally chaining on completion, Returns unique ID which can be used to subsequently cancel the timer
+```cpp
+ESPARTO_TIMER nTimesRandom(n,Rmin,Rmax,fn,chain=nullptr);
+```
+**Example:** ```Esparto.nTimes(4,500,1500,[](){ Serial.print("Hic!\n"); },[](){ Serial.print("Hooray!\n"); });``` Print a slightly drunk sounding "Hic!", "Hic!","Hic!", "Hic!", "Hooray!"  each between  0.5sec and 1.5sec apart
+
+### once: 
+Callback once optionally chaining on completion, Returns unique ID which can be used to subsequently cancel the timer, although the cancel will obvioulsy have to be called before the ms timeout has expired, or the job will have already completed. The main use of this is to "offload" a long-running piece of work to the "background"
+```cpp
+ESPARTO_TIMER once(ms,fn,chain=nullptr);
+```
+**Example:** ```Esparto.once(1000 * 60 * 60,[](){ Serial.print("BOO!\n"); });``` Surprise yourself in an hour's time
+
+The following are all equivalent (if return values are ignored - none of these can be cancelled, they happen too fast!):
+
+**Example:** ```Esparto.once(0,[](){ Serial.print("Do it now!\n"); });``` zero delay makes it as close to "now" as possible (next schedule)- same as ```queueFunction```
+
+**Example:** ```Esparto.nTimes(1,0,[](){ Serial.print("Do it now!\n"); });``` Callback as close to "now" as possible (next schedule)
+
+**Example:** ```Esparto.queueFunction([](){ Serial.print("Do it now!\n"); });``` Callback as close to "now" as possible (next schedule)
+
+### onceRandom: 
+Callback once at a random future point, optionally chaining on completion, Returns unique ID which can be used to subsequently cancel the timer, although the cancel will obvioulsy have to be called before the ms timeout has expired, or the job will have already completed. The main use of this is to "offload" a long-running piece of work to the "background"
+```cpp
+ESPARTO_TIMER onceRandom(Rmin,Rmax,fn,chain=nullptr);
+```
+**Example:** ```Esparto.onceRandom(1000 * 60 * 60,2000 * 60 * 60,[](){ Serial.print("BOO!\n"); });``` REALLY Surprise yourself in an hour or two's time
+
+### queueFunction: 
+Place job in queue for "immediate" execution, where "immediate" is actually the next main loop scheduler call. The main use of this is to "offload" a long-running piece of work to the "background". See also once and nTimes
+```cpp
+void queueFunction(fn);
+```
+**Example:** ```Esparto.queueFunction([](){ Serial.print("BOO!\n"); });``` No Surprise at all, in fact if you blink, you will miss it
+
+### randomTimes: 
+Callback a random number of times optionally chaining on completion, Returns unique ID which can be used to subsequently cancel the timer
+```cpp
+ESPARTO_TIMER randomTimes(Nmin,Nmax,ms,fn,chain=nullptr);
+```
+* *Nmin*: uint32_t lower bound of random count
+* *Nmax*: uint32_t upper bound of random count
+
+**Example:**
+```cpp
+Serial.print("It's a ");
+Esparto.randomTimes(2,5,[](){ Serial.print("Mad,\n"); },[](){ Serial.print("World\n"); }); // I can never remember the film title, but I'm sure its between 2 and 5
+```
+
+Helpful reference for those who do not understand the last example: https://www.imdb.com/title/tt0057193/
+
+### randomTimesRandom: 
+Callback a random number of times at random intervals, optionally chaining on completion, Returns unique ID which can be used to subsequently cancel the timer
+```cpp
+ESPARTO_TIMER randomTimesRandom(tmin,tmax,Rmin,Rmax,fn,chain=nullptr);
+```
+* *Nmin*: uint32_t lower bound of random count
+* *Nmax*: uint32_t upper bound of random count
+
+**Example:** ```Esparto.randomTimes(2,5,250,1500,[](){ Serial.print("Knock!\n"); },[](){ Serial.print("They're obviously not in.\n"); }); ``` When there's no-one home.
+
+## "Watch point" functions
+
+**Common parameters**:
+
+The "when" and "whenever" API calls introduce another new type, ESPARTO_FN_WHEN which is a function that takes no parameters, but returns a uint32_t. Think of it as a "countdown" function as both API calls only do anything when the function returns zero.
+This makes them like a debugger "watch point". The "when" function can do anything(1), call anything(1) and as long as it returns a non-zero value, nothing will happen. As soon as it returns zero, the callback function is executed. This makes them very useful for debugging and not much sense for anything else. If you think you *need* either of these , you are probably doing something very wrong.
+
+(1) These operate by being repeatedly called at a very high rate of knots, so they are horribly inefficient and highly prejudicial to any other scheduled process, so you should keep what they do to an absolute minimum and only use them a last, desperate measure.
+
+* ```ESPARTO_FN_WHEN countdown:``` The name of a countdown function you provide, taking no parameters which returns uint32_t
+
+### when: 
+"Single-shot" watchpoint function which executes callback exactly once when countdown function returns zero
+```cpp
+void when(countdown,fn);
+```
+**Example:** ```Esparto.when([]()->uint32_t{ return nFreePins; },[](){ Serial.print("EEEK! We ran out of pins!!!\n"); }); ``` Print warning when some global variable "nFreePins" becomes zero
+
+**Example:** ```Esparto.when([]()->uint32_t{ return !Esparto.httpUpdateFinished(); },[](){ Esparto.reboot(666); }); ``` Imagine there is some function which performs an OTA code update (if available) and returns tru when it has successfully completed. Once thats done, this will make the device reboot to use the new code.
+
+**N.B.** *These are really bad examples, you would never do these things this way, it's difficult to think of "sensible" examples. This fact alone should warn you to steer clear at all costs*
+
+### whenever: 
+Rescheduling version of "when": a watchpoint function which executes callback every ESPARTO_IDLE_TIME (currently 25ms) while countdown function returns zero. This is even crazier than "when" itself since unless your callback cancels / negates / reverses the countdown condition before it exits, you will loop possibly forever and probably crash.
+```cpp
+void whenever(countdown,fn);
+```
+**Example:**
+```cpp
+Esparto.whenever([]()->uint32_t{ return nFreePins; },
+				 [](){
+					nFreePins=freeSomePinsSomehow(); // otherwise you are going to loop forever, or until some other high-priority process frees some pins...
+					if(nFreePins) Serial.printf("EEEK! We nearly ran out of pins!!! We now have %d free again\n",nFreePins);
+					else {
+						Serial.print("Oh dear. I crashed my ESP by ignoring the advice in the documentation!\n");
+						Serial.print("Guess that's the end of MY support!\n");
+				 });
+``` 
 
 ## GPIO handling
 
@@ -379,7 +565,9 @@ Demonstrates LED flashing with dot-dash pattern, similar in concept to Morse cod
 * "-" is a long pulse
 * " " is a gap
 So "   ... --- ..." would be S-O-S in Morse Code
-note ^              start with 3 gaps to break up repeating pattern up stop one running into the next 
+
+note ^              start with 3 gaps to break up repeating pattern up stop one running into the next
+
 note      ^   ^     same idea here to make the groups distinct from each other  
 
 Flashing the pattern requires a "timebase" (in mSec)  - this is just the speed @ which each dot/dash/space is acted upon. Lower values make the whole ppattern repeat faster, larger values make it slower
@@ -400,10 +588,15 @@ Output
 
 ## basics\Blinky_Xmas_Tree
  Demonstrates LED flashing simultaneously on multiple pins at different rates / different patterns
+ 
  Hardware required: LED plus current limiting resistor on each pin used:
+ 
  connect Vcc ------^V^V^--------D|----> GPIOx
+ 
                   resistor     LED
+				  
                 abt 220 Ohm
+				
 *calls*
 ```cpp
 flashLED
@@ -414,17 +607,23 @@ Output
 
 ## core\Basic_Features
 Demonstrates Basic 3-stage GPIO features of Esparto and elementary use of "lifecycle" callbacks
-Hardware Required:  
+**Hardware Required:**  
 This and many subsequent examples assume a simple "tact"  switch on GPIO  which pulls directly to GND when pressed
 
 First we see the "three-stage" functionality of this button.
+
 if pressed for a "short" period, a user defined function is called
+
 if held down for a "medium" period the built-in LED starts to flash and device will reboot when released
+
 if held down for a "long" period the built-in LED flashes rapidly and device will "Factory Reset" when released
 
 "short" is up to 2 seconds
+
 "medium" is 2-5secs **WARNING! Will reboot the device!**
+
 "long" is over 5s **WARNING will reset device, erase all configuration data and WiFI credentials!**
+
 *calls*
 ```cpp
 onFactoryReset
@@ -433,9 +632,56 @@ Output
 std3StageButton
 ```
 
-core\Config
+## core\Config
+Demonstrates SPIFFS-based Config system of name / value pairs
+ 
+Esparto hold a number of name / value pairs in Flash RAM (SPIFFS) between boots. All values are therefore available each time a sketch starts. They are "write-through" i.e. they are saved as soon as they are modified
+ 
+Esparto uses several for its internal functioning they are of the form $nn where nn is a number. Do not change Esparto config items unless you know EXACTLY what you are doing, and DO NOT USE 
+ $ for your own items
+ 
+Two "lifecycle" callbacks make life easy: 
+* ```addConfig``` allows you to add your items to the pool that Esparto
+ automatically saves and restores
+* ```onConfigItemChange``` is called with the name and new value of any item whose value changes
+ 
+Don't worry too much about ESPARTO_CFG_MAP and the syntax required. if you have used other languages, think of it as an "associative array" or an indexed map
+ 
+You will need to run the program sevral times to see the changed values persist across boots
+ 
+All items are held internal as a std::string do not worry if you don't know what that means, they can be considered in most cases just like an Arduino String
+ 
+In both cases the "C String" char* to the actual bytes can be retrieved using ```xxx.c_str()```  but this is a pain, so Esparto uses the handy **CSTR( )** macro whenever a char* is required e.g. in print statments etc
+ 
+Esparto also provides two very useful general-purpose functions for converting integers to string / String:
+
+ ```stringFromInt```  // for std::string {you can safely ignore this if you don't understand it)
+ ```StringFromInt```  // for Arduino String
+
+**Hardware Required:**  
+A simple "tact"  switch on GPIO  which pulls directly to GND when pressed
+
 *calls*
-core\Timers1_simple
+```cpp
+addConfig
+decConfigInt
+getConfig
+getConfigInt
+getConfigString
+getConfigstring
+incConfigInt
+minusEqualsConfigInt
+onConfigItemChange
+Output
+plusEqualsConfigInt
+setConfig
+setConfigInt
+setConfigString
+setConfigstring
+std3StageButton
+```
+
+## core\Timers1_simple
 *calls*
 core\Timers2_lambda
 *calls*
@@ -523,7 +769,7 @@ The API calls are again broken up by group, showing which (by number) of the abo
 
 
 
-Â© 2019 Phil Bowles
+© 2019 Phil Bowles
 * philbowles2012@gmail.com
 * http://www.github.com/philbowles
 * https://8266iot.blogspot.com
