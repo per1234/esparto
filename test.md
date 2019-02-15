@@ -275,21 +275,28 @@ In summary I am happy to try to help, provided you show willing by reading the d
 
 ## Introduction
 
-The API is broken down by functional area, corresponding broadly with the example skecth folders. They are laid out in the order a beginner might start experimentation, but certainly in a "ground up" order as far as understanding Esprto. Try as far as possible to adhere to that order while "getting used" to it.
+The API is broken down by functional area, corresponding broadly with the example sketch folders. They are laid out in the order a beginner might start experimentation, but certainly in a "ground up" order as far as understanding Esprto. Try as far as possible to adhere to that order while "getting used" to it.
 
-## The areas are:
+* Simple Flashing functions
+* Timers, task scheduling and the configuration system
+* GPIO handling
+* WiFI, webUI, web REST
+* MQTT
+* Advanced / complex topics / expert diagnostics
+* A bit of fun - some fripperies that I built along the way to test various things)
+
 ### Simple Flashing functions
 
 Everyone Loves a "Blinky": it's the "Hello World" of IOT / embedded systems. Just to get you into the Esparto sing of things, eher are some somple Flashinf routines. Technically they are "out of order" and we shouldn't rellay look at them till later, but doing it this way gets you actually *doing* things straight away.
 
-Common parameters: ```cpp uint8_t pin ``` : The GPIO pin number to be flashed. This must have previously been the subject of an ```cpp Output ``` call.
+Common parameters: uint8_t pin: The GPIO pin number to be flashed. This must have previously been the subject of an Output call.
 
 ```cpp
 void flashPWM(int period,int duty,uint8_t pin=LED_BUILTIN);
 ```
 *period*: Total time of flashign cycle in milliseconds
 *duty*:  duty cycle from 1 to 100 as a percentage
-Example: ```cpp Esparto.flashPWM(1000,10); // will flash the BUILTIN_LED ON: 100ms OFF 900ms continuously (100 = 10% of 1000, 900ms is the remaning 90%) ```
+Example: Esparto.flashPWM(1000,10); // will flash the BUILTIN_LED ON: 100ms OFF 900ms continuously (100 = 10% of 1000, 900ms is the remaning 90%)
 
 ```cpp
 void flashLED(int rate,uint8_t pin=LED_BUILTIN);
