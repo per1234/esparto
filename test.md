@@ -299,9 +299,10 @@ flash GPIO pin in Pulse-Width Modulation fashion given period / duty cycle
 void flashPWM(int period,int duty,uint8_t pin=LED_BUILTIN);
 ```
 *period*: Total time of flashing cycle in milliseconds
+
 *duty*:  duty cycle from 1 to 100 as a percentage
 
-**Example:**  ```Esparto.flashPWM(1000,10); ```// will flash the BUILTIN_LED ON: 100ms OFF 900ms continuously (100 = 10% of 1000, 900ms is the remaning 90%)
+**Example:**  ```cpp Esparto.flashPWM(1000,10); ```// will flash the BUILTIN_LED ON: 100ms OFF 900ms continuously (100 = 10% of 1000, 900ms is the remaning 90%)
 
 ### flashLED: 
 flash GPIO pin in simple symmetric on / off fashion
@@ -310,7 +311,7 @@ void flashLED(int rate,uint8_t pin=LED_BUILTIN);
 ```
 *rate*: the symmetric on/off flash rate in milliseconds
 
-Example: Esparto.flashPWM(1000); // will flash the BUILTIN_LED ON: 1000ms (1sec),  OFF 1000ms (1sec) continuously
+**Example:**  Esparto.flashPWM(1000); // will flash the BUILTIN_LED ON: 1000ms (1sec),  OFF 1000ms (1sec) continuously
 
 ### flashPattern: flash GPIO pin in arbitrary pattern represnted by dots / dashes
 ```cpp
