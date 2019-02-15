@@ -59,13 +59,13 @@ Correct. All your code runs when Esparto decides it is safe to do so (within the
 | onMqttConnect      | When a successful connection is made to an MQTT broker                                                              | None                                            | You must subscribe here to any topics of interest. This is the only place where it makes sense to do so                                                                           |
 | onMqttDisconnect   | When connection to MQTT broker is lost                                                                              | None                                            |                                                                                                                                                                                   |
 | setAlexaDeviceName | During startup or when device name is changed                                                                       | None, but see notes                             | You must return a const char* containing the name Alexa will know your device as                                                                                                  |
-| onAlexaCommand     | When an ìonî or ìoffî voice command is received                                                                     | A bool set to true for ìonî and false for ìoffî |                                                                                                                                                                                   |
-| onReboot           | Badly named, should be ìjustBeforeRebootî can be initiated by webUi, MQTT command, physical hardware on GPIO0       | None                                            | On exit from your code, the device will reboot (soft reset)                                                                                                                       |
-| onFactoryReset     | Badly named, should be ìjustBeforeFactoryResetî can be initiated by webUi, MQTT command, physical hardware on GPIO0 | None                                            | On exit from your code, the device will ìhard resetî to factory settings, i.e. all configuration data and saved WiFI connections will be lost                                     |
+| onAlexaCommand     | When an ‚Äúon‚Äù or ‚Äúoff‚Äù voice command is received                                                                     | A bool set to true for ‚Äúon‚Äù and false for ‚Äúoff‚Äù |                                                                                                                                                                                   |
+| onReboot           | Badly named, should be ‚ÄújustBeforeReboot‚Äù can be initiated by webUi, MQTT command, physical hardware on GPIO0       | None                                            | On exit from your code, the device will reboot (soft reset)                                                                                                                       |
+| onFactoryReset     | Badly named, should be ‚ÄújustBeforeFactoryReset‚Äù can be initiated by webUi, MQTT command, physical hardware on GPIO0 | None                                            | On exit from your code, the device will ‚Äúhard reset‚Äù to factory settings, i.e. all configuration data and saved WiFI connections will be lost                                     |
 | addConfig          | During startup, to allow the user to add his/her own configuration Items                                            | None                                            | You must return a CFG_MAP containing your config items. See example xxx                                                                                                           |
-| onConfigItemChange | Whenever any config item changes value webUI, MQTT etc either through code,                                         | Item name, new value                            | You will ìseeî changes to system values as well as your own ñ see example xxx                                                                                                     |
+| onConfigItemChange | Whenever any config item changes value webUI, MQTT etc either through code,                                         | Item name, new value                            | You will ‚Äúsee‚Äù changes to system values as well as your own ‚Äì see example xxx                                                                                                     |
 | onPinChange        | A defined GPIO pin has had its config values changed                                                                | Pin number, 1st value, 2nd value                | He values depend on the type of pin, see the relevant pin documentation                                                                                                           |
-| addWebHandler      | During setup, this is the userís chance to override the default web UI page handler                                 | None                                            | You must return an AsyncWebHandler* this is a very advanced topic, see section 5.xxx                                                                                              |
+| addWebHandler      | During setup, this is the user‚Äôs chance to override the default web UI page handler                                 | None                                            | You must return an AsyncWebHandler* this is a very advanced topic, see section 5.xxx                                                                                              |
 | userLoop           | Once per main loop cycle, after all other actions complete                                                          | None                                            | This is included merely for future expansion. If you think you need to use it, you are almost certainly wrong: contact the author.                                                |
 
 Most commonly you will define GPIOs for input and output in setupHardware. Each of these may have its own callback for when activity occurs on the pin, though many pin types have a great amount of automatic functionality already built-in. In many common scenarios, there will be little for your code to do.
@@ -105,13 +105,13 @@ This enables extremely rapid development of "bomb-proof" code using mutiple simu
 *	Flexibility: create apps from simple "blinky" to fully-featured, complex, resilient IOT / home automation firmware
 *	Tested on a wide variety of hardware: ESP-01, SONOFF, Wemos D1, NodeMCU etc
 ## Rapid development
-*	Most common errors and ìgotchasî avoided
+*	Most common errors and ‚Äúgotchas‚Äù avoided
 *	Many flexible input-pin options pre-configured e.g. fully debounced rotary encoder support with a single line of code
 *	Create MQTT controlled firmware in only 15 lines of code
 *	User code hugely simplified, consisting mainly of short callback functions
 *	Several flexible asynchronous LED flashing functions including slow PWM, arbitrary pattern e.g. "... --- ..." for SOS, 
-*	Modular: Esparto ìLiteî / Esparto WiFi / Esparto MQTT: use only what you need / your experience matches
-## ìIndustrial strengthî
+*	Modular: Esparto ‚ÄúLite‚Äù / Esparto WiFi / Esparto MQTT: use only what you need / your experience matches
+## ‚ÄúIndustrial strength‚Äù
 *	Voice-driven compatibility with Amazon Alexa (via Belkin Wemo emulation)
 *	Copes resiliently with WiFi outage or total network loss, reconnecting automatically without requiring reboot
 *	Hardware features continue to function at all times irrespective of connection status
@@ -197,13 +197,13 @@ You must make sure your environment is at least as up-to-date as these versions.
 *	ESPAsyncUDP  1.0.0 https://github.com/me-no-dev/ESPAsyncUDP
 *	ESPAsyncWebserver  1.1.0 https://github.com/me-no-dev/ESPAsyncWebserver
 
-The developer ìme-no-devî (ironic understatement of the decade) needs special praise for these gems: Esparto could not work without them. Iíd even go as far as to say that *no* robust ESP8266 firmware could. 
+The developer ‚Äúme-no-dev‚Äù (ironic understatement of the decade) needs special praise for these gems: Esparto could not work without them. I‚Äôd even go as far as to say that *no* robust ESP8266 firmware could. 
 
 *	PubSubClient v2.6 https://github.com/knolleary/pubsubclient
 
-Be careful: there are two or three MQTT client libraries out there for Arduino ñ do not be tempted to use any other than the above: they simply wonít work.
+Be careful: there are two or three MQTT client libraries out there for Arduino ‚Äì do not be tempted to use any other than the above: they simply won‚Äôt work.
 
-Arduinoís own site has a good tutorial on adding 3rd-party libraries: https://www.arduino.cc/en/Guide/Libraries
+Arduino‚Äôs own site has a good tutorial on adding 3rd-party libraries: https://www.arduino.cc/en/Guide/Libraries
 
 ## Next, install Esparto's own libraries
 
@@ -221,7 +221,7 @@ Also make sure you choose 1M SPIFFS option for any 4MB device (e.g. Wemos D1 min
 # Hardware Compatibility
 
 Esparto has been tested on a variety of hardware. It will probably run on anything with an ESP-12 in it, but the official at-a-glance list is:
-*	ESP-01 (but why would you bother when thereísÖ)
+*	ESP-01 (but why would you bother when there‚Äôs‚Ä¶)
 *	ESP-01S
 *	Wemos D1
 *	Wemos D1 mini 
@@ -231,7 +231,7 @@ Esparto has been tested on a variety of hardware. It will probably run on anythi
 *	SONOFF Basic
 *	SONOFF S20
 *	SONOFF SV
-Iím very interested to hear of anybody getting it running on any other platform e.g. NodeMCU 1.0 will probably work, as will (I expect) other SONOFFs
+I‚Äôm very interested to hear of anybody getting it running on any other platform e.g. NodeMCU 1.0 will probably work, as will (I expect) other SONOFFs
 
 # The techniccal stuff - how to use it
 ## YOU NEED TO READ THIS FIRST
@@ -293,17 +293,18 @@ Everyone Loves a "Blinky": it's the "Hello World" of IOT / embedded systems. Jus
 
 ```uint8_t pin:``` The GPIO pin number to be flashed. This must have previously been the subject of an Output call.
 
-### flashPWM: flash GPIO pin in Pulse-Width Modulation fashion given period / duty cycle
+### flashPWM: 
+flash GPIO pin in Pulse-Width Modulation fashion given period / duty cycle
 ```cpp
 void flashPWM(int period,int duty,uint8_t pin=LED_BUILTIN);
 ```
 *period*: Total time of flashing cycle in milliseconds
-
 *duty*:  duty cycle from 1 to 100 as a percentage
 
-Example: Esparto.flashPWM(1000,10); // will flash the BUILTIN_LED ON: 100ms OFF 900ms continuously (100 = 10% of 1000, 900ms is the remaning 90%)
+**Example:**  ```Esparto.flashPWM(1000,10); ```// will flash the BUILTIN_LED ON: 100ms OFF 900ms continuously (100 = 10% of 1000, 900ms is the remaning 90%)
 
-### flashLED: flash GPIO pin in simple symmetric on / off fashion
+### flashLED: 
+flash GPIO pin in simple symmetric on / off fashion
 ```cpp
 void flashLED(int rate,uint8_t pin=LED_BUILTIN);
 ```
@@ -525,7 +526,7 @@ The API calls are again broken up by group, showing which (by number) of the abo
 
 
 
-© 2019 Phil Bowles
+¬© 2019 Phil Bowles
 * philbowles2012@gmail.com
 * http://www.github.com/philbowles
 * https://8266iot.blogspot.com
