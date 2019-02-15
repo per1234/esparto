@@ -289,44 +289,56 @@ The API is broken down by functional area, corresponding broadly with the exampl
 
 Everyone Loves a "Blinky": it's the "Hello World" of IOT / embedded systems. Just to get you into the Esparto sing of things, eher are some somple Flashinf routines. Technically they are "out of order" and we shouldn't rellay look at them till later, but doing it this way gets you actually *doing* things straight away.
 
-Common parameters: uint8_t pin: The GPIO pin number to be flashed. This must have previously been the subject of an Output call.
+**Common parameters**:
+```uint8_t pin:``` The GPIO pin number to be flashed. This must have previously been the subject of an Output call.
 
 ```cpp
 void flashPWM(int period,int duty,uint8_t pin=LED_BUILTIN);
 ```
 *period*: Total time of flashign cycle in milliseconds
 *duty*:  duty cycle from 1 to 100 as a percentage
+
 Example: Esparto.flashPWM(1000,10); // will flash the BUILTIN_LED ON: 100ms OFF 900ms continuously (100 = 10% of 1000, 900ms is the remaning 90%)
+
 
 ```cpp
 void flashLED(int rate,uint8_t pin=LED_BUILTIN);
 ```
 *rate*: the symmetric on/off flash rate in milliseconds
+
 Example: Esparto.flashPWM(1000); // will flash the BUILTIN_LED ON: 1000ms (1sec),  OFF 1000ms (1sec) continuously
+
 
 ```cpp
 void flashPattern(const char * pattern,int timebase,uint8_t pin=LED_BUILTIN);
 ```
 *pattern*: is string of "dots" . and "dashes" - much like Morse code. The . is a short blip (a "dit" in Morse) and the - is a long blip (a "dah") A space represents a quiet spot with no flash. The pattern is abitrary: it does not have to be valid Morse code.
 *timebase*: a figure in milliseconds which the dots, dashes and spaces are "clocked at". A smaller value makes the pattern cycle faster. A good starting point is 300. Any less (quicker) tends to make the dots and dashes blend into each other while larger values (slower) tend require more concentration and patience to "read".
+
 Example: Esparto.flashPattern("   ... --- ...",300,D1); // flashes Morse S-O-S on digital pin D1 (GPIO5 on a Wemos D1) at a apttern cycle rate of 300ms. Note the leading three spaces to "separate" each occurrence of the pattern. Without these the followint pattern will run directy on from the last and perhaps be confusing.
 Sometimes this may be what you want: Esparto.flashPattern(".-",300); will flash short/long/short/long/short/long...etc with no discernible gaps.
+
 
 ```cpp
 bool isFlashing(uint8_t pin=LED_BUILTIN); // returns true if pin is Flashing
 ```
+
 Example: if(Esparto.isFlashing(D2)) Serial.println("D2 (GPIO4) is flashing");
+
 
 ```cpp
 void pulseLED(int period,uint8_t pin=LED_BUILTIN);
 ```
 *period*: Total time of single flash pulse
+
 Example: Esparto.pulseLED(50); // flashes a 50ms "blip" on the BUILTIN_LED. Should be kept very short
+
 
 ```cpp
 void stopLED(uint8_t pin=LED_BUILTIN);
 ```
 Example: Esparto.stopLED(D2); // Immediately ceases all flashing on D2 and sets it OFF. It it not necessary to check first if is flashing: no harm will be done if it is already stopped
+
 
 ### Timers, task scheduling and the configuration system
 ### GPIO handling
