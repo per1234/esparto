@@ -9,7 +9,7 @@ All the examples require that the LED (most often the BUILTIN_LED) is defined as
 **Common parameters**:
 
 `uint8_t pin:` The GPIO pin number to be flashed. This must have previously been the subject of an Output call.
-...
+***
 # flashPWM: 
 flash GPIO pin in Pulse-Width Modulation fashion given period / duty cycle
 ```cpp
@@ -23,7 +23,7 @@ void flashPWM(int period,int duty,uint8_t pin=LED_BUILTIN);
 _*Sample sketches: view / run in the order shown*_
 * [Blinky_PWM ](../master/examples/basics/Blinky_PWM/Blinky_PWM.ino)
 * [Blinky_Xmas_Tree ](../master/examples/basics/Blinky_Xmas_Tree/Blinky_Xmas_Tree.ino)
-...
+***
 # flashLED: 
 flash GPIO pin in simple symmetric on / off fashion
 ```cpp
@@ -49,7 +49,7 @@ _*Sample sketches: view / run in the order shown*_
 * [Tasks_Spoolers ](../master/examples/xpert/Tasks_Spoolers/Tasks_Spoolers.ino)
 * [EncoderAuto_Variable_Blinky ](../master/examples/zz_fun/EncoderAuto_Variable_Blinky/EncoderAuto_Variable_Blinky.ino)
 * [MQTT_Blinky ](../master/examples/wifi_mqtt/MQTT_Blinky/MQTT_Blinky.ino)
-...
+***
 # flashPattern: 
 flash GPIO pin in arbitrary pattern represnted by dots / dashes
 ```cpp
@@ -65,7 +65,7 @@ _*Sample sketches: view / run in the order shown*_
 * [Blinky_Pattern ](../master/examples/basics/Blinky_Pattern/Blinky_Pattern.ino)
 * [Blinky_Xmas_Tree ](../master/examples/basics/Blinky_Xmas_Tree/Blinky_Xmas_Tree.ino)
 * [WiFi_Warning ](../master/examples/wifi/WiFi_Warning/WiFi_Warning.ino)
-...
+***
 # isFlashing:
 tests whether GPIO is currently flashing
 ```cpp
@@ -79,7 +79,7 @@ _*Sample sketches: view / run in the order shown*_
 * [MQTT_Wildcards ](../master/examples/wifi_mqtt/MQTT_Wildcards/MQTT_Wildcards.ino)
 * [Tasks_Spoolers ](../master/examples/xpert/Tasks_Spoolers/Tasks_Spoolers.ino)
 * [MQTT_Blinky ](../master/examples/wifi_mqtt/MQTT_Blinky/MQTT_Blinky.ino)
-...
+***
 # pulseLED:
 send a single timed pulse to GPIO
 ```cpp
@@ -94,7 +94,7 @@ _*Sample sketches: view / run in the order shown*_
 * [Timers7_mayhem ](../master/examples/core/Timers7_mayhem/Timers7_mayhem.ino)
 * [Pins9_ThreeStage ](../master/examples/gpio/Pins9_ThreeStage/Pins9_ThreeStage.ino)
 * [VeryUselessMeter_3 ](../master/examples/zz_fun/VeryUselessMeter_3/VeryUselessMeter_3.ino)
-...
+***
 # stopLED:
 stop flashing on GPIO and set it to "OFF" (unlit) state
 ```cpp
