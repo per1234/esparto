@@ -51,15 +51,16 @@ _*Sample sketches: view / run in the order shown*_
 * [MQTT_Blinky ](../master/examples/wifi_mqtt/MQTT_Blinky/MQTT_Blinky.ino)
 ***
 # flashPattern: 
-flash GPIO pin in arbitrary pattern represnted by dots / dashes
+flash GPIO pin in arbitrary pattern represented by dots / dashes
 ```cpp
 void flashPattern(const char * pattern,int timebase,uint8_t pin=LED_BUILTIN);
 ```
 * *pattern*: is string of "dots" . and "dashes" - much like Morse code. The . is a short blip (a "dit" in Morse) and the - is a long blip (a "dah") A space represents a quiet spot with no flash. The pattern is abitrary: it does not have to be valid Morse code.
 * *timebase*: a figure in milliseconds which the dots, dashes and spaces are "clocked at". A smaller value makes the pattern cycle faster. A good starting point is 300. Any less (quicker) tends to make the dots and dashes blend into each other while larger values (slower) tend require more concentration and patience to "read".
 
-**Example:** `Esparto.flashPattern("   ... --- ...",300,D1);` // flashes Morse S-O-S on digital pin D1 (GPIO5 on a Wemos D1) at a pattern cycle rate of 300ms. Note the leading three spaces to "separate" each occurrence of the pattern. Without these the followint pattern will run directy on from the last and perhaps be confusing.
-Sometimes this may be what you want: Esparto.flashPattern(".-",300); will flash short/long/short/long/short/long...etc with no discernible gaps.
+**Example:** `Esparto.flashPattern("   ... --- ...",300,D1);` // flashes Morse S-O-S on digital pin D1 (GPIO5 on a Wemos D1) at a pattern cycle rate of 300ms. Note the leading three spaces to "separate" each occurrence of the pattern. Without these the following pattern will run directy on from the last and perhaps be confusing.
+
+Sometimes this may be what you want: `Esparto.flashPattern(".-",300);` will flash short/long/short/long/short/long...etc with no discernible gaps.
 
 _*Sample sketches: view / run in the order shown*_
 * [Blinky_Pattern ](../master/examples/basics/Blinky_Pattern/Blinky_Pattern.ino)
@@ -111,3 +112,10 @@ _*Sample sketches: view / run in the order shown*_
 * [MQTT_Wildcards ](../master/examples/wifi_mqtt/MQTT_Wildcards/MQTT_Wildcards.ino)
 * [Tasks_Spoolers ](../master/examples/xpert/Tasks_Spoolers/Tasks_Spoolers.ino)
 * [MQTT_Blinky ](../master/examples/wifi_mqtt/MQTT_Blinky/MQTT_Blinky.ino)
+
+
+© 2019 Phil Bowles
+* philbowles2012@gmail.com
+* http://www.github.com/philbowles
+* https://8266iot.blogspot.com
+
