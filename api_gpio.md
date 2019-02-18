@@ -5,26 +5,38 @@
 
 ## Important concepts: "raw" vs "cooked" states
 
-Esparto introduces the idea of different physical and logical pin states. It all the physical state (i.e. from digitalRead) "raw" and the logical state "cooked". Consider the Debounced pin as an example. The "raw" state will oscillate rapidly ("bounce") as the button is pressed or released - this is its raw state. Once the bouncing has stopped, Esparto signals the final "cooked" state.
-Another example is the Latching pin. One pair of down-up presses put it into one state (latched), another down-up sequence un-latches it. On the first press/release, the raw state goes 1/0 and the cooked state is now 1 (latched), Repeating the process has raw going 1/0 again, this time the cooked state is unlatched.
-In order for this to work (as well as features like the real-time GPIO lights in the web UI) you need to call Esparto.digitalWrite() in preference to the "native" digitalWrite()
+Esparto introduces the idea of different physical and logical pin states. It calls the physical state (i.e. from digitalRead) "raw" and the logical state "cooked". Consider the Debounced pin as an example. The "raw" state will oscillate rapidly ("bounce") as the button is pressed or released - these are its raw states. Once the bouncing has stopped, Esparto signals the final "cooked" state.
+Another example is the Latching pin. One pair of down-up presses put it into one state (latched), another down-up sequence un-latches it. On the first press/release, the raw state goes 1/0 and the cooked state is now 1 (latched), Repeating the process has raw going 1/0 again, this time the cooked state is 0 (un-latched).
+In order for this to work (as well as features like the real-time GPIO lights in the web UI) you need to call `Esparto.digitalWrite()` in preference to the "native" `digitalWrite()`
 
 ## Important concepts: "Active High" vs "Active Low" and logical ON/OFF
 
-Many beginners are confused by e.g. LEDs that will light up when they write "digitalWrite(LED_PIN,LOW)" they mentally associate electricity flowing with +5v and HIGH GPIO states. For them, Esparto introducs logical states of ON an OFF. Once an Output is defined as active HIGH or LOW, then a logicalWrite with ON will always set it active and OFF inactive etc.
+Many beginners are confused by e.g. LEDs that will light up when they write `digitalWrite(LED_PIN,LOW)` as they mentally associate electricity flowing with +5v and HIGH GPIO states. For them, Esparto introducs logical states of ON and OFF. Once an Output is correctly defined as active HIGH or LOW, then a logicalWrite with ON will always set it active and OFF inactive etc.
 
 ## Important concepts: Throttling
 
-In the real world, some GPIO pins can change so fast that no code can realistically "keep up". Esparto allows you the "throttle" a pin, i.e. set a limit on how many 1s and 0s per second you want it to let through. You need to read "Known Issues" in realtion to the web UI as to how this might affect your view of the "real-time" GPIO lights
+In the real world, some GPIO pins can change so fast that no code can realistically "keep up". Esparto allows you to "throttle" a pin, i.e. set a limit on how many 1s and 0s per second you want it to let through. You need to read [Known Issues](../master/README.md#Known Issues) in relation to the web UI as to how this might affect your view of the "real-time" GPIO lights
 The "granularity" is one second, i.e. if a pin is limited to 100 and is physically "firing" at a constant rate of 1000/s then it will fall silent after 0.1sec and stay silent for another 0.9 sec. This can lead to a very "choppy" response
 
 # GPIO API Calls
-
-**Common parameters**:
+## Common parameters:
 
 * `uint8_t pin:` The GPIO pin number
 * `uint8_t state:` a binary GPIO pin state HIGH / LOW, 1/0, true/false
 * `ESPARTO_LOGICAL_STATE onoff:` ON or OFF
+* `uint8_t mode:` normal ArduinoIDE mode: INPUT or INPUT_PULLUP depending on whether you have external pullup resistors
+* `ESPARTO_FN_SV fn:` The name of a callback function you provide, taking two integers: `void myGPIOCallback(int i1, int i2){ do something }` In all cases, i1 is the state of the pin that caused the callback event. In many cases i2 is the micros() value of when the event occured. See table at the end of this section
+* `bool active:` HIGH / LOW Whether a feature is "Active High" or "Active Low"
+* `uint32_t dbt:` The debounce time in milliseconds
+
+**Encoder types only**:
+
+* int* pV:	pointer to a global whose value will be automatically adjusted as encoder is rotated
+* *int Vmin*: minimum value that encoder may hold
+* *int Vmax*: maximum value that encoder may hold
+* *int Vinc*: amount to increment / decrement on each click CW / CCW
+* *int Vset*: initial "set point" value. default is halfway between Vmin and Vmax
+
 ***
 # digitalWrite: 
 Set GPIO to given state and update internal settings to maintain GPIO awareness. This **must** be used in preference to "bare" digitalWrite
@@ -94,23 +106,6 @@ _*Sample sketches: view / run in the order shown*_
 * [Pins14_Throttling ](../master/examples/gpio/Pins14_Throttling/Pins14_Throttling.ino)
 ***
 # GPIO Pin Types
-**Common parameters**:
-
-* `uint8_t pin:` The GPIO pin number
-* `uint8_t mode:` normal ArduinoIDE mode: INPUT or INPUT_PULLUP depending on whether you have external pullup resistors
-* `ESPARTO_FN_SV fn:` The name of a callback function you provide, taking two integers: ```void myGPIOCallback(int i1, int i2){ do something }``` In all cases, i1 is the state of the pin that caused the callback event. In many cases i2 is the micros() value of when the event occured. See table at the end of this section
-* `bool active:` HIGH / LOW Whether a feature is "Active High" or "Active Low"
-* `uint32_t dbt:` The debounce time in milliseconds
-
-**Encoder types only**:
-
-* int* pV:	pointer to a global whose value will be automatically adjusted as encoder is rotated
-* *int Vmin*: minimum value that encoder may hold
-* *int Vmax*: maximum value that encoder may hold
-* *int Vinc*: amount to increment / decrement on each click CW / CCW
-* *int Vset*: initial "set point" value. default is halfway between Vmin and Vmax
-
-***
 # Debounced: 
 Creates a debounced input pin
 ```cpp
@@ -193,7 +188,7 @@ The following functions may be used to manipulate the EncoderAuto:
 
 ```cpp
 int getValue();// int v=eea->getValue(); // v= current EncoderAuto value
-void reconfigure(Vmin,Vmax,Vinc,Vset=0);// eea->reconfigure(-273,212,32,0); 
+void reconfigure(Vmin,Vmax,Vinc,Vset=0);// eea->reconfigure(-273,212,32,0); When Vset = 0 it will be automatically centered
 void setValue(int);// eea->setValue(666); // set EncoderAuto value to 666 (if limits allow). This will be constrained between Vmin and Vmax
 void setMin();// eea->setMin(); // set EncoderAuto to minimum value
 void setMax();// eea->setMax(); //set EncoderAuto to maximum value		
@@ -375,8 +370,8 @@ _*Sample sketches: view / run in the order shown*_
 * [MQTT_Blinky ](../master/examples/wifi_mqtt/MQTT_Blinky/MQTT_Blinky.ino)
 ***
 # ThreeStage: 
-(See also std3StageButton) A "standard" 3-stage button provides pre-defined actions for the "medium" and "long" phases of a ThreeStage input on GPIO0. Medium press causes reboot and long press causes Factory resest, each presaged by an increasing flash rate of the BUILTIN_LED. It remins only for the user to define the "short" i.e. "normal" press function.
-If a DefaultOutput pin has been previously defined, the "short" press function can be omitted and will cause whatever default action has been defined by the DefaultOutput
+(See also std3StageButton, Reporting) A ThreeStage button defines "short", "medium" and "long" presses. It also has a progress function that calls back periodically so that the user can activate an indication (audio, visual etc) of the amount of time the button is being held down.
+The user determines what "short" "medium" and "long" mean by setting the m and l values: short < m < medium < l < long
 ```cpp
 void ThreeStage(pin,mode,dbt,uint32_t freq,fnP,fnS,uint32_t m,fnM,uint32_t l,fnL);
 ```
@@ -435,6 +430,8 @@ _*Sample sketches: view / run in the order shown*_
 | Timed         | dbt      | twoState  |
 
 
+
+***
 © 2019 Phil Bowles
 * philbowles2012@gmail.com
 * http://www.github.com/philbowles

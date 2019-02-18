@@ -78,8 +78,8 @@ Correct. All your code runs when Esparto decides it is safe to do so (within the
 | onFactoryReset     | Badly named, should be “justBeforeFactoryReset” can be initiated by webUi, MQTT command, physical hardware on GPIO0 | None                                            | On exit from your code, the device will “hard reset” to factory settings, i.e. all configuration data and saved WiFI connections will be lost                                     |
 | addConfig          | During startup, to allow the user to add his/her own configuration Items                                            | None                                            | You must return a CFG_MAP containing your config items. See example xxx                                                                                                           |
 | onConfigItemChange | Whenever any config item changes value webUI, MQTT etc either through code,                                         | Item name, new value                            | You will “see” changes to system values as well as your own – see example xxx                                                                                                     |
-| onPinChange        | A defined GPIO pin has had its config values changed                                                                | Pin number, 1st value, 2nd value                | He values depend on the type of pin, see the relevant pin documentation                                                                                                           |
-| addWebHandler      | During setup, this is the user’s chance to override the default web UI page handler                                 | None                                            | You must return an AsyncWebHandler* this is a very advanced topic, see section 5.xxx                                                                                              |
+| onPinConfigChange  | A defined GPIO pin has had its config values changed                                                                | Pin number, 1st value, 2nd value                | He values depend on the type of pin, see the relevant pin documentation                                                                                                           |
+| addWebHandler      | During setup, this is the user’s chance to override the default web UI page handler                                 | None                                            | You must return an AsyncWebHandler* this is a very advanced topic                                                                                           |
 | userLoop           | Once per main loop cycle, after all other actions complete                                                          | None                                            | This is included merely for future expansion. If you think you need to use it, you are almost certainly wrong: contact the author.                                                |
 
 Most commonly you will define GPIOs for input and output in setupHardware. Each of these may have its own callback for when activity occurs on the pin, though many pin types have a great amount of automatic functionality already built-in. In many common scenarios, there will be little for your code to do.
@@ -122,7 +122,7 @@ This enables extremely rapid development of "bomb-proof" code using mutiple simu
 
 # MQTT control
 
-
+# Known Issues
 
 # Installation
 
@@ -154,7 +154,7 @@ This folder ontains all the files for the web User Interface, so you won't be ab
 
 Also make sure you choose 1M SPIFFS option for any 4MB device (e.g. Wemos D1 mini etc) or 96K SPIFFS for 1M devices (ESP-01, SONOFF etc)
 
-# The techniccal stuff - how to use it
+# The technical stuff - how to use it
 ## YOU NEED TO READ THIS FIRST
 
 Successful asynchronous programming can be a new way of thinking. Esparto does not look like (or function like) most other example code you may have seen. It is very important  that you read, understand and follow the documentation. Esparto v3.0 comes with 46 example programs demonstrating all its features, and every API call.
@@ -196,287 +196,11 @@ In summary I am happy to try to help, provided you show willing by reading the d
 The API is broken down by functional area. They are laid out in the order a beginner might start experimentation, but certainly in a "ground up" order as far as understanding Esprto. Try as far as possible to adhere to that order while "getting used" to Esparto.Each area is found by following the relevant link below:
 
 * [Simple LED Flashing functions](../master/api_flash.md)
+* [LifeCycle callbacks](../master/api_cycle.md)
 * [Timers, task scheduling](../master/api_timer.md)
 * [GPIO Handling](../master/api_gpio.md)
 * [MQTT Messaging / Command handling](../master/api_mqtt.md)
 * [Miscellaneous, Advanced, Diagnostics etc](../master/api_expert.md)
-
-## "Lifecycle"
-
-### addCmd: 
-Useful only in WiFi-only scenario. In full MQTT you would subscribe to a topic, and provide a callback. Thsi call allows identical functionality but using the web UI simulator and other Esparto features when MQTT is not being used.
-See also invokeCmd as a way to execute the command once added.
-```cpp
-void addCmd(const char * topic,ESPARTO_FN_MSG fn);
-```
-
-* ```topic:``` any name not already assigned to a command. do **NOT** use "cmd"!!!
-* ```fn:``` a callback function provided by you which takes a vector<string> parameter (see "command processing" in MQTT section for an explanation of vector<string>)
-
-**Example:** ``` Esparto.addCmd("newtopic",[](vector<string> vs){ Serial.printf("New Topic, payload=%d\n",PAYLOAD_INT); }); ``` add "newtopic" to the list of valid commands
-
-### invokeCmd: 
-Execute a command as if it had been initiated via MQTT.
-
-```cpp
-void invokeCmd(String topic,String payload="",ESPARTO_SOURCE src=ESPARTO_SRC_USER,const char* name="invoke");				
-```
-
-* ```topic:``` any name not already assigned to a command. do **NOT** use "cmd"!!!
-* ```fn:``` a callback function provided by you which takes a vector<string> parameter (see "command processing" in MQTT section for an explanation of vector<string>)
-* ```ESPARTO_SOURCE src:``` A special code, used mainly in diagnostics. It indicates the "layer" of code where the call originated. It defaults to ESPARTO_SRC_USER i.e. your code, and is best left alone until you know more about Esparto
-* ```char * name:``` A "tag", used to identify this task in diagnostics. As with src, just leave it to the default, it makes no difference to the way the function operates.
-
-**Example:** ``` Esparto.invokeCmd("newtopic",666); ``` "New Topic, payload=666" will get printed (see addCmd)
-
-**Example:** ``` Esparto.invokeCmd("cmd/pin/choke/4",300); ``` same effect as Esparto.throttlePin(4,300);
-
-### factoryReset: 
-"Does what it says on the tin"! **WARNING** this will erase all configuration data and all stored WiFi credentials.
-You should never need to call this. If you have a std3StageButton, a long press > 5 seconds will initiate it.
-```cpp
-void factoryReset();
-```
-
-### reboot: 
-"Does what it says on the tin"! 
-You should never need to call this. If you have a std3StageButton, a medium press > 2 seconds will initiate it.
-```cpp
-void reboot(uint32_t reason=ESPARTO_BOOT_USERCODE); // leave the default so Esparto knows what cause the reboot!
-```
-
-# API: MQTT
-
-
-# API: Advanced / complex topics / expert diagnostics
-
-		static	void				runWithSpooler(ESPARTO_FN_VOID f,ESPARTO_SOURCE src,const char* name,ESPARTO_FN_XFORM spf);
-		static	void				setAllSpoolDestination(uint32_t plan);
-		static	void				setSrcSpoolDestination(uint32_t plan,ESPARTO_SOURCE src=ESPARTO_SRC_USER);
-
-
-# Examples / API cross-reference:
-
-## basics\A_HelloWorld
-Demonstrates most fundamental usage of the Esparto libarary and introduces the concept of working without traditional setup() and loop() functions. Contains no Esparto API calls.
-
-## basics\Blinky
-Demonstrates simple LED flashing (symmetric on / off)
-*calls*
-```cpp
-flashLED
-Output
-```
-
-## basics\Blinky_Pattern
-Demonstrates LED flashing with dot-dash pattern, similar in concept to Morse code
-* "." is a short pulse
-* "-" is a long pulse
-* " " is a gap
-So "   ... --- ..." would be S-O-S in Morse Code
-
-note ^              start with 3 gaps to break up repeating pattern up stop one running into the next
-
-note      ^   ^     same idea here to make the groups distinct from each other  
-
-Flashing the pattern requires a "timebase" (in mSec)  - this is just the speed @ which each dot/dash/space is acted upon. Lower values make the whole ppattern repeat faster, larger values make it slower
-300 is a good choice to start, try varying it to get the exact "feel" that works for you
-*calls*
-```cpp
-flashPattern
-Output
-```
-
-## basics\Blinky_PWM
-Demonstrates LED flashing with PWM-style period / duty cycle
-*calls*
-```cpp
-flashPWM
-Output
-```
-
-## basics\Blinky_Xmas_Tree
- Demonstrates LED flashing simultaneously on multiple pins at different rates / different patterns
- 
- Hardware required: LED plus current limiting resistor on each pin used:
- 
- connect Vcc ------^V^V^--------D|----> GPIOx
- 
-                  resistor     LED
-				  
-                abt 220 Ohm
-				
-*calls*
-```cpp
-flashLED
-flashPattern
-flashPWM
-Output
-```
-
-## core\Basic_Features
-Demonstrates Basic 3-stage GPIO features of Esparto and elementary use of "lifecycle" callbacks
-**Hardware Required:**  
-This and many subsequent examples assume a simple "tact"  switch on GPIO  which pulls directly to GND when pressed
-
-First we see the "three-stage" functionality of this button.
-
-if pressed for a "short" period, a user defined function is called
-
-if held down for a "medium" period the built-in LED starts to flash and device will reboot when released
-
-if held down for a "long" period the built-in LED flashes rapidly and device will "Factory Reset" when released
-
-"short" is up to 2 seconds
-
-"medium" is 2-5secs **WARNING! Will reboot the device!**
-
-"long" is over 5s **WARNING will reset device, erase all configuration data and WiFI credentials!**
-
-*calls*
-```cpp
-onFactoryReset
-onReboot
-Output
-std3StageButton
-```
-
-## core\Config
-Demonstrates SPIFFS-based Config system of name / value pairs
- 
-Esparto hold a number of name / value pairs in Flash RAM (SPIFFS) between boots. All values are therefore available each time a sketch starts. They are "write-through" i.e. they are saved as soon as they are modified
- 
-Esparto uses several for its internal functioning they are of the form $nn where nn is a number. Do not change Esparto config items unless you know EXACTLY what you are doing, and DO NOT USE 
- $ for your own items
- 
-Two "lifecycle" callbacks make life easy: 
-* ```addConfig``` allows you to add your items to the pool that Esparto
- automatically saves and restores
-* ```onConfigItemChange``` is called with the name and new value of any item whose value changes
- 
-Don't worry too much about ESPARTO_CFG_MAP and the syntax required. if you have used other languages, think of it as an "associative array" or an indexed map
- 
-You will need to run the program sevral times to see the changed values persist across boots
- 
-All items are held internal as a std::string do not worry if you don't know what that means, they can be considered in most cases just like an Arduino String
- 
-In both cases the "C String" char* to the actual bytes can be retrieved using ```xxx.c_str()```  but this is a pain, so Esparto uses the handy **CSTR( )** macro whenever a char* is required e.g. in print statments etc
- 
-Esparto also provides two very useful general-purpose functions for converting integers to string / String:
-
- ```stringFromInt```  // for std::string {you can safely ignore this if you don't understand it)
- ```StringFromInt```  // for Arduino String
-
-**Hardware Required:**  
-A simple "tact"  switch on GPIO  which pulls directly to GND when pressed
-
-*calls*
-```cpp
-addConfig
-decConfigInt
-getConfig
-getConfigInt
-getConfigString
-getConfigstring
-incConfigInt
-minusEqualsConfigInt
-onConfigItemChange
-Output
-plusEqualsConfigInt
-setConfig
-setConfigInt
-setConfigString
-setConfigstring
-std3StageButton
-```
-
-## core\Timers1_simple
-*calls*
-core\Timers2_lambda
-*calls*
-core\Timers3_classy
-*calls*
-core\Timers4_chaining
-*calls*
-core\Timers5_advanced
-*calls*
-core\Timers6_whenever
-*calls*
-core\Timers7_mayhem
-*calls*
-gpio\Pins0_digital_vs_logical
-*calls*
-gpio\Pins1_Raw
-*calls*
-gpio\Pins10_Encoder
-*calls*
-gpio\Pins11_EncoderBound
-*calls*
-gpio\Pins12_EncoderAuto
-*calls*
-gpio\Pins13_EncoderAutoBound
-*calls*
-gpio\Pins14_Throttling
-*calls*
-gpio\Pins15_DefaultOutput
-*calls*
-gpio\Pins2_Filtered
-*calls*
-gpio\Pins3_Polled
-*calls*
-gpio\Pins4_Retriggering
-*calls*
-gpio\Pins5_Debounced
-*calls*
-gpio\Pins6_Latching
-*calls*
-gpio\Pins7_Timed
-*calls*
-gpio\Pins8_Reporting
-*calls*
-gpio\Pins9_ThreeStage
-*calls*
-wifi\WiFi_Blinky
-*calls*
-wifi\WiFi_DefaultOutput
-*calls*
-wifi\WiFi_Warning
-*calls*
-wifi_mqtt\MQTT_DefaultOutput
-*calls*
-wifi_mqtt\MQTT_Wildcards
-*calls*
-wifi_mqtt\SONOFF_BASIC_Firmware
-*calls*
-xpert\Tasks_Spoolers
-*calls*
-zz_fun\BareMinimum
-*calls*
-zz_fun\BareMinimum_SONOFF_BASIC
-*calls*
-zz_fun\BareMinimum_wifi
-*calls*
-zz_fun\BareMinimum_wifiMQTT
-*calls*
-zz_fun\EncoderAuto_Variable_Blinky
-*calls*
-zz_fun\VeryUselessMeter_1
-*calls*
-zz_fun\VeryUselessMeter_2
-*calls*
-zz_fun\VeryUselessMeter_2_Variable
-*calls*
-zz_fun\VeryUselessMeter_3
-*calls*
-wifi_mqtt\MQTT_Blinky
-*calls*
-
-
-
-The API calls are again broken up by group, showing which (by number) of the above examples they are used in.
-
-
-
 
 © 2019 Phil Bowles
 * philbowles2012@gmail.com
