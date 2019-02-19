@@ -262,11 +262,11 @@ _*Sample sketches: view / run in the order shown*_
 ***
 # The configuration system
 
-Esparto stores a collection of name / value pairs in SPIFFS which persist between reboots. The user may also add their own persistent dta itmes to the collection and retrieve them at any time.
+Esparto stores a collection of name / value pairs in SPIFFS which persist between reboots. The user may also add their own persistent data items to the collection and retrieve them at any time.
 All items are stored as a map, indexed by the name of the item. All items are stored as std::string but Esparto provides numerous functions to treat items as char*, Arduino String or int as required by the ap.
 
 Only the briefest of examples are provided as the function names are mostly self-explanatory. We assume there exists an item named "markOfBeast" wiht a value of 666.
-
+## User items
 ```cpp
 int decConfigInt(const char* c) // Esparto.decConfigInt("markOfBeast"); decrement the named item and return new value: now = 665
 int	getConfigInt(const char* c)	// Esparto.getConfigInt("markOfBeast"); return 665
@@ -282,9 +282,28 @@ void setConfigstring(const char*,string value); // Esparto.setConfigstring("hitc
 void setConfigString(const char*,String value); // Esparto.setConfigString("hitchhiker",StringGalaxy); create / set new value Arduino String named stringGalaxy
 ```
 
-_*Sample sketches: view / run in the order shown*_
-* [Config ](../master/examples/core/Config/Config.ino)
-***
+## System items
+
+There exists also the same functions ass above which take an ESPARTO_SYS_VAR rather than a char*. These are reserved for Esparto's own use and should _*NEVER*_ be altered unless you know _*EXACTLY*_ what you are doing, as doing so will almost certainly cause Esparto to misbehanve or even crash.
+There are some, however which may prove useful to the user and they may be used in read-only mode. A full list is provided in Appendix XXX but be warned: there is very little explanation for many of the values.
+
+Some of the more useful / less dangerous ones are:
+
+* ESPARTO_IP_ADDRESS 
+* ESPARTO_AP_FALLBACK // treated as an int; this is the amount of time to wait for a connection before falling back to AP mode. The default is 180000 = 3 minutes. You can safely change this if you need to
+* ESPARTO_MQTT_RETRY // treated as an int; the amount of time between retries when MQTT goes offline. Default is 5 seconds, Can safely be changed, but beware of making it too short
+* ESPARTO_CHIP_ID
+* ESPARTO_DEVICE_NAME
+* ESPARTO_PRETTY_BOARD // the type of hardware in an easy to read style, e.g. "Wemos D1 Mini"
+* ESPARTO_DUINO_BOARD // the type of hardware in a more formal style, e.g. "WEMOS_D1MINI"
+
+**Example:**
+```cpp
+Serial.printf("This is a %s connected on %s\n",Esparto.getConfig(ESPARTO_PRETTY_BOARD),Esparto.getConfig(ESPARTO_IP_ADDRESS));
+Esparto.subscribe("dosomething",myCallback,Esparto.getConfig(ESPARTO_DUINO_BOARD));
+```
+The above code sets the MQTT prefix to the hardware board type. This is a way of targeting all devices of a specific type, e.g. WEMOS_D1MINI/dosomething [42] will get sent only to your IOT devices that run on Wemos D1 Mini dev boards.
+See [MQTT Messaging / Command handling](../master/api_mqtt.md) for further explanation
 
 © 2019 Phil Bowles
 * philbowles2012@gmail.com
