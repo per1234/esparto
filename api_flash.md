@@ -10,20 +10,6 @@ All the examples require that the LED (most often the BUILTIN_LED) is defined as
 
 `uint8_t pin:` The GPIO pin number to be flashed. This must have previously been the subject of an Output call.
 ***
-# flashPWM: 
-flash GPIO pin in Pulse-Width Modulation fashion given period / duty cycle
-```cpp
-void flashPWM(int period,int duty,uint8_t pin=LED_BUILTIN);
-```
-* *period*: Total time of flashing cycle in milliseconds
-* *duty*:  duty cycle from 1 to 100 as a percentage
-
-**Example:**  `Esparto.flashPWM(1000,10); // will flash the BUILTIN_LED ON: 100ms OFF 900ms continuously (100 = 10% of 1000, 900ms is the remaning 90%)`
-
-_*Sample sketches: view / run in the order shown*_
-* [Blinky_PWM ](../master/examples/basics/Blinky_PWM/Blinky_PWM.ino)
-* [Blinky_Xmas_Tree ](../master/examples/basics/Blinky_Xmas_Tree/Blinky_Xmas_Tree.ino)
-***
 # flashLED: 
 flash GPIO pin in simple symmetric on / off fashion
 ```cpp
@@ -66,6 +52,20 @@ _*Sample sketches: view / run in the order shown*_
 * [Blinky_Pattern ](../master/examples/basics/Blinky_Pattern/Blinky_Pattern.ino)
 * [Blinky_Xmas_Tree ](../master/examples/basics/Blinky_Xmas_Tree/Blinky_Xmas_Tree.ino)
 * [WiFi_Warning ](../master/examples/wifi/WiFi_Warning/WiFi_Warning.ino)
+***
+# flashPWM: 
+flash GPIO pin in Pulse-Width Modulation fashion given period / duty cycle
+```cpp
+void flashPWM(int period,int duty,uint8_t pin=LED_BUILTIN);
+```
+* *period*: Total time of flashing cycle in milliseconds
+* *duty*:  duty cycle from 1 to 100 as a percentage
+
+**Example:**  `Esparto.flashPWM(1000,10); // will flash the BUILTIN_LED ON: 100ms OFF 900ms continuously (100 = 10% of 1000, 900ms is the remaning 90%)`
+
+_*Sample sketches: view / run in the order shown*_
+* [Blinky_PWM ](../master/examples/basics/Blinky_PWM/Blinky_PWM.ino)
+* [Blinky_Xmas_Tree ](../master/examples/basics/Blinky_Xmas_Tree/Blinky_Xmas_Tree.ino)
 ***
 # isFlashing:
 tests whether GPIO is currently flashing
