@@ -9,14 +9,13 @@ testbed/switch/lounge
 This saves us a lot of typing. There are exceptions to this and we will discuss them further when we talk about "wildcards".
 For each topic you subscribe to, you must define a callback function.
 
-# the MQTT callback function and command handling
+# The MQTT callback function and command handling
 **Example:**
 ```cpp
-void myTopic(vector<string> vs){
-}
+void myTopic(vector<string> vs){}
 ```
 
-For those who are unfamiliar with vector<string> think of the string part very much like an Arduino string. Now think of the vector as a list or one-dimensional array. It's one of those topics that far easier when you see an example:
+For those who are unfamiliar with `vector<string>` think of the `string` part very much like an Arduino `String`. Now think of the `vector` as a list or one-dimensional array. It's one of those topics that far easier when you see an example:
 Imagine that someone has published "testbed/switch/lounge" with a payload of "1". Inside your callback the following will exist
 ```cpp
 void myTopic(vector<string> vs){
@@ -35,7 +34,7 @@ Values are always strings, so if you need to treat any as an integer you can use
 int myIntPayload=PARAM(3); // myIntPayload now contains integer 1
 int evenEasier=PAYLOAD_INT; // evenEasier now conatins integer 1
 ```
-# general command handling
+# General command handling
 It is important to remember that there are a number of different routes into your callback function other than MQTT. If your IP address is 192.168.1.100 then a user can type:
 
 http://192.168.1.100/switch/1
@@ -45,14 +44,19 @@ Also, it is possible when subscribing to override the automatic prefix of device
 This is shown clearly in the example sketch [MQTT_Wildcards ](../master/examples/wifi_mqtt/MQTT_Wildcards/MQTT_Wildcards.ino)
 
 # MQTT wildcards
-MQTT allows "+" and "#" wildcards. Espartos supports only "#" wildcards. This means you can subscribe to "switch/#" and you could then receive:
-switch/lounge
-switch/kitchen
-switch/anyoldrubbish
-switch/3.1515926
+MQTT allows "+" and "#" wildcards. Esparto supports only "#" wildcards. This means you can subscribe to "switch/#" and you could then receive:
+
+* switch/lounge
+* switch/kitchen
+* switch/anyoldrubbish
+* switch/3.1515926
 
 ...and so on - _anything_ is permitted to replace the #. It will be up to you in your callback then to look at whats in vs and determine a) if its even valid and sensible b) how to deal with all the possible variations you will allow, while rejecting or ignroing those that make no sense.
-Note also that - of course - also valid is switch/junk/rubbish/nonsense/crap/sheisse/merde/ [random data] which will give you a vector of 9 elements... A good starting point when validating the command is to check that only the exact expected number of elements are present.
+Note also that - of course - also valid is:
+
+switch/junk/rubbish/nonsense/crap/sheisse/merde/ [random data]
+
+which will give you a vector of 9 elements... A good starting point when validating the command is to check that only the exact expected number of elements are present.
 
 This is shown clearly in the example sketch [MQTT_Wildcards ](../master/examples/wifi_mqtt/MQTT_Wildcards/MQTT_Wildcards.ino)
 
@@ -71,7 +75,7 @@ _*Sample sketches: view / run in the order shown*_
 * [SONOFF_BASIC_Firmware ](../master/examples/wifi_mqtt/SONOFF_BASIC_Firmware/SONOFF_BASIC_Firmware.ino)
 ***
 # subscribe
-Subscribes to MQTT topic and provides callback of type ESPARTO_FN_MSG (see above). If "prefix" is not supplied the device name is used. Waht is _actually_ subscribed becomes prefix+topic.
+Subscribes to MQTT topic and provides callback of type ESPARTO_FN_MSG which returns void and takes a vector of strings: `void myTopic(vector<string> vs);` (see above). If "prefix" is not supplied the device name is used. Waht is _actually_ subscribed becomes prefix+topic.
 This callback may also be invoked by:
 
 * webUI "Run" tab dropdown
@@ -88,9 +92,9 @@ void subscribe(const char * topic,ESPARTO_FN_MSG fn,const char* prefix="");
 
 **Example:**
 ```cpp
-Esparto.subscribe("more/complex",myMQTTCallback2,"all")` // only respond to "all/more/complex", "testbed/more/complex" is ignored
-Esparto.subscribe("more/complex",myMQTTCallback2)` // respond to "testbed/more/complex" also
-Esparto.subscribe("wild/#",myMQTTCallback3)` // respond to "testbed/wild/wild/west", "testbed/wild/in/the/country", "testbed/wild/weekend/666" etc etc
+Esparto.subscribe("more/complex",myMQTTCallback2,"all"); // only respond to "all/more/complex", "testbed/more/complex" is ignored
+Esparto.subscribe("more/complex",myMQTTCallback2); // respond to "testbed/more/complex" also
+Esparto.subscribe("wild/#",myMQTTCallback3); // respond to "testbed/wild/wild/west", "testbed/wild/in/the/country", "testbed/wild/weekend/666" etc etc
 
 ```
 

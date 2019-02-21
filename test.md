@@ -197,7 +197,7 @@ The API is broken down by functional area. They are laid out in the order a begi
 
 * [Simple LED Flashing functions](../master/api_flash.md)
 * [LifeCycle callbacks](../master/api_cycle.md)
-* [Timers, task scheduling](../master/api_timer.md)
+* [Timers, task scheduling, configuration](../master/api_timer.md)
 * [GPIO Handling](../master/api_gpio.md)
 * [MQTT Messaging / Command handling](../master/api_mqtt.md)
 * [Miscellaneous, Advanced, Diagnostics etc](../master/api_expert.md)

@@ -17,7 +17,7 @@ Either way, each of the calls returns a value of type ESPARTO_TIMER. If you will
 The major difference though is that finite timers all have the ability to "chain" in another function when they complete. This allows you to build up complex pattern of time-dependent behaviour. For example, imagine you want to send some data according to a clocked scheme which consist of 8 bits then a stop bit. You could set an 8xtimes timer to the clock rate, then "chain in" a short function to send the stop bit, all in a single logical call
 
 # API: Timer / scheduler API
-## Common parameters**:
+## Common parameters:
 
 Many calls have src, name as the final two parameters
 
@@ -269,7 +269,7 @@ Only the briefest of examples are provided as the function names are mostly self
 ## User items
 ```cpp
 int decConfigInt(const char* c) // Esparto.decConfigInt("markOfBeast"); decrement the named item and return new value: now = 665
-int	getConfigInt(const char* c)	// Esparto.getConfigInt("markOfBeast"); return 665
+int getConfigInt(const char* c)	// Esparto.getConfigInt("markOfBeast"); return 665
 string getConfigstring(const char* c) // Esparto.getConfigstring("myName"); return std::string e.g. "phil"
 String getConfigString(const char* c) // Esparto.getConfigString("myVersion"); return Arduino String e.g. "3.0.1a(modified)"
 const char getConfig(const char* c) // Serial.printf("My config item called 'favColor' is %s\n",Esparto.getConfig("favColor")); // returns char *
@@ -284,7 +284,7 @@ void setConfigString(const char*,String value); // Esparto.setConfigString("hitc
 
 ## System items
 
-There exists also the same functions ass above which take an ESPARTO_SYS_VAR rather than a char*. These are reserved for Esparto's own use and should _*NEVER*_ be altered unless you know _*EXACTLY*_ what you are doing, as doing so will almost certainly cause Esparto to misbehanve or even crash.
+There same functions as above also exists in a form that takes an ESPARTO_SYS_VAR rather than a char*. These are reserved for Esparto's own use and should _*NEVER*_ be altered unless you know _*EXACTLY*_ what you are doing, as doing so will almost certainly cause Esparto to misbehanve or even crash.
 There are some, however which may prove useful to the user and they may be used in read-only mode. A full list is provided in Appendix XXX but be warned: there is very little explanation for many of the values.
 
 Some of the more useful / less dangerous ones are:
@@ -303,7 +303,8 @@ Serial.printf("This is a %s connected on %s\n",Esparto.getConfig(ESPARTO_PRETTY_
 Esparto.subscribe("dosomething",myCallback,Esparto.getConfig(ESPARTO_DUINO_BOARD));
 ```
 The above code sets the MQTT prefix to the hardware board type. This is a way of targeting all devices of a specific type, e.g. WEMOS_D1MINI/dosomething [42] will get sent only to your IOT devices that run on Wemos D1 Mini dev boards.
-See [MQTT Messaging / Command handling](../master/api_mqtt.md) for further explanation
+See [MQTT Messaging / Command handling](../master/api_mqtt.md) for more details and sample sketches
+
 
 © 2019 Phil Bowles
 * philbowles2012@gmail.com

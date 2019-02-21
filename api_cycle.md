@@ -315,3 +315,8 @@ void userLoop();
 
 **Example:** `void userLoop(){ someFictitiousLibrary.keepAlive(); }`
 ***
+
+© 2019 Phil Bowles
+* philbowles2012@gmail.com
+* http://www.github.com/philbowles
+* https://8266iot.blogspot.com
