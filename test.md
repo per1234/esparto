@@ -195,13 +195,20 @@ In summary I am happy to try to help, provided you show willing by reading the d
 # Esparto v3.0 API
 The API is broken down by functional area. They are laid out in the order a beginner might start experimentation, but certainly in a "ground up" order as far as understanding Esprto. Try as far as possible to adhere to that order while "getting used" to Esparto.Each area is found by following the relevant link below:
 
+* [Contructors and utilities](../master/api_utils.md)
 * [Simple LED Flashing functions](../master/api_flash.md)
 * [LifeCycle callbacks](../master/api_cycle.md)
 * [Timers, task scheduling, configuration](../master/api_timer.md)
 * [GPIO Handling](../master/api_gpio.md)
-* [MQTT Messaging / Command handling](../master/api_mqtt.md)
+* [Command handling & MQTT messaging](../master/api_mqtt.md)
 * [Miscellaneous, Advanced, Diagnostics etc](../master/api_expert.md)
 
+# Appendices:
+
+1 [API function / Sample sketch cross-reference](../master/appx_1.md)
+2 [Sample sketch / API function cross-reference](../master/appx_2.md)
+
+Sample sketch / API function cross-reference
 © 2019 Phil Bowles
 * philbowles2012@gmail.com
 * http://www.github.com/philbowles
