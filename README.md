@@ -313,21 +313,47 @@ See the sample sketch [Tasks_Spoolers ](../master/examples/xpert/Tasks_Spoolers/
 
 All of the images that follow are collected together into a hand PDF "cheat sheet" tehy are deisgned to fir exactly onto a sheet of A4 should you wish to print them
 
-* Low-res (faster download) 1MB: ![Esparto Logo](/assets/webUI cheat sheet sml.pdf)
-* High-res (better quality) 4MB: ![Esparto Logo](/assets/webUI cheat sheet.pdf)
+* [Low-res (faster download) 1MB:](../master/assets/webUI%20cheat%20sheet%20sml.pdf)
+* [High-res (better quality) 4MB:](../master/assets/webUI%20cheat%20sheet.pdf)
 
 ## Default view (WiFi Tab)
 ![Esparto Logo](/assets/v3default.jpg)
-## Notes on WiFi tab
-If you enter incorrect credentials, Esparto will enter AP mode after 3 minutes (or immediatley on a brand new MCU - see [System Variables](../master/api_utils.md#initial-credentials-ap-mode)
+## Common controls
+The row of icons each represent a different tab. Clicking takes you to the relevant tab, descriptions of which follow here.
+The heart should "beat" once per second, to show the MCU is functioning correctly. If there is a (hopefully) green light to its left, that shows a good link to MQTT. If the light is red, MQTT is unavailable. No light will be shwon if you decide not use MQTT
 
-Make sure you Alexa name is easy to pronounce and hard to mis-hear! If you leave it empty, it will be taken to be the  same as your device name
+If the heart turns grey, it is because the MCU is too busy to show all GPIO transitions (said to be "throttled") and thus the exact stae of each GPIO may not be accurate until the red heart returns.
+
+(see the advanced topics section) [Throttling](../README.md#throttling)
+## Notes on WiFi tab
+* If you enter incorrect credentials, Esparto will enter AP mode after 3 minutes (or immediatley on a brand new MCU - see [System Variables](../master/api_utils.md#initial-credentials-ap-mode)
+* Make sure your Alexa name is easy to pronounce and hard to mis-hear! If you leave it empty, it will be taken to be the  same as your device name
+***
 ## GPIO Panel
 ![Esparto Logo](/assets/v3gpio.jpg)
 ## Notes on GPIO Panel
-
 ***
-# The technical stuff - how to use it
+## CPU Tab
+![Esparto Logo](/assets/v3cpu.jpg)
+## Notes on CPU Tab
+***
+## Info Tab
+![Esparto Logo](/assets/v3arto.jpg)
+## Notes on Info Tab
+***
+## Tool Tab
+![Esparto Logo](/assets/v3tool.jpg)
+## Notes on Tool Tab
+***
+## Pins Tab
+![Esparto Logo](/assets/v3pins.jpg)
+## Notes on Pins Tab
+***
+## Log and Spool Tabs
+![Esparto Logo](/assets/v3spool.jpg)
+## Notes on Log and Spool Tabs
+***
+# The technical stuff:  Writing your own code in Esparto
 ## READ THIS BEFORE RAISING AN ISSUE
 Successful asynchronous programming can be a new way of thinking. Esparto does not look like (or function like) most other example code you may have seen. It is very important  that you read, understand and follow the documentation. Esparto v3.0 comes with 47 example programs demonstrating all its features, and every API call.
 Much of the "traditonal" description for these API calls and advice on how / when to use them is *in the comments* of the example programs. They are named and arranged in a specifc order are designed to build upon each other to introduce new concepts.
@@ -418,19 +444,18 @@ You will proabably never get deep enough to call anything starting with an under
 		static	void 			dumpTopics()	{ __dumper("topics"); }
 ```
 ## Detailed monitoring of "gear" tab / heap usage
-
-
+	T.B.A.
+***
 ## Setting up automatic OTA server
 	T.B.A.
-	
+***
 # Appendices:
 
-1 [API function / Sample sketch cross-reference](../master/appx_1.md)
-2 [Sample sketch / API function cross-reference](../master/appx_2.md)
-3 [System Variables](../master/appx_3.md)
+* Appendix 1 [API function / Sample sketch cross-reference](../master/appx_1.md)
+* Appendix2 [Sample sketch / API function cross-reference](../master/appx_2.md)
+* Appendix3 [System Variables](../master/appx_3.md)
 
 
 © 2019 Phil Bowles
 * philbowles2012@gmail.com
-* http://www.github.com/philbowles
 * https://8266iot.blogspot.com
