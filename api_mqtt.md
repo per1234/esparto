@@ -60,7 +60,7 @@ which will give you a vector of 9 elements... A good starting point when validat
 
 This is shown clearly in the example sketch [MQTT_Wildcards ](../master/examples/wifi_mqtt/MQTT_Wildcards/MQTT_Wildcards.ino)
 
-# MQTT API
+# MQTT and command handling API
 
 As the publish APi calls are self-explanatory, only brief examples will be given
 ```cpp
@@ -68,11 +68,47 @@ void publish(String topic,String payload="",bool retained=false); // Esparto.pub
 void publish(String topic,int payload,bool retained=false); // Esparto.publish(myTemperature,25,true); Topic in String "myTemperature", payload=25, retained
 void publish(const char* topic,const char* payload="",bool retained=false); // Esparto.publish("anyold/info","and more to follow"); 
 void publish(const char* topic,int payload,bool retained=false); // Esparto.publish("temp/lounge",25); 
-void publish_v(const char* fmt,const char * payload,...); // (like printf) Esparto.publish("unknown/%s/%d","@ line 427","pin",666); => testbed/unknown/pin/666 [@ line 427] 
+void publish_v(const char* format,const char * payload,...); // (like printf) Esparto.publish("unknown/%s/%d","@ line 427","pin",666); => testbed/unknown/pin/666 [@ line 427] 
 ```
 _*Sample sketches: view / run in the order shown*_
 * [MQTT_Wildcards ](../master/examples/wifi_mqtt/MQTT_Wildcards/MQTT_Wildcards.ino)
 * [SONOFF_BASIC_Firmware ](../master/examples/wifi_mqtt/SONOFF_BASIC_Firmware/SONOFF_BASIC_Firmware.ino)
+***
+# addCmd
+This is the WiFi-only equivalent of `Esparto.subscribe` (following shortly). It defines a new comman and names the ESPARTO_FN_MSG callback that will handle it, defined thus: `void myTopic(vector<string> vs);`
+
+This should only ever be used when NOT using MQTT, since `Esparto.subscribe` calls this internally anyway. It is included so that users are able to replicate the full MQTT functionality via the web UI simulator or `Esparto.invokeCmd` (see next)
+
+```cpp
+void addCmd(const char * cmd,ESPARTO_FN_MSG callback);
+```
+* *cmd:* The new command: Do NOT start it with "cmd/"
+* *callback:* The name of your new command handler
+
+**Example:** `Esparto.addCmd("myNewTopic",myWiFiCallback)` // most common usage
+
+_*Sample sketches: view / run in the order shown*_
+* [WiFi_Blinky ](../master/examples/wifi/WiFi_Blinky/WiFi_Blinky.ino)
+***
+
+# invokeCmd
+Run an internal command without having it initiated by MQTT, webUI etc
+```cpp
+void invokeCmd(String topic,String payload="",ESPARTO_SOURCE src=ESPARTO_SRC_USER,const char* name="invoke");				
+```
+* *topic:* existing command to invoke
+* *payload:* payload of the command
+* *src:* always best to leave this as the default
+* *name:* always best to leave this as the default
+
+**Example:** `Esparto.invokeCmd("cmd/config/set/blinkrate","myWiFiCallback"1000")` // Set variable "blinkrate" to 1000
+
+N.B. In 99.9% of cases, there is an Esparto function that does the same thing as whatever you invoke...it is always better to use the function, for clarity and efficiency. The above eample is the same as:
+
+`Esparto.setConfigInt("blinkrate",1000);`
+
+_*Sample sketches: view / run in the order shown*_
+* [WiFi_Blinky ](../master/examples/wifi/WiFi_Blinky/WiFi_Blinky.ino)
 ***
 # subscribe
 Subscribes to MQTT topic and provides callback of type ESPARTO_FN_MSG which returns void and takes a vector of strings: `void myTopic(vector<string> vs);` (see above). If "prefix" is not supplied the device name is used. Waht is _actually_ subscribed becomes prefix+topic.
@@ -83,19 +119,18 @@ This callback may also be invoked by:
 * user code `invokeCmd`
 
 ```cpp
-void subscribe(const char * topic,ESPARTO_FN_MSG fn,const char* prefix=""); 
+void subscribe(const char * topic,ESPARTO_FN_MSG callback,const char* prefix=""); 
 ```
-
-**Example:** `Esparto.subscribe("myTopic",myMQTTCallback1)` // most common usage
-
-**Example:** `Esparto.subscribe("more/complex",myMQTTCallback2,"all")` // only respond to "all/more/complex", "testbed/more/complex" is ignored
+* topic: The topic to subscribe to: Make sure you have read the section above if using a "#" wildcard
+* callback: function to handle the topic. It must cope with all possibilities if using a "#" wildcard
+* prefix="" When left blank, defaults to your device name which is what you need in 99.9% of cases. This prefix is added to the front of the topic, hence the _actual_
+subscription is prefix + "/" + topic
 
 **Example:**
 ```cpp
 Esparto.subscribe("more/complex",myMQTTCallback2,"all"); // only respond to "all/more/complex", "testbed/more/complex" is ignored
 Esparto.subscribe("more/complex",myMQTTCallback2); // respond to "testbed/more/complex" also
 Esparto.subscribe("wild/#",myMQTTCallback3); // respond to "testbed/wild/wild/west", "testbed/wild/in/the/country", "testbed/wild/weekend/666" etc etc
-
 ```
 
 _*Sample sketches: view / run in the order shown*_

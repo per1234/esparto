@@ -97,18 +97,18 @@
 | [Pins11_EncoderBound ](../master/examples/gpio/Pins11_EncoderBound/Pins11_EncoderBound.ino)                           | [Encoder](../master/api_gpio.md#Encoder)                            |
 |                                                                                                                       | [every](../master/api_timer.md#every)                               |
 | [Pins12_EncoderAuto ](../master/examples/gpio/Pins12_EncoderAuto/Pins12_EncoderAuto.ino)                              | [Debounced](../master/api_gpio.md#Debounced)                        |
-|                                                                                                                       | #N/A                                                                |
-|                                                                                                                       | #N/A                                                                |
-|                                                                                                                       | #N/A                                                                |
-|                                                                                                                       | #N/A                                                                |
-|                                                                                                                       | #N/A                                                                |
+|                                                                                                                       | [EncoderAuto::center](../master/api_gpio.md#EncoderAuto)            |
+|                                                                                                                       | [EncoderAuto::getValue](../master/api_gpio.md#EncoderAuto)          |
+|                                                                                                                       | [EncoderAuto::reconfigure](../master/api_gpio.md#EncoderAuto)       |
+|                                                                                                                       | [EncoderAuto::setPercent](../master/api_gpio.md#EncoderAuto)        |
+|                                                                                                                       | [EncoderAuto::setValue](../master/api_gpio.md#EncoderAuto)          |
 |                                                                                                                       | [EncoderAuto](../master/api_gpio.md#EncoderAuto)                    |
 |                                                                                                                       | [everyRandom](../master/api_timer.md#everyRandom)                   |
 |                                                                                                                       | [once](../master/api_timer.md#once)                                 |
 | [Pins13_EncoderAutoBound ](../master/examples/gpio/Pins13_EncoderAutoBound/Pins13_EncoderAutoBound.ino)               | [Debounced](../master/api_gpio.md#Debounced)                        |
-|                                                                                                                       | #N/A                                                                |
-|                                                                                                                       | #N/A                                                                |
-|                                                                                                                       | #N/A                                                                |
+|                                                                                                                       | [EncoderAuto::center](../master/api_gpio.md#EncoderAuto)            |
+|                                                                                                                       | [EncoderAuto::reconfigure](../master/api_gpio.md#EncoderAuto)       |
+|                                                                                                                       | [EncoderAuto::setPercent](../master/api_gpio.md#EncoderAuto)        |
 |                                                                                                                       | [EncoderAuto](../master/api_gpio.md#EncoderAuto)                    |
 |                                                                                                                       | [everyRandom](../master/api_timer.md#everyRandom)                   |
 | [Pins14_Throttling ](../master/examples/gpio/Pins14_Throttling/Pins14_Throttling.ino)                                 | [Debounced](../master/api_gpio.md#Debounced)                        |
@@ -173,6 +173,7 @@
 |                                                                                                                       | [every](../master/api_timer.md#every)                               |
 |                                                                                                                       | [flashLED](../master/api_flash.md#flashLED)                         |
 |                                                                                                                       | [getConfigInt](../master/api_timer.md#getConfigInt)                 |
+|                                                                                                                       | [getTask](../master/api_gpio.md#getTask)                            |
 |                                                                                                                       | [getTaskName](../master/api_gpio.md#getTaskName)                    |
 |                                                                                                                       | [getTaskSource](../master/api_.md#getTaskSource)                    |
 |                                                                                                                       | [isFlashing](../master/api_flash.md#isFlashing)                     |

@@ -31,21 +31,21 @@
 | [digitalWrite](../master/api_gpio.md#digitalWrite)                  | [BareMinimum_SONOFF_BASIC ](../master/examples/zz_fun/BareMinimum_SONOFF_BASIC/BareMinimum_SONOFF_BASIC.ino)          |
 |                                                                     | [Pins0_digital_vs_logical ](../master/examples/gpio/Pins0_digital_vs_logical/Pins0_digital_vs_logical.ino)            |
 |                                                                     | [SONOFF_BASIC_Firmware ](../master/examples/wifi_mqtt/SONOFF_BASIC_Firmware/SONOFF_BASIC_Firmware.ino)                |
-| [center](../master/api_gpio.md#center)                              | [Pins12_EncoderAuto ](../master/examples/gpio/Pins12_EncoderAuto/Pins12_EncoderAuto.ino)                              |
-|                                                                     | [Pins13_EncoderAutoBound ](../master/examples/gpio/Pins13_EncoderAutoBound/Pins13_EncoderAutoBound.ino)               |
-| #N/A                                                                | [Pins12_EncoderAuto ](../master/examples/gpio/Pins12_EncoderAuto/Pins12_EncoderAuto.ino)                              |
-| #N/A                                                                | [Pins12_EncoderAuto ](../master/examples/gpio/Pins12_EncoderAuto/Pins12_EncoderAuto.ino)                              |
-| #N/A                                                                | [Pins13_EncoderAutoBound ](../master/examples/gpio/Pins13_EncoderAutoBound/Pins13_EncoderAutoBound.ino)               |
-| #N/A                                                                | [Pins12_EncoderAuto ](../master/examples/gpio/Pins12_EncoderAuto/Pins12_EncoderAuto.ino)                              |
-| #N/A                                                                | [Pins13_EncoderAutoBound ](../master/examples/gpio/Pins13_EncoderAutoBound/Pins13_EncoderAutoBound.ino)               |
-| #N/A                                                                | [Pins12_EncoderAuto ](../master/examples/gpio/Pins12_EncoderAuto/Pins12_EncoderAuto.ino)                              |
-| #N/A                                                                | [Pins10_Encoder ](../master/examples/gpio/Pins10_Encoder/Pins10_Encoder.ino)                                          |
+| [Encoder](../master/api_gpio.md#Encoder)                            | [Pins10_Encoder ](../master/examples/gpio/Pins10_Encoder/Pins10_Encoder.ino)                                          |
 |                                                                     | [Pins11_EncoderBound ](../master/examples/gpio/Pins11_EncoderBound/Pins11_EncoderBound.ino)                           |
 | [EncoderAuto](../master/api_gpio.md#EncoderAuto)                    | [EncoderAuto_Variable_Blinky ](../master/examples/zz_fun/EncoderAuto_Variable_Blinky/EncoderAuto_Variable_Blinky.ino) |
 |                                                                     | [Pins12_EncoderAuto ](../master/examples/gpio/Pins12_EncoderAuto/Pins12_EncoderAuto.ino)                              |
 |                                                                     | [Pins13_EncoderAutoBound ](../master/examples/gpio/Pins13_EncoderAutoBound/Pins13_EncoderAutoBound.ino)               |
 |                                                                     | [Pins14_Throttling ](../master/examples/gpio/Pins14_Throttling/Pins14_Throttling.ino)                                 |
 |                                                                     | [VeryUselessMeter_2_Variable ](../master/examples/zz_fun/VeryUselessMeter_2_Variable/VeryUselessMeter_2_Variable.ino) |
+| [EncoderAuto::center](../master/api_gpio.md#EncoderAuto)            | [Pins12_EncoderAuto ](../master/examples/gpio/Pins12_EncoderAuto/Pins12_EncoderAuto.ino)                              |
+|                                                                     | [Pins13_EncoderAutoBound ](../master/examples/gpio/Pins13_EncoderAutoBound/Pins13_EncoderAutoBound.ino)               |
+| [EncoderAuto::getValue](../master/api_gpio.md#EncoderAuto)          | [Pins12_EncoderAuto ](../master/examples/gpio/Pins12_EncoderAuto/Pins12_EncoderAuto.ino)                              |
+| [EncoderAuto::reconfigure](../master/api_gpio.md#EncoderAuto)       | [Pins12_EncoderAuto ](../master/examples/gpio/Pins12_EncoderAuto/Pins12_EncoderAuto.ino)                              |
+|                                                                     | [Pins13_EncoderAutoBound ](../master/examples/gpio/Pins13_EncoderAutoBound/Pins13_EncoderAutoBound.ino)               |
+| [EncoderAuto::setPercent](../master/api_gpio.md#EncoderAuto)        | [Pins12_EncoderAuto ](../master/examples/gpio/Pins12_EncoderAuto/Pins12_EncoderAuto.ino)                              |
+|                                                                     | [Pins13_EncoderAutoBound ](../master/examples/gpio/Pins13_EncoderAutoBound/Pins13_EncoderAutoBound.ino)               |
+| [EncoderAuto::setValue](../master/api_gpio.md#EncoderAuto)          | [Pins12_EncoderAuto ](../master/examples/gpio/Pins12_EncoderAuto/Pins12_EncoderAuto.ino)                              |
 | [every](../master/api_timer.md#every)                               | [Pins0_digital_vs_logical ](../master/examples/gpio/Pins0_digital_vs_logical/Pins0_digital_vs_logical.ino)            |
 |                                                                     | [Pins10_Encoder ](../master/examples/gpio/Pins10_Encoder/Pins10_Encoder.ino)                                          |
 |                                                                     | [Pins11_EncoderBound ](../master/examples/gpio/Pins11_EncoderBound/Pins11_EncoderBound.ino)                           |
@@ -88,6 +88,7 @@
 |                                                                     | [WiFi_Blinky ](../master/examples/wifi/WiFi_Blinky/WiFi_Blinky.ino)                                                   |
 | [getConfigString](../master/api_timer.md#getConfigString)           | [Config ](../master/examples/core/Config/Config.ino)                                                                  |
 |                                                                     | [Config ](../master/examples/core/Config/Config.ino)                                                                  |
+| [getTask](../master/api_gpio.md#getTask)                            | [Tasks_Spoolers ](../master/examples/xpert/Tasks_Spoolers/Tasks_Spoolers.ino)                                         |
 | [getTaskName](../master/api_gpio.md#getTaskName)                    | [Tasks_Spoolers ](../master/examples/xpert/Tasks_Spoolers/Tasks_Spoolers.ino)                                         |
 | [getTaskSource](../master/api_.md#getTaskSource)                    | [Tasks_Spoolers ](../master/examples/xpert/Tasks_Spoolers/Tasks_Spoolers.ino)                                         |
 | [incConfigInt](../master/api_timer.md#incConfigInt)                 | [Config ](../master/examples/core/Config/Config.ino)                                                                  |

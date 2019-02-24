@@ -12,7 +12,7 @@ It also has some general-purpose routines which don't "fit" neatly anywhere else
 # Constructors
 ## Common Parameters:
 
-* `const char* SSID` // network name of your router
+* `const char* SSID` // network name of your router. may be blank, in which case AP mode activates, see "Initial Credentials" below
 * `const char* password` // password of your router. If no security, use ""
 * `const char* device` // name by which device is known on network
 
@@ -34,7 +34,6 @@ N.B. Even if you don't use MQTT, you can still execute the same commands as MQTT
 Even in the standalone (disconnected) mode you can use `Esparto.invokeCmd` to execute them (see  [Command handling and MQTT Messaging](../master/api_mqtt.md) )
 
 # Device naming
-
 From this point on we will assume that the device name is "testbed". This name is also use by the OTA (Over-The-Air) update mechanism and MQTT, so when choosing a device name, you need to make sure of the following:
 
 * It _must_ be unique on your network
@@ -69,8 +68,16 @@ The "Alexa Name" works in a similar fashion as far as precedence, but the mechan
 
 As with device name, if you only have one MCU, use `Esparto.setAlexaDeviceName` (see [LifeCycle callbacks](../master/api_cycle.md) ) in the source code. For multiple MCU deployment, don't call  `Esparto.setAlexaDeviceName` but enter it in the box when setting up the device name in the web UI WiFi tab as described above.
 
-# Utility API
+# Initial Credentials / AP mode
+If you do not specify a valid SSID  / Psk (Pre-Shared Key == "Password") for example by deliberately leaving them blank or accidentally mistyping them then obviously Eparto will not be able to connect.
 
+If there are no saved credentials (as will be the case on a "virgin" MCU) then Esparto will immediately run a "Captive Portal" and enter AP mode with an SSDI name according to the rules above. The password is the same as the AP SSID name. The  Captive Portal means that _any_ access by your browser will bring you to the webUI WiFi page where you can enter the appropriate credentials.
+(see [Default view (WiFi Tab) ](../master/README.md#default-view-wifi-tab) )
+
+If on the other hand, there are saved credentials, it means at least one successful connection has previously been made so it is assumed that these are valid and perhaps the router is down with e.g. a power failure. Esparto will try for 3 minutes* to establish the old connection, whereupon it will fall back to AP mode as described above.
+(* The actual time is determined by the system variable ESPARTO_AP_FALLBACK in milliseconds - see Appendix 3 [System Variables](../master/appx_3.md) )
+
+# Utility API
 These utility routines are used "under the hood" by many of the Esparto API calls. They are sufficiently general to perhaps be of use and so have been included here a) for completeness and b) they don't really "fit" anywhere else.
 
 # join

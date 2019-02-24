@@ -315,6 +315,37 @@ void userLoop();
 
 **Example:** `void userLoop(){ someFictitiousLibrary.keepAlive(); }`
 ***
+# wifiConnected
+Included here for completeness as a) is it not a callback and b) There is only one place it makes sense to use it. Furthermore there is only one real reason for using it, as Esparto manages _all_ aspects of WiFi connection and reconnection.
+You will get notified of WiFi connects and disconnects via the callbacks mentioned above. If, however you need to set some intial status in setpHardware there is a problem:
+
+1) WiFi "runs in the background" and it may have already connected before `setupHardware` is called, therefore you _*cannot*_ assume it is still disconnected.
+2) If your router is down, or just very slow, you may not get connected for several seconds, by which time the code in `setupHardware` will be a distant memory. Hence neither can you assume it is connected!
+
+Imagine that you wish to use an LED to show WiFI connection status. Turning it off and on as WiFi disconnects and reconnects is easy: just "hook" into `wifiDisconnect` to turn it off and `wififConnect` to turn it on, but what should its initial state be?
+
+This question lies at the heart of Esparto's asynchronous programming model and understanding the issues and solution is the key to successful programming of the ESP8266 and best use of Esparto.
+
+* *PROBLEM 1:* You cannot rely upon your `onWiFiConnect` callback to correctly turn on the LED intially, because if `setupHardware` has not yet been run, the pin will not yet have been defined as an output, so will not illuminate!
+* *PROBLEM 2:* You cannot rely on `setupHardware` to set the pin to any valid initial status after setting it as an output for the reasons explained above. If you turn it on and WiFI is not yet connected it will show a false reading. If this is due to your router being down, then it may show falsely as "on" for a long time, becuase you will never get a disconnect event to turn it off. If on the other hand, you set it off when WiFI was already connected, then again you show incorrect status and will never get another `onWiFiConnect` to set it straight
+
+This is what's known "in the business" as a "timing" or synchronisation problem and `wifiConnected` is Esparto's solution.
+
+```cpp
+bool wifiConnected();
+```
+**Example:**
+```cpp
+Esparto.Output(BUILTIN_LED);
+if(!Esparto.wifiConnected()) { // we are not yet connected
+  onWiFiDisconnect();   // set intial slow flash and do whatever else you'd normally do on "no WiFi"    
+}
+```
+
+_*Sample sketches: view / run in the order shown*_
+[WiFi_Warning ](../master/examples/wifi/WiFi_Warning/WiFi_Warning.ino)
+***
+
 
 © 2019 Phil Bowles
 * philbowles2012@gmail.com
