@@ -305,8 +305,8 @@ Esparto.subscribe("dosomething",myCallback,Esparto.getConfig(ESPARTO_DUINO_BOARD
 The above code sets the MQTT prefix to the hardware board type. This is a way of targeting all devices of a specific type, e.g. WEMOS_D1MINI/dosomething [42] will get sent only to your IOT devices that run on Wemos D1 Mini dev boards.
 See [MQTT Messaging / Command handling](../master/api_mqtt.md) for more details and sample sketches
 
-
+***
 © 2019 Phil Bowles
 * philbowles2012@gmail.com
-* http://www.github.com/philbowles
-* https://8266iot.blogspot.com
+* [Blog](https://8266iot.blogspot.com)
+* [Facebook Group](https://www.facebook.com/groups/597324830744576/)

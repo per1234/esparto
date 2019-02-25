@@ -268,8 +268,8 @@
 | [writeSPIFFS](../master/api_utils.md#writeSPIFFS)                   | [A_Utilities ](../master/examples/basics/A_Utilities/A_Utilities.ino)                                                 |
 
 
+***
 © 2019 Phil Bowles
-
-philbowles2012@gmail.com
- 
-https://8266iot.blogspot.com
+* philbowles2012@gmail.com
+* [Blog](https://8266iot.blogspot.com)
+* [Facebook Group](https://www.facebook.com/groups/597324830744576/)

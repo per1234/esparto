@@ -7,7 +7,7 @@
 * [Installation](../master/README.md#installation)
 * [Getting Started](../master/README.md#getting-started)
 * [Command and Control](../master/README.md#command-and-control)
-* ["Spooling" and "Crash Recovery"](../master/README.md#"spooling-and-crash-recovery)
+* ["Spooling" and "Crash Recovery"](../master/README.md#spooling-and-crash-recovery)
 * [The Web User Interface](../master/README.md#the-web-user-interface)
 * [Known Issues](../master/README.md#known-issues)
 * [Common Causes of Error](../master/README.md#common-causes-of-error)
@@ -17,7 +17,8 @@
 * [Appendices](../master/README.md#appendices)
 ***
 # Introduction
-Esparto has also been described as a "sort of RTOS" for ESP8266 - while it is true that its most important feature is the synchronous task queue into which all asynchronous events are serialised..."RTOS" is way too grand a title! It's an MQTT client, a replacement firmware creator, a web UI to view pin activity in near real-time, and a self-learning resource with 46 example programs, graded from very basic right through to fiendishly complex.
+Esparto has also been described as a "sort of RTOS" for ESP8266 - while it is true that its most important feature is the synchronous task queue into which all asynchronous events are serialised..."RTOS" is way too grand a title!
+It's an MQTT client, a replacement firmware creator, a web UI to view pin activity in near real-time, and a self-learning resource with 47 example sketches, graded from very basic beginner level right through to boffin / guru.
 
 It makes short work of creating anything from a simple "blinky" to drop-in firmware for e.g. SONOFF switches. "Out of the box" it allows control via:
 
@@ -26,10 +27,9 @@ It makes short work of creating anything from a simple "blinky" to drop-in firmw
 * REST-like http:// interface
 * MQTT messages
 * Amazon Echo Dot voice commands (Alexa)
-
+***
 ## Hardware Compatibility
-
-Esparto has been tested on a variety of hardware. It will probably run on anything with an ESP-12 in it, but the official at-a-glance list is:
+Esparto has been tested on a variety of hardware. It will probably run on anything with an ESP8266 in it, but the official at-a-glance list is:
 *	ESP-01 (but why would you bother when there’s…)
 *	ESP-01S
 *	Wemos D1
@@ -110,7 +110,7 @@ Esparto also publishes frequent statistics and / or GPIO status if required and 
 In summary, you "plug in" short pieces of user code (callbacks) that make up the specifics of your app into the appropriate place in Esparto's lifecycle to respond to the relevant real-world events.
 This enables extremely rapid development of "bomb-proof" code using mutiple simultaneous complex sensors / actuators. Say goodbye to WDT resets and "random" crashes (which never actually *are* random)
 ***
-# ESPARTO MAIN FEATURES
+# Main Features
 ## Ease of use
 * Voice-driven compatibility with Amazon Echo (Alexa)
 * WiFi + MQTT control built-in and ready "out of the box"
@@ -513,7 +513,7 @@ You will proabably never get deep enough to call anything starting with an under
 	(youtube video T.B.A.)
 ***
 ## Setting up automatic OTA server
-	T.B.A. in the meanwhile, see: https://www.instructables.com/id/Set-Up-an-ESP8266-Automatic-Update-Server/
+	T.B.A. in the meanwhile, see: <https://www.instructables.com/id/Set-Up-an-ESP8266-Automatic-Update-Server/>
 ***
 # Appendices:
 
@@ -523,4 +523,5 @@ You will proabably never get deep enough to call anything starting with an under
 
 © 2019 Phil Bowles
 * philbowles2012@gmail.com
-* https://8266iot.blogspot.com
+* [Blog](https://8266iot.blogspot.com)
+* [Facebook Group](https://www.facebook.com/groups/597324830744576/)

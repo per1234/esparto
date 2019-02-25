@@ -114,10 +114,8 @@ _*Sample sketches: view / run in the order shown*_
 * [MQTT_Blinky ](../master/examples/wifi_mqtt/MQTT_Blinky/MQTT_Blinky.ino)
 
 
-
 ***
 © 2019 Phil Bowles
 * philbowles2012@gmail.com
-* http://www.github.com/philbowles
-* https://8266iot.blogspot.com
-
+* [Blog](https://8266iot.blogspot.com)
+* [Facebook Group](https://www.facebook.com/groups/597324830744576/)

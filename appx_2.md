@@ -266,7 +266,8 @@
 |                                                                                                                       | [onWiFiDisconnect](../master/api_cycle.md#onWiFiDisconnect)         |
 |                                                                                                                       | [Output](../master/api_gpio.md#Output)                              |
 |                                                                                                                       | [wifiConnected](../master/api_.md#wifiConnected)                    |   
+***
 © 2019 Phil Bowles
-  philbowles2012@gmail.com
-  http://www.github.com/philbowles
-  https://8266iot.blogspot.com
+* philbowles2012@gmail.com
+* [Blog](https://8266iot.blogspot.com)
+* [Facebook Group](https://www.facebook.com/groups/597324830744576/)
