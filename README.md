@@ -2,7 +2,24 @@
 # UNDER CONSTRUCTION (verifying links etc!) PLEASE BE PATIENT - EXPECTED READY DATE: C.O.P. 25/02/2019
 # Esparto v3.0 is a rapid development framework, synchronous task queue and GPIO manager (plus more) for ESP8266 devices.
 
-It has also been described as a "sort of RTOS" for ESP8266 - while it is true that its most important feature is the synchronous task queue into which all asynchronous events are serialised..."RTOS" is way too grand a title! It's an MQTT client, a replacement firmware creator, a web UI to view pin activity in near real-time, and a self-learning resource with 46 example programs, graded from very basic right through to fiendishly complex.
+# Contents
+
+* [Introduction](../master/README.md#introduction)
+* [Main Features](../master/README.md#main-features)
+* [Installation](../master/README.md#installation)
+* [Getting Started](../master/README.md#getting-started)
+* [Command and Control](../master/README.md#command-and-control)
+* ["Spooling" and "Crash Recovery"](../master/README.md#"spooling-and-crash-recovery)
+* [The Web User Interface](../master/README.md#the-web-user-interface)
+* [Known Issues](../master/README.md#known-issues)
+* [Common Causes of Error](../master/README.md#common-causes-of-error)
+* [Support and Raising Issues](../master/README.md#support-and-raising-issues)
+* [Esparto v3.0 API](../master/README.md#esparto-v30-api)
+* [Advanced Topics](../master/README.md#advanced-topics)
+* [Appendices](../master/README.md#appendices)
+***
+# Introduction
+Esparto has also been described as a "sort of RTOS" for ESP8266 - while it is true that its most important feature is the synchronous task queue into which all asynchronous events are serialised..."RTOS" is way too grand a title! It's an MQTT client, a replacement firmware creator, a web UI to view pin activity in near real-time, and a self-learning resource with 46 example programs, graded from very basic right through to fiendishly complex.
 
 It makes short work of creating anything from a simple "blinky" to drop-in firmware for e.g. SONOFF switches. "Out of the box" it allows control via:
 
@@ -28,12 +45,12 @@ Esparto has been tested on a variety of hardware. It will probably run on anythi
 
 ## Arduino IDE integration
 
-It is presented as an Arduino IDE library which presents a class object "Esparto". The Esparto API allows sophisticated control of all the GPIO pins, often with only a single line of code. It serialises all asynchronous events into a task queue which runs "on the main loop". This helps prevent cross-task contamination and common timing errors, and removes the need for beginners to understand "volatile", task synchronisation, critical sections, mutual locking and other highly complex and error-prone topics. The majority of user code is run in Esparto callbacks.
+It is an Arduino IDE library which presents a class object "Esparto". The Esparto API allows sophisticated control of all the GPIO pins, often with only a single line of code. It serialises all asynchronous events into a task queue which runs "on the main loop". This helps prevent cross-task contamination and common timing errors, and removes the need for beginners to understand "volatile", task synchronisation, critical sections, mutual locking and other highly complex and error-prone topics. The majority of user code is run in Esparto callbacks.
 It provides rich functionality covering a wide range of typical IOT functions.
 
 It also comes with additional "boards.txt" entries for ESP-01S, and SONOFF devices to make development as easy for those as it is for "standard" boards.
 
-Here, for example is all the code needed to build a simple button-controlled latching "blinky".
+Here, for example is all the code needed to build a simple (debounced) latching button-controlled "blinky".
 
 ```cpp
 #include <ESPArto.h>
@@ -55,12 +72,12 @@ A fully-functional MQTT / Alexa / web UI / web Rest / physical button controlled
 #include <ESPArto.h>
 ESPArto Esparto("mySSID","password","testbed","192.168.1.4",1883);
 void setupHardware(){
-  Esparto.Output(BUILTIN_LED,LOW,HIGH);          
+  Esparto.Output(BUILTIN_LED);          
   Esparto.DefaultOutput(RELAY,HIGH,LOW,[](int v1, int v2){ Esparto.digitalWrite(BUILTIN_LED,!v1); });    
   Esparto.std3StageButton();
 }
 ```
-This also includes the ability to reboot the SONOFF (with a "medium press" > 2sec) or factory reset ("long press" > 5 sec) the device.
+This also includes the ability to reboot the SONOFF (with a "medium press" > 2sec) or factory reset  ("long press" > 5 sec) .
 
 More importantly the main design goal of Esparto is 24/7 hardware functionality with no reboots, no matter what the network does. Hardware is fully functional after typically < 0.6sec from power on, irrespective of network state. Any network outages are gracefully recovered - without rebooting - when the network becomes available again, ensuring zero hardware "downtime".
 Users running fishtanks or security systems or living in areas with poor / patchy WiFi recpetion will appreciate this feature.
@@ -150,7 +167,7 @@ Spoiler alert: No support will be given to exception / crash issues without a de
 ## 5 Copy the data folder to the root folder of any sketch you write that uses WiFi or MQTT.
 This also applies to the sample sketches: Any that use WiFi / MQTT _must_ have the data folder copied to their root folder.
 ***
-# Getting Started / Known issues
+# Getting Started
 There are 47 example sketches included with Esparto. While the full API is documented here, there is no better way to learn than by compiling and running the examples in the order they appear.
 They have been deliberately graded to build on each other, and each contains its own documentation. Thus "the documentation" consist not only this file and its linked files and appendices, but also the _*comments of the example sketches*_ so bearing in mind that support will not be provided to users who have not read the documentation, it would be a good idea to look at them run them and understand how Esparto works before dealing wiht anything you think may be a problem.
 
@@ -171,7 +188,7 @@ For each time-based event, you need to define a callback which will be a void-re
 Add the code to handle the event into the callback, and add the timer defintion to the `setupHardware` callback
 
 ## Choose which lifecycle events you will monitor
-For each of these you will need to define the specific callback as described in the section above: [Lifecycle Callbacks](../master/test.md#esparto-lifecycle)
+For each of these you will need to define the specific callback as described in the section above: [Lifecycle Callbacks](../master/README.md#esparto-lifecycle)
 
 Add your lifecycle event code to the callback.
 
@@ -207,29 +224,6 @@ Wait a second or two, and plug the device back in, not forgetting to reopen the 
 This is required due to a bug in the ESP8266 firmware which can (and frequently _does_) cause crash / reboot the first time (and only the first time) after a Serial flash upload.
 
 ...which brings us nicely on to:
-
-# Known Issues
-* This is major rewrite with major new functionality and a ".0" release - it has been compiled with diagnostics on. You may see some interesting mesages. Hopefully, you won't.
-* Depending on the speed of your browser and/or your network, it can take several attempts to load the webUI cleanly after first flash. All of the image graphics have a long cache period, so clearing your brower's cache frequently will make this matter worse.
-* The web UI has not been optimised for multiple viewers, so restrict yourself to a single browser. This will be enforced in a future release, but at the moment, opening two or more browers onto the same MCU will almost certainly crash it - but will also give inconsistent results.
-* Dynamic pin tab does not accurately re-set pin designations until the tab is exited. If multiple pins are to be added, you may need to click to another tab and then back to the pins tab keeps the pin designations "in step"
-
-# Common causes of error
-* not power-cycling the device 1st time after Serial flash
-* opening multiple browser windows on the same MCU (will be fixed in future release)
-* scheduling a task which takes longer to run than the timer tick, e.g. a task 1x per second that takes 1.2 sec to run
-* flashing an LED so ridiculously fast that it either leaves no time for Esparto to manage its affairs or prevents WiFi from running when it needs to
-* any use of `delay()` or messing with the watchdog _*in any way whatsoever*_: use timer functions! [Timers, task scheduling, configuration](../master/api_timer.md)
-* doing anything in a tight loop: use timer functions! [Timers, task scheduling, configuration](../master/api_timer.md)
-* entering wild values in MQTT commands or the web UI MQTT simulator. Much validation is already done, but I'm sure some enterprising soul will find a way to enter value that's so nuts no-one else could have ever sensibly predicted it...
-* mismatching format string specifiers with their data types in e.g. printf. printf("a string %s",integer)or printf("an integer %d","this will crash");
-* anything whihc allocates large chunks of free memory and does not rapidly release them
-
-The last point is very important. The ESP8266 does not have a lot of free heap at the best of times. The asyncWebserver library takes a fair chunk to process incoming http requests (more on this later in the advanced topics).
-The fact is that Esparto runs with about 20k free heap by the time your code comes around, and it is highly sensitive to low heap scenarios. Given that there is a threshhold below which the code will crash, Esparto puts a lot of effort into preventing it.
-The main technique is to abitrarily "chop" task out of the queue. Obviously yours get chopped first because Esparto may stop functioning correctly if it chops some of its own, but...sometimes it has to. The bottom line is that if yiur code chews up large lumps of heap, bad things are going to happen.
-
-As a developer you need to become very familiar with the webUI core processor or "gear" pane which shows the heap, the queue, the GPIO activity etc to warn you if your code starts misbehaving
 
 # Command and control
 While the primary source of control commands is likely to be MQTT, Esparto will function quite happily without MQTT as it has both a web UI whiach can control it graphically and REST-like interface that simulates MQTT.
@@ -310,8 +304,36 @@ Of course the user can always write / add his / her own. Maybe you want to log v
 
 See the sample sketch [Tasks_Spoolers ](../master/examples/xpert/Tasks_Spoolers/Tasks_Spoolers.ino) for more detail.
 
-# The Web User Interface
+## Crash Recovery
+If Esparto gets to the stage where your code has somehow filled up the task queue, or you have (against advice) rapildy reduced the free heap to a dangerous level, then Esparto has to take drastic measure to avoid a crash.
 
+It tries to free the queue to at least half its size becoming re-available and it does this simply by "chopping" tasks, i.e deleting them from the queue with no warning.
+It does this in the reverse order of the "event source" of the task. So user tasks are the first to go, because:
+* They are by far the most likely to be the cause of the problem in the first place
+* They are likely to be the most populous, i.e. they will feee up the greatest number of "slots" if chopped, thereby speeding recovery recovery
+* They are unlikely to crash Esparto if stopped
+
+Next to go are any waiting voice commands:
+* It is no great effort to have to repat the command
+* With Alexa, it pretty common to have to do that anyway!
+
+As we go futher and further up the list we get closer and closer to tasks that are likley to cause internal problems when unceremoniously chopped, so Esparto stops when it has at least half of the queue free again.
+As it does not have time to "mess around" it does this in a brutal manner by source type, all tasks of a given source are deleted before checking how much queue is now free.
+So if the queue has 20 slots and slot 1 has an Esparto task, while 2-20 are USER tasks, all 19 of the USER tasks will get chopped. if 2-10 are WEB and only 11-20 are USER then only the USER tasks will get chopped as after that the queue will be half empty again
+
+As an extra precautionary measure, Esparto "holds offs" accepting new tasks for an additional short period to give more critical tasks time to recover, so as well as behaving oddly it may appear "frozen" for a second or two.
+The moral of this story is, that while Esparto will bend over backwards to prevent a crash; if your code is not well-behaved it will take the whole system down with it, so don't get into this postion to start with!
+
+Have a look at [Common Causes of Error](../master/README.md#common-causes-of-error) to see some obvious things to avoid, but alwys remember, Esparto is not an RTOS, it cannot forcibly stop your code misbehaving, you have to learn to "play nicely" to get all the benefits that Esparto brings. It's a small price to pay.
+
+_*W A R N I N G!*_
+
+Crash Recovery is a last-ditch measure and is almost certain to cause some sort of long-term malfunction, normal service should *not* be resumed. This technique is to give you the ability to:
+* Gather as much diagnostic information as possible (see [Web UI CPU Tab](../master/README.md#cpu-tab))
+* Shut down / restart in as orderly a manner as possible
+* Fix your code before running Esparto again
+
+# The Web User Interface
 All of the images that follow are collected together into a handy PDF "cheat sheet". Each page is designed to fit exactly onto a sheet of A4 should you wish to print any of them
 
 * [Low-res (faster download) 1MB:](../master/assets/webUI%20cheat%20sheet%20sml.pdf)
@@ -374,7 +396,30 @@ Detailed analysis is a very complex topic and will be the subject of an upcoming
 ![Esparto Logo](/assets/v3spool.jpg)
 ## Notes on Log and Spool Tabs
 ***
-# The technical stuff:  Writing your own code in Esparto
+# Known Issues
+* This is major rewrite with major new functionality and a ".0" release - it has been compiled with diagnostics on. You may see some interesting mesages. Hopefully, you won't.
+* Depending on the speed of your browser and/or your network, it can take several attempts to load the webUI cleanly after first flash. All of the image graphics have a long cache period, so clearing your brower's cache frequently will make this matter worse.
+* The web UI has not been optimised for multiple viewers, so restrict yourself to a single browser. This will be enforced in a future release, but at the moment, opening two or more browers onto the same MCU will almost certainly crash it - but will also give inconsistent results.
+* Dynamic pin tab does not accurately re-set pin designations until the tab is exited. If multiple pins are to be added, you may need to click to another tab and then back to the pins tab keeps the pin designations "in step"
+
+# Common Causes of Error
+* not power-cycling the device 1st time after Serial flash
+* opening multiple browser windows on the same MCU (will be fixed in future release)
+* scheduling a task which takes longer to run than the timer tick, e.g. a task 1x per second that takes 1.2 sec to run
+* flashing an LED so ridiculously fast that it either leaves no time for Esparto to manage its affairs or prevents WiFi from running when it needs to
+* any use of `delay()` or messing with the watchdog _*in any way whatsoever*_: use timer functions! [Timers, task scheduling, configuration](../master/api_timer.md)
+* doing anything in a tight loop: use timer functions! [Timers, task scheduling, configuration](../master/api_timer.md)
+* entering wild values in MQTT commands or the web UI MQTT simulator. Much validation is already done, but I'm sure some enterprising soul will find a way to enter value that's so nuts no-one else could have ever sensibly predicted it...
+* mismatching format string specifiers with their data types in e.g. printf. printf("a string %s",integer)or printf("an integer %d","this will crash");
+* anything whihc allocates large chunks of free memory and does not rapidly release them
+
+The last point is very important. The ESP8266 does not have a lot of free heap at the best of times. The asyncWebserver library takes a fair chunk to process incoming http requests (more on this later in the advanced topics).
+The fact is that Esparto runs with about 20k free heap by the time your code comes around, and it is highly sensitive to low heap scenarios. Given that there is a threshhold below which the code will crash, Esparto puts a lot of effort into preventing it.
+The main technique is to abitrarily "chop" task out of the queue. Obviously yours get chopped first because Esparto may stop functioning correctly if it chops some of its own, but...sometimes it has to. The bottom line is that if yiur code chews up large lumps of heap, bad things are going to happen.
+
+As a developer you need to become very familiar with the webUI core processor or "gear" pane which shows the heap, the queue, the GPIO activity etc to warn you if your code starts misbehaving
+
+# Support and Raising Issues
 ## READ THIS BEFORE RAISING AN ISSUE
 Successful asynchronous programming can be a new way of thinking. Esparto does not look like (or function like) most other example code you may have seen. It is very important  that you read, understand and follow the documentation. Esparto v3.0 comes with 47 example programs demonstrating all its features, and every API call.
 Much of the "traditonal" description for these API calls and advice on how / when to use them is *in the comments* of the example programs. They are named and arranged in a specifc order are designed to build upon each other to introduce new concepts.
@@ -407,7 +452,7 @@ I don't have time for (and will not accept) is 3000 lines of code, where 2900 of
 In summary I am happy to try to help, provided you show willing by reading the documentation first and at least *trying* to solve the problem yourself. If that fails, give me everything I ask for and together we will fix it. Anything less and you are on your own.
 ***
 # Esparto v3.0 API
-The API is broken down by functional area. They are laid out in the order a beginner might start experimentation, but certainly in a "ground up" order as far as understanding Esprto. Try as far as possible to adhere to that order while "getting used" to Esparto.Each area is found by following the relevant link below:
+The API is broken down by functional area. They are laid out in the order a beginner might start experimentation, but certainly in a "ground up" order as far as understanding Esprto. Try as far as possible to adhere to that order while "getting used" to Esparto.
 
 * [Contructors and utilities](../master/api_utils.md)
 * [Simple LED Flashing functions](../master/api_flash.md)
@@ -418,7 +463,7 @@ The API is broken down by functional area. They are laid out in the order a begi
 * [Miscellaneous, Advanced, Diagnostics etc](../master/api_expert.md)
 ***
 # Advanced topics
-# Throttling
+## Throttling
 
 ## Diagnostics
 Much of the detailed info is T.B.A. but then you are probably an expert already. So, if you understand what follows, can dig into the code etc then by all means use it. If not, then you will have to wait till its fully documented ("soon" - of course)
