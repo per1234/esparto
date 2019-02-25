@@ -1,9 +1,7 @@
-![Esparto Logo](/assets/espartotitle.png)
 # UNDER CONSTRUCTION (verifying links etc!) PLEASE BE PATIENT - EXPECTED READY DATE: C.O.P. 25/02/2019
 # Esparto v3.0 is a rapid development framework, synchronous task queue and GPIO manager (plus more) for ESP8266 devices.
-
+![v3 preview](/assets/v3preview.jpg)
 # Contents
-
 * [Introduction](../master/README.md#introduction)
 * [Main Features](../master/README.md#main-features)
 * [Installation](../master/README.md#installation)
