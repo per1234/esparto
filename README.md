@@ -237,8 +237,6 @@ The fundamental unit of control is a "command". In the examples we will concentr
 The point here is that Esparto has a number of built-in commands which _look like_ MQTT topics, but can be invoked without having to actually have an MQTT broker.
 If you are going to be doing your own coding then you _must_ read in full first: [Command handling & MQTT messaging](../master/api_mqtt.md)
 
-Those full list commands is:
-
 # Built-in commands
 
 | Command          | Sub1    | Sub2     | PAYLOAD             | Notes                                                                                    |
@@ -268,20 +266,94 @@ Those full list commands is:
 * http://testbed.local/cmd/config/set/blinkrate/150 sets Config Item "blinktrate" to "150" and publishes testbed/dta/blinkrate ["150"] see below
 * webUI "run" tab dropdown cmd/pin/flash/4/300 ["   ... --- ..."] flashes S-O-S
 
-## note on REST-like interface
-When using commands such as: http://testbed.local/cmd/config/set/blinkrate/150 the pyload is taken to be the last part of the command, i.e. 150 in this case. Technically speaking, since all commands _have_ a payload (even if its blank)
-so that cmd/info for example should be typed as http://testbed.local/cmd/info/ (note trailing "/") or it will show up as ...cmd/info with a payload of "info". This will still work since cmd/info ignores any pyload, but: jus' sayin'...
+cmd/pin/add is such a complex command that it has it own section:
+## Adding Pins Dynamically
+A full cmd/pin/add can have up to 17 parts before the payload and many are cryptic coded numbers, so entering one manually into an MQTT client is fraught with problems.
+It is intended that the user will generally use the [Pins Tab](../master/README.md#pins-tab) of the web UI to add pins dynamically. However, because of the way Esparto works, that generates an internal command which is identical to an MQTT command, so for the sake of completeness the full cmd breakdown is included.
 
+The cmd falls into two halves: the pin defintion and then the action to be taken on a change of state. They are separated for convenience here by the subtopic "ax" but the whole command must be sent as one string when required.
+Generally we get: testbed/cmd/pin/add/gpio_number/pintype/options/for/each/pintype/ax/actioncode/different/parameters/for/each/action
+
+First pintypes:
+
+|	Pintype			|No.| Sub1 | Sub2 | Sub3 | Sub4 | Sub5 | Sub6 | Sub7 | Sub8 |
+|(not part of cmd)  |   |      |      |      |      |      |      |      |      |
+|-------------------|---|------|------|------|------|------|------|------|------|
+|RAW				|  1|mode  | ax   | ...  |      |      |      |      |      |
+|OUTPUT				|  2|active|initl |  ax  | ...  |      |      |      |      |
+|DEBOUNCED			|  3|mode  |dbv   |  ax  | ...  |      |      |      |      |
+|FILTERED			|  4|mode  |filter|  ax  | ...  |      |      |      |      |	
+|LATCHING			|  5|mode  |dbv   |  ax  | ...  |      |      |      |      |
+|RETRIGGERING		|  6|mode  |timout|active|  ax  | ...  |      |      |      |
+|ENCODER			|  7|mode  |pinB  |  ax  | ...  |      |      |      |      |
+|ENCODER_AUTO		|  8|mode  |pinB  |Vmin  |Vmax  |Vinc  |Vset  | ax   | ...  |
+|REPORTING			|  9|mode  |dbv   |freqcy|  ax  | ...  |      |      |      |
+|TIMED				| 10|mode  |dbv   |  ax  | ...  |      |      |      |      |
+|POLLED				| 11|mode  |freqcy|ADC   |  ax  | ...  |      |      |      |
+|DEFAULT_OUT		| 12|active|initl |  ax  | ...  |      |      |      |      |
+|STD3STG			| 13|  ax  | ...  |      |      |      |      |      |      |
+
+The additonal subtopics for each type will be found in the relevant section of the GPIO definition:[GPIO Handling](../master/api_gpio.md)
+
+Next the actions, the ... portion of the above table
+
+|     Action      |Action| Sub  | Sub  | Sub  |
+|(not part of cmd)| Code | ax+1 | ax+2 | ax+3 |
+|-----------------|------|------|------|------|
+|No Action        |    1 |      |      |      |
+|Publish Pin Value|    2 |      |      |      |
+|Output Passthru  |    3 |GPIO #|invert|      |
+|Set Var (Pin)    |    4 | var  |      |      |
+|Set Var (Param)  |    5 | var  |value |txtnum|
+|Dec Var          |    6 | var  |      |      |
+|Inc Var          |    7 | var  |      |      |
+|Command          |    8 | cmd  |pyload|      |                                                                       
+|Publish Var Value|    9 | var  |      |      |                 
+|Add to Var       |   10 | var  |      |      |
+|Sub from Var     |   11 | var  |      |      |
+|Flash LED        |   12 |GPIO #|rate  |      |
+|Flash LED PWM    |   13 |GPIO #|period|cycle |
+|Flash LED Pattern|   14 |GPIO #|tmbase|pattrn|
+|Stop LED Flash   |   15 |GPIO #|      |      |
+
+### Common Subtopic ax... values
+* GPIO # - number of GPIO pin to receive action
+* var - name of a user-defined variable (Configuration Item)
+
+### Specific Subtopic ax... values
+* code 3: invert: 0 or 1 => invert value send to GPIO # =1, don't invert=0
+* code 5: value: new value for var; txtnum: => 0 treat as text, 1 treat as integer
+* code 8: cmd = cmd to execute with "/" replaced by "#" e.g. cmd#pin#get#4; pyload: payload
+* code 12 - 15 take the same names as the corresponding functions as decribed in [Simple LED Flashing functions](../master/api_flash.md)
+
+Finally, the last subtopic of all cmd/pin/add is a 0 or 1 value for "Retain". When = 1, the MQTT message is retained. This means it will be autoamtically read back in on reboot and thus reconfigure then pin, so that you don't have to manually re-enter it
+
+**Example**:
+We want to define an EncoderAuto on pins 4 and 5 as INPUT_PULLUP (=1). We want it to have min=0, max=100, increment of 10 and set position 50. When it changes we want to set the value of variable "encval" to whatever the current value is, as an integer...and we want it to be retained so it reappeatrs on next reboot.
+From an MQTT client we would need to publish:
+
+testbed/cmd/pin/add/4/8/1/5/0/100/10/50/ax/5/encval/1/1
+
+Even the simplest (and fairly useless) possible combination of a temporary Raw INPUT_PULLUP pin on GPIO12 would be 10 parts:
+
+testbed/cmd/pin/add/12/1/1/ax/1/0
+
+...which is why it was recommended above to use the web UI [Pins Tab](../master/README.md#pins-tab)
+
+## note on REST-like interface
+When using commands such as: http://testbed.local/cmd/config/set/blinkrate/150 the payload is taken to be the last part of the command, i.e. 150 in this case. Technically speaking, since all commands _have_ a payload (even if its blank)
+so that cmd/info for example should be typed as http://testbed.local/cmd/info/ (note trailing "/") or it will show up as ...cmd/info with a payload of "info". This will still work since cmd/info ignores any payload, but: jus' sayin'...
+***
 # "Spooling" (and "crash recovery")
 ## Definitons: Event Sources
 Esparto code runs in layers, like an onion. At the lowest layer is the scheduler and timers, next comes the GPIO activity and so on. Each layer deals with the activities of events that originate from a single specific source, for example:
 
-* ESPARTO_SRC_H4	The scheduler and timers (information in why it is called "H4" https://en.wikipedia.org/wiki/John_Harrison )
+* ESPARTO_SRC_H4	The scheduler and timers (why it is called "H4": https://en.wikipedia.org/wiki/John_Harrison )
 * ESPARTO_SRC_GPIO  All GPIO activity
 * ESPARTO_SRC_MQTT	Genuine MQTT topics
 * ESPARTO_SRC_WEB	Any activity arising from user interaction with graphical web UI
 * ESPARTO_SRC_REST	Any activity arising from REST-like web commands e.g. http://192.168.1.114/flash/0
-* ESPARTO_SRC_ALEXA "On" or "Off" commands orgination from Amazon Echo
+* ESPARTO_SRC_ALEXA "On" or "Off" voice commands orgination from Amazon Echo
 * ESPARTO_SRC_USER  Any activity arising from your code
 * ESPARTO_SRC_SYNTH (Advanced topic: DIAGNOSTICS ONLY: any sythentic task activity)
 
@@ -303,7 +375,7 @@ Of course the user can always write / add his / her own. Maybe you want to log v
 See the sample sketch [Tasks_Spoolers ](../master/examples/xpert/Tasks_Spoolers/Tasks_Spoolers.ino) for more detail.
 
 ## Crash Recovery
-If Esparto gets to the stage where your code has somehow filled up the task queue, or you have (against advice) rapildy reduced the free heap to a dangerous level, then Esparto has to take drastic measure to avoid a crash.
+If Esparto gets to the stage where your code has somehow filled up the task queue, or you have (against advice) rapidly reduced the free heap to a dangerous level, then Esparto has to take drastic measure to avoid a crash.
 
 It tries to free the queue to at least half its size becoming re-available and it does this simply by "chopping" tasks, i.e deleting them from the queue with no warning.
 It does this in the reverse order of the "event source" of the task. So user tasks are the first to go, because:
@@ -330,7 +402,7 @@ Crash Recovery is a last-ditch measure and is almost certain to cause some sort 
 * Gather as much diagnostic information as possible (see [Web UI CPU Tab](../master/README.md#cpu-tab))
 * Shut down / restart in as orderly a manner as possible
 * Fix your code before running Esparto again
-
+***
 # The Web User Interface
 All of the images that follow are collected together into a handy PDF "cheat sheet". Each page is designed to fit exactly onto a sheet of A4 should you wish to print any of them
 
@@ -416,7 +488,7 @@ The fact is that Esparto runs with about 20k free heap by the time your code com
 The main technique is to abitrarily "chop" task out of the queue. Obviously yours get chopped first because Esparto may stop functioning correctly if it chops some of its own, but...sometimes it has to. The bottom line is that if yiur code chews up large lumps of heap, bad things are going to happen.
 
 As a developer you need to become very familiar with the webUI core processor or "gear" pane which shows the heap, the queue, the GPIO activity etc to warn you if your code starts misbehaving
-
+***
 # Support and Raising Issues
 ## READ THIS BEFORE RAISING AN ISSUE
 Successful asynchronous programming can be a new way of thinking. Esparto does not look like (or function like) most other example code you may have seen. It is very important  that you read, understand and follow the documentation. Esparto v3.0 comes with 47 example programs demonstrating all its features, and every API call.
@@ -462,6 +534,40 @@ The API is broken down by functional area. They are laid out in the order a begi
 ***
 # Advanced topics
 ## Throttling
+### The need for (lack of) speed
+Esparto uses the magnificent [ESPAsyncWebserver](https://github.com/me-no-dev/ESPAsyncWebserver) library to provide the web UI and also the websockets that are used for the near real-time communication between the UI and the MCU.
+Many libraries have to make compromises on ESP8266 due to its restricted SRAM which only allows quite a small free heap. ESPAsyncWebserver is quite sensitve to low heap situations, as each websocket message is sent or received the library needs to allocate memory from the free heap. There is a fonote limit to:
+
+ * The rate at which it can do that
+ * The asbsolute amount of free heap left from which it can allocate a message
+
+It rapidly becomes obvious that if the websocket messages arrive (or are queued for sending) faster than it takes ESPAsyncWebserver to release the space and return the memory to the free heap, then the free heap is going to get smaller and smaller as the queue of waiting messages builds up.
+During early development of Esparto, the author calibrated the rate of heap loss measured against the rate of socket messages per second: (sox/s)
+![Heap Loss](../master/assets/heaploss.jpg)
+
+Below (a surprisingly low) 20sox/s, the heap stays fairly static. Once 20sox/s is exceeded the free heap starts to drop rapidly. If there is a rapid burst of - say - 40sox/s;
+it can be seen from the graph that the heap will shrink at the rate of about 1400 bytes per second. Now assume the burst lasts for 5 seconds, the total heap loss will be 7kb.
+Happily the recovery is quite rapid once the rate drops back below 20sox/s, but if the higher rate is sustained, after 10 seconds 14kb will have been shaved off the free heap.
+
+Esparto starts with around 28 - 30Kb free heap. Depending on how much code you write, that figure will go down. Doing the mental arithmetic, 20 seconds of "bursty" 40sox/s will use _all_ the heap and we will crash. If the rate is 70sox/s we will lose 3.5kb per sec and crash in 7 or 8 seconds.
+Now imagine you connect e.g. a sound sensor to a Raw GPIO then play Motorhead's "Ace of Spades" into it at (of course) volume 11. Tests on some cheap Chinese offerings have shown anything up to 14,000 transitions per sec (14kHz input signal) will occur. The graph doesn't go anywhere near that but my guess is less than a second.
+
+If you have read ["Spooling" and "Crash Recovery"](../master/README.md#spooling-and-crash-recovery) - and if you haven't then:
+* You should have
+* You need to
+* You have already broken rule 1 of [Support and Raising Issues](../master/README.md#support-and-raising-issues) so you'd better read that too, othwerwise you wont be able to get support
+
+But if you _have_ read it, you will know that Esparto probably won't actually crash, it just goes into  "crash recovery" mode an will "chop" tasks, lock the input queue several hundred times a second, making life really really difficult.
+
+### The (partial) solution
+Any solution is only partial, beacuse we can't "magic up" a ton more SRAM and even if we could, we would still come to limit sometime. While there is some scientific debate about how many framers per second the human eye can perceive, its in the medium double to perhaps triple figures.
+Film usually runs at 24fps so anything above that is wasted anyway, so if we are wanting to watch GPIO, we need to basically throw away anything over that figure.
+
+Esparto limits the total throughput to the web UI to 20 sox/s - above that and the heap starts steadily dying. This is for _all_ pins so if you have many, you are not going to get real-time flashing. Once this value is exceeded the red heartbeat turns grey to indicate that GPIO indications are being limited or "throttled".
+
+Esparto also provides the ability to throttle individual GPIO pins. see [throttlePin](../master/api_gpio.md#throttlePin) and sample sketch [Pins14_Throttling ](../master/examples/gpio/Pins14_Throttling/Pins14_Throttling.ino)
+It is up to you to set a suitable value _*if*_ you want to be able to call up the web UI. If you don't then you can let through as many transitions per second as  Esparto will allow, but of course then as soon as you opne the web UI, all hell will break loose.
+The webUI changes to show individual pin throttling by changing the GPIO number from white to black. The rate sampling is only granular to the second, meaning that if your GPIO has exceeded its throttling rate after 1/10 of a second then all of the remaning 9/10 sec will be ignored. Then it will aloow 1/10 again etc, leading to a very "choppy" response.
 
 ## Diagnostics
 Much of the detailed info is T.B.A. but then you are probably an expert already. So, if you understand what follows, can dig into the code etc then by all means use it. If not, then you will have to wait till its fully documented ("soon" - of course)
@@ -484,7 +590,7 @@ You need to undertand the webUI gear tab (REF) in minute detail before attemptin
 * cmd/dump/topics // guess again
 
 ## Diagnostics 2 - Additional functions:
-You will proabably never get deep enough to call anything starting with an underscore, but the dumpXXX are handy
+You will probably never get deep enough to call anything starting with an underscore, but the dumpXXX are handy
 ```cpp
 		static	string 			__getArduinoPin(uint8_t i);
 		static 	void			__dumper(string type){ invokeCmd(CSTR(string("cmd/dump/"+type)),"",ESPARTO_SRC_USER,"__dumper"); }
