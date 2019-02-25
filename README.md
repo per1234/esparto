@@ -209,6 +209,7 @@ This is required due to a bug in the ESP8266 firmware which can (and frequently 
 ...which brings us nicely on to:
 
 # Known Issues
+* This is major rewrite with major new functionality and a ".0" release - it has been compiled with diagnostics on. You may see some interesting mesages. Hopefully, you won't.
 * Depending on the speed of your browser and/or your network, it can take several attempts to load the webUI cleanly after first flash. All of the image graphics have a long cache period, so clearing your brower's cache frequently will make this matter worse.
 * The web UI has not been optimised for multiple viewers, so restrict yourself to a single browser. This will be enforced in a future release, but at the moment, opening two or more browers onto the same MCU will almost certainly crash it - but will also give inconsistent results.
 * Dynamic pin tab does not accurately re-set pin designations until the tab is exited. If multiple pins are to be added, you may need to click to another tab and then back to the pins tab keeps the pin designations "in step"
@@ -311,7 +312,7 @@ See the sample sketch [Tasks_Spoolers ](../master/examples/xpert/Tasks_Spoolers/
 
 # The Web User Interface
 
-All of the images that follow are collected together into a hand PDF "cheat sheet" tehy are deisgned to fir exactly onto a sheet of A4 should you wish to print them
+All of the images that follow are collected together into a handy PDF "cheat sheet". Each page is designed to fit exactly onto a sheet of A4 should you wish to print any of them
 
 * [Low-res (faster download) 1MB:](../master/assets/webUI%20cheat%20sheet%20sml.pdf)
 * [High-res (better quality) 4MB:](../master/assets/webUI%20cheat%20sheet.pdf)
@@ -320,30 +321,50 @@ All of the images that follow are collected together into a hand PDF "cheat shee
 ![Esparto Logo](/assets/v3default.jpg)
 ## Common controls
 The row of icons each represent a different tab. Clicking takes you to the relevant tab, descriptions of which follow here.
-The heart should "beat" once per second, to show the MCU is functioning correctly. If there is a (hopefully) green light to its left, that shows a good link to MQTT. If the light is red, MQTT is unavailable. No light will be shwon if you decide not use MQTT
+The heart should "beat" once per second, to show the MCU is functioning correctly. If there is a (hopefully) green light to its left, that shows a good link to MQTT. If the light is red, MQTT is unavailable. No light will be shown if you decide not use MQTT
 
-If the heart turns grey, it is because the MCU is too busy to show all GPIO transitions (said to be "throttled") and thus the exact stae of each GPIO may not be accurate until the red heart returns.
+If the heart turns grey, it is because the MCU is too busy to show all GPIO transitions (the UI is said to be "throttled") and thus the exact state of each GPIO may not be accurate until the red heart returns.
 
 (see the advanced topics section) [Throttling](../README.md#throttling)
 ## Notes on WiFi tab
-* If you enter incorrect credentials, Esparto will enter AP mode after 3 minutes (or immediatley on a brand new MCU - see [System Variables](../master/api_utils.md#initial-credentials-ap-mode)
-* Make sure your Alexa name is easy to pronounce and hard to mis-hear! If you leave it empty, it will be taken to be the  same as your device name
+* If you enter incorrect credentials, Esparto will enter AP mode after 3 minutes (immediately on a brand new MCU) See: [System Variables](../master/api_utils.md#initial-credentials--ap-mode)
+* Make sure your Alexa name is easy to pronounce and hard to mis-hear.
 ***
 ## GPIO Panel
 ![Esparto Logo](/assets/v3gpio.jpg)
 ## Notes on GPIO Panel
+* The grey unusable pins are usually the ones that are used by the external SPI Flash on most ESP8266 boards
+* For the meaning of "raw" and "cooked" see: [Raw and Cooked Pins](../master/api_gpio.md#important-concepts-raw-vs-cooked-states)
+* GPIO numbers go black when GPIO pin is "throttled" and return to white when throttling clears. This is related to, but not the same as the web UI throttling on the previous screen, see [GPIO Throttling](../master/api_gpio.md#important-concepts-throttling)
+* For non-programmers, GPIO pins can be added on the [Pins Tab](../master/README.md#pins-tab) although with (of course) more limited functionality than creating them via code
 ***
 ## CPU Tab
 ![Esparto Logo](/assets/v3cpu.jpg)
 ## Notes on CPU Tab
+* This will mostly be used by developers to make sure their Esparot code behaves properly and co-operates well with other tasks, Especially those that Esparto needs to function.
+Detailed analysis is a very complex topic and will be the subject of an upcoming Youtube video, as it is far easier to explain while watching real-life apps, especially how to spot potential problems wiht your code
+* The graphs start from the right-hand side each time you revisit the tab
+* Setting the system variable ESPARTO_LOG_STATS to 1 causes Esparto to send all the CPU stats to MQTT 1x per second See: [System Variables](../master/appx_3.md) and [setConfigInt](../master/api_timer.md#setConfigInt)
 ***
 ## Info Tab
 ![Esparto Logo](/assets/v3arto.jpg)
 ## Notes on Info Tab
+* Chip is the standard "last 6 of MAC address". If no device name given, defaults to e.g. ESPARTO-0BC939
+* When falling back to AP mode, SSID will be e.g. ESPARTO-0BC939 and password ESPARTO-0BC939
 ***
-## Tool Tab
+## Config Tab
 ![Esparto Logo](/assets/v3tool.jpg)
-## Notes on Tool Tab
+## Notes on Config Tab
+* This is the visual front-end to the  [configuration system](../master/api_timer.md#the-configuration-system)
+* Value is updated as soon as you exit the field
+* Your code is notified and can react instantly
+* New value published to MQTT
+* New value saved and takes precedenc on next reboot
+***
+## Run Tab
+![Esparto Logo](/assets/v3run.jpg)
+## Notes on Run Tab
+* This is where you come if you are not running your own MQTT broker as every command Esparto "listens for" can be "inserted" through this tab rather than arriving genuinely from MQTT and _should_ behave identically with the genuine article from MQTT
 ***
 ## Pins Tab
 ![Esparto Logo](/assets/v3pins.jpg)
@@ -395,8 +416,10 @@ The API is broken down by functional area. They are laid out in the order a begi
 * [GPIO Handling](../master/api_gpio.md)
 * [Command handling & MQTT messaging](../master/api_mqtt.md)
 * [Miscellaneous, Advanced, Diagnostics etc](../master/api_expert.md)
-
+***
 # Advanced topics
+# Throttling
+
 ## Diagnostics
 Much of the detailed info is T.B.A. but then you are probably an expert already. So, if you understand what follows, can dig into the code etc then by all means use it. If not, then you will have to wait till its fully documented ("soon" - of course)
 
@@ -444,17 +467,16 @@ You will proabably never get deep enough to call anything starting with an under
 		static	void 			dumpTopics()	{ __dumper("topics"); }
 ```
 ## Detailed monitoring of "gear" tab / heap usage
-	T.B.A.
+	(youtube video T.B.A.)
 ***
 ## Setting up automatic OTA server
-	T.B.A.
+	T.B.A. in the meanwhile, see: https://www.instructables.com/id/Set-Up-an-ESP8266-Automatic-Update-Server/
 ***
 # Appendices:
 
 * Appendix 1 [API function / Sample sketch cross-reference](../master/appx_1.md)
-* Appendix2 [Sample sketch / API function cross-reference](../master/appx_2.md)
-* Appendix3 [System Variables](../master/appx_3.md)
-
+* Appendix 2 [Sample sketch / API function cross-reference](../master/appx_2.md)
+* Appendix 3 [System Variables](../master/appx_3.md)
 
 © 2019 Phil Bowles
 * philbowles2012@gmail.com
