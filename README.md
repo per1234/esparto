@@ -1,4 +1,4 @@
-# UNDER CONSTRUCTION (verifying links etc!) PLEASE BE PATIENT - EXPECTED READY DATE: C.O.P. 25/02/2019
+# Ready for dowlnoad, although tweaks to documentation still being made (verifying links etc!)
 # Esparto v3.0 is a rapid development framework, synchronous task queue and GPIO manager (plus more) for ESP8266 devices.
 ![v3 preview](/assets/v3preview.jpg)
 # Contents
@@ -78,7 +78,7 @@ void setupHardware(){
 This also includes the ability to reboot the SONOFF (with a "medium press" > 2sec) or factory reset  ("long press" > 5 sec) .
 
 More importantly the main design goal of Esparto is 24/7 hardware functionality with no reboots, no matter what the network does. Hardware is fully functional after typically < 0.6sec from power on, irrespective of network state. Any network outages are gracefully recovered - without rebooting - when the network becomes available again, ensuring zero hardware "downtime".
-Users running fishtanks or security systems or living in areas with poor / patchy WiFi recpetion will appreciate this feature.
+Users running fishtanks or security systems or living in areas with poor / patchy WiFi reception will appreciate this feature.
 It goes without saying that all devices can be updated Over-The-Air (OTA) once the intial upload has been made. 
 
 ## Wot? No ```setup()``` or ```loop()```?
@@ -415,7 +415,7 @@ All of the images that follow are collected together into a handy PDF "cheat she
 The row of icons each represent a different tab. Clicking takes you to the relevant tab, descriptions of which follow here.
 The heart should "beat" once per second, to show the MCU is functioning correctly. If there is a (hopefully) green light to its left, that shows a good link to MQTT. If the light is red, MQTT is unavailable. No light will be shown if you decide not use MQTT
 
-If the heart turns grey, it is because the MCU is too busy to show all GPIO transitions (the UI is said to be "throttled") and thus the exact state of each GPIO may not be accurate until the red heart returns.
+If the beating heart turns grey, it is because the MCU is too busy to show all GPIO transitions (the UI is said to be "throttled") and thus the exact state of each GPIO may not be accurate until the red heart returns.
 
 (see the advanced topics section) [Throttling](../README.md#throttling)
 ## Notes on WiFi tab
@@ -451,7 +451,7 @@ Detailed analysis is a very complex topic and will be the subject of an upcoming
 * Value is updated as soon as you exit the field
 * Your code is notified and can react instantly
 * New value published to MQTT
-* New value saved and takes precedenc on next reboot
+* New value saved and takes precedence on next reboot
 ***
 ## Run Tab
 ![Esparto Logo](/assets/v3run.jpg)
@@ -471,6 +471,7 @@ Detailed analysis is a very complex topic and will be the subject of an upcoming
 * Depending on the speed of your browser and/or your network, it can take several attempts to load the webUI cleanly after first flash. All of the image graphics have a long cache period, so clearing your brower's cache frequently will make this matter worse.
 * The web UI has not been optimised for multiple viewers, so restrict yourself to a single browser. This will be enforced in a future release, but at the moment, opening two or more browers onto the same MCU will almost certainly crash it - but will also give inconsistent results.
 * Dynamic pin tab does not accurately re-set pin designations until the tab is exited. If multiple pins are to be added, you may need to click to another tab and then back to the pins tab keeps the pin designations "in step"
+* No check made for adding pin style DefaultOutput > once (results undefined if you do this!)
 
 # Common Causes of Error
 * not power-cycling the device 1st time after Serial flash
@@ -615,6 +616,15 @@ You will probably never get deep enough to call anything starting with an unders
 		static	void 			dumpSources()	{ __dumper("sources"); }
 		static	void 			dumpTopics()	{ __dumper("topics"); }
 ```
+## Compiling SONOFFs and/or ESP-01S
+The standard IDE does not come with hardware definitions for SONOFFs or the ESP-01S. In order to compile Esparto for these, you will need to perform the following steps:
+* 1 locate the ESP8266 core library folder. It will be something similar to: C:\Users\phil\AppData\Local\Arduino15\packages\esp8266\hardware\esp8266\2.4.2
+* 2 Edit the boards.txt you find there.
+* 3 Locate your Esparto library folder (similar to C:\Users\phil\Documents\Arduino\libraries\ESPArto) or get the file here [boards.txt](../master/boards.txt)
+* 4 Get the contents of the file from your Esparto folder (in step 3) and add it to the end of the "real" boards.txt in step 2. Save / Exit
+* 5 Copy the contents of the "variants" folder in step 3 to the variants folder in step 2
+* 6 Close / re-open the IDE. You should now see the new boards on the Tools/Board menu
+***
 ## Detailed monitoring of "gear" tab / heap usage
 	(youtube video T.B.A.)
 ***

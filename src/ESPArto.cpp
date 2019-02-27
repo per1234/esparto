@@ -22,256 +22,319 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #include <ESPArto.h>
-#include "stats.h"
+#include <limits.h>
+
+extern const char* hwPrettyName;
+
+extern void onWiFiConnect();
+extern void onWiFiDisconnect();
 //
 //	Caller MAY override:
 //
-CFG_MAP& 			__attribute__((weak)) addConfig(){static CFG_MAP empty; return empty;}
-void 					__attribute__((weak)) onConfigItemChange(const char* id,const char* value){}
-void 					__attribute__((weak)) onFactoryReset(void){}
-void 					__attribute__((weak)) onReboot(void){}
-void 					__attribute__((weak)) setupHardware(void){}
-void 					__attribute__((weak)) userBoot(void){}
-void 					__attribute__((weak)) userLoop(void){}
+ESPARTO_CFG_MAP&	__attribute__((weak)) addConfig(){static ESPARTO_CFG_MAP empty; return empty;}
+void 				__attribute__((weak)) onConfigItemChange(const char* id,const char* value){}
+void 				__attribute__((weak)) onMqttConnect(){}
+void 				__attribute__((weak)) onMqttDisconnect(){}
+void 				__attribute__((weak)) setupHardware(){}
+void 				__attribute__((weak)) userLoop(void){}
+//
+h4_priority_queue					ESPArto::_Q;
+vector<H4task*>						ESPArto::_callChain;
+uint32_t							ESPArto::_cpuLoad=0;
+bool								ESPArto::_heapChoke=false;
+uint32_t							ESPArto::_hWarn=0;
+mutex_t				volatile		ESPArto::_qMutex;
+array<statistic*,ESPARTO_N_STATS>	ESPArto::_statistics;
+bool volatile						ESPArto::_syncClock=false;
+//
+vector<ESPARTO_FN_XFORM> ESPArto::_spoolers={
+	_spoolSerial,
+	_spoolLog,
+	_spoolPublish,
+	_spoolRawData
+};
 
-CMD_MAP						ESPArto::cmds={
-#ifdef ESPARTO_DEBUG_PORT
-		{"7dump",			{2,0,0,nullptr}},
-		{"2config",		{0,0,0,CMD_LAMBDA( _info(); )}},
-		{"2topics",		{0,0,0,CMD_LAMBDA( _forEachTopic([](string t,int i){ publish("topic", CSTR(t)); }); )}},
-#endif
-		{"cmd",				{7,0,0,nullptr}},			
-		{"7config",		{3,0,0,nullptr}},
-		{"3get",			{0,0,0,CMD_LAMBDA( _configGet(tokens); )}},
-		{"3set",			{0,0,0,CMD_LAMBDA( _configSet(tokens); )}},
-		{"7factory",	{0,0,0,CMD_LAMBDA( factoryReset(); )}},
-		{"7pin", 			{1,0,0,nullptr}},
-		{"1cfg",			{0,0,0,CMD_LAMBDA( _cfgPin(tokens); )  }},
-		{"1get",			{0,0,0,CMD_LAMBDA( _getPin(tokens); )}},
-		{"1choke",		{0,0,0,CMD_LAMBDA( _chokePin(tokens); )}},
-		{"1set",			{0,0,0,CMD_LAMBDA( _setPin(tokens); )}},
-		{"1flash",		{0,0,0,CMD_LAMBDA( _flashPin(tokens); )}},
-		{"1stop",			{0,0,0,CMD_LAMBDA( _stopPin(tokens); )}},
-		{"1pattern",	{0,0,0,CMD_LAMBDA( _patternPin(tokens); )}},
-		{"1pwm",			{0,0,0,CMD_LAMBDA( _pwmPin(tokens); )}},
-		{"7reboot", 	{0,0,0,CMD_LAMBDA( reboot(ESPARTO_BOOT_MQTT); )}},
-		{"7rename", 	{0,0,0,CMD_LAMBDA( _changeDevice(CSTR(tokens[0]), CSTR(WiFi.SSID()), CSTR(WiFi.psk()) ); )}} //, // validation!!!!!!!!!!!		
+array<uint32_t,ESPARTO_N_SOURCES> ESPArto::_sources={
+	ESPARTO_SPOOLER_SERIAL | ESPARTO_SPOOLER_LOG | ESPARTO_SPOOLER_PUBLISH, // H4
+	ESPARTO_SPOOLER_SERIAL | ESPARTO_SPOOLER_LOG | ESPARTO_SPOOLER_PUBLISH, // GPIO
+	ESPARTO_SPOOLER_SERIAL | ESPARTO_SPOOLER_LOG | ESPARTO_SPOOLER_PUBLISH, // mqtt
+	ESPARTO_SPOOLER_SERIAL | ESPARTO_SPOOLER_LOG | ESPARTO_SPOOLER_PUBLISH, // web
+	ESPARTO_SPOOLER_SERIAL | ESPARTO_SPOOLER_LOG | ESPARTO_SPOOLER_PUBLISH, // rest
+	ESPARTO_SPOOLER_SERIAL | ESPARTO_SPOOLER_LOG | ESPARTO_SPOOLER_PUBLISH, // alexa
+	ESPARTO_SPOOLER_SERIAL | ESPARTO_SPOOLER_LOG | ESPARTO_SPOOLER_PUBLISH, // user
+	ESPARTO_SPOOLER_NULL // synth
 	};
-//
-//	prefix legend:
-//	<none> = mutable {USER}
-//	~ = mutable {sys} change at your peril!
-//	$ = immutable
-//
-//	<none> = mutable {USER}
-//	~ = mutable {sys} change at your peril!
-const char* SYS_AP_FALLBACK			="~fb2AP";
-const char* SYS_MQTT_RETRY			="~mqRetry";
-const char* SYS_MQTT_USER				="~mqUser";
-const char* SYS_MQTT_PASS				="~mqPass";
-// $ = immutable
-const char* SYS_BOOT_COUNT			="$bc";
-const char* SYS_BOOT_REASON			="$br";
-const char* SYS_CHIP_ID					="$chp";
-const char* SYS_DEVICE_NAME			="$dev";
-const char* SYS_ESPARTO_VERSION	="$evn";
-const char* SYS_FAIL_CODE				="$fc";
-const char* SYS_ALEXA_NAME			="$lex";
-const char* SYS_STATE						="$on";
-const char* SYS_PSK							="$psk";
-const char* SYS_ROOTWEB					="$root";
-const char* SYS_SPIFFS_VERSION	="$SPIFFS";
-const char* SYS_SSID						="$ssid";
-// memory savers
-const char*	SYS_CMD_HASH				="cmd/#";
-const char* SYS_TXT_HTM					="text/html";
-//
-CFG_MAP 							ESPArto::config={
-												{SYS_ESPARTO_VERSION,ESPARTO_VERSION},
-												{SYS_BOOT_COUNT,"0"}
-												};
-											
-std::map<string,int>	ESPArto::srcStats;
-vector<autoStats*>		ESPArto::statistics(ESPARTO_N_STATS);
-//														
-function<void(const char*,const char*)>
-											ESPArto::_cicHandler=[](const char* id,const char* value){ onConfigItemChange(id,value); };		// => deflt = let caller do it													
-//
-VFN										ESPArto::NOOP=[]{};
 
-VFN										ESPArto::_connected=nullptr;			// "manual virtual" upcall on WiFi connect - default is public onWiFi...
-VFN										ESPArto::_disconnected=nullptr;  	// overriden by MQTT to get those notifications BEFORE user
-WiFiEventHandler			ESPArto::_disconnectedEventHandler;									
-WiFiEventHandler    	ESPArto::_gotIpEventHandler;
-VFN										ESPArto::_handleCaptive=NOOP;
-VFN										ESPArto::_handleMQTT=NOOP;		// NOOP while MQTT disconnected, =event loop function while connected	
-VFN										ESPArto::_handleWiFi=NOOP;	// NOOP while WiFi disconnected, =event loop function while connected
-VFN										ESPArto::_mqttUiExtras=NOOP;
-VFN										ESPArto::_setupFunction=NOOP;
+ESPARTO_CFG_MAP 			ESPArto::_config={
+	{"$0",ESPARTO_VN}, 
+	{"$1","0"},
+	{"$2","0"},
+	{"$4","18000"},
+	{"$5","53"},
+	{"$6","115"},
+	{"$7","1000"},
+	{"$8","20"},
+	{"$9","25"},
+	{"$10","1"},
+	{"$11","5000"},
+	{"$12","2000"},
+	{"$13","20"},
+	{"$14","2000"},
+	{"$15","20"},
+	{"$16","5000"},
+	{"$17","100"},
+	{"$18","80"},
+	{"$21",""},
+	{"$27","/ws.htm"},
+//	{"$28",__FILE__},
+	{"$30","/cmd/#"},
+	{"$31","text/html"},
+	{"$32","/cfg"}
+};
 
-bool									ESPArto::discoNotified=false;	
-DNSServer*						ESPArto::dnsServer;
-ESPARTO_TIMER					ESPArto::fallbackToAP=0;
-Ticker								ESPArto::heartbeatTicker;	
-PubSubClient*					ESPArto::mqttClient=nullptr;
-uint32_t							ESPArto::sigmaPins=0;
-AsyncUDP 							ESPArto::udp;
-WiFiClient     				ESPArto::wifiClient;
-simpleAsyncWebSocket*	ESPArto::ws;
-//
-//		U T I L I T Y
-//
-//	_uptime TODO get REAL time from MQTT and adjust base offset...etc
-//
-char* ESPArto::_uptime(){
+ESPARTO_FN_CIC				ESPArto::_cicHandler=[](const char* id,const char* value){ onConfigItemChange(id,value); };									
+Ticker						ESPArto::_hbTicker;	
+ESPARTO_FN_VOID				ESPArto::_setupFunction=NOOP_V;
+uint32_t					ESPArto::_sigmaPins=0;
+uint32_t					ESPArto::_sigmaSox=0;
+
+String      				ESPArto::_wemoReply="HTTP/1.1 200 OK\nCACHE-CONTROL: max-age=60\nLOCATION: http://%ip%:80/wemo\nST: urn:Belkin:device:**\nUSN: uuid:%usn%\n\n"; 
+String      				ESPArto::_wemoXML  = "<?xml version=\"1.0\"?><root><device><deviceType>urn:Belkin:device:controllee:1</deviceType><friendlyName>%fn%</friendlyName>"
+							"<manufacturer>Belkin International Inc.</manufacturer><modelName>weenyMo</modelName><modelNumber>1</modelNumber><UDN>uuid:%usn%</UDN></device></root>";
+													
+ESPARTO_FN_SV				ESPArto::_gpio0Default=[](int v1, int v2){ Serial.printf("_gpio0Default does nothing with %d %d\n",v1,v2); };											
+
+void ESPArto::__showPin(uint8_t p,int v1){ SOCKSEND(ESPARTO_AP_NONE,"%d,%d,%d",p,v1,millis());	}
+
+ESPARTO_TIMER ICACHE_RAM_ATTR ESPArto::__heapThrottle(){
+	static Ticker	mori;
+	_heapChoke=true;
+	mori.once_ms(CII(ESPARTO_HEAP_HOLD),[](){ ESPArto::_heapChoke=true;	});
+}
+
+ESPARTO_TIMER ICACHE_RAM_ATTR ESPArto::__queueTask(H4task t){
+	if(!_heapChoke){
+		uint32_t qs=_Q.size();
+		uint32_t _qMax=_getCapacity();
+		uint32_t fh=ESP.getFreeHeap();
+		if(qs < _qMax){
+			if(fh > _hWarn){		
+				_Q.push(t);	
+				return t.getUid();
+			} else __heapThrottle();
+		}	else _crashPrevention();
+	}
+	return 0;
+}
+
+void ESPArto::_bootstrap(){
+	SPIFFS.begin();
+	ESPARTO_CFG_MAP userDefaults=addConfig();
+	_config.insert(userDefaults.begin(),userDefaults.end());
+	_readConfig();
+
+	incConfigInt(ESPARTO_BOOT_COUNT);
+	SCI(ESPARTO_PRETTY_BOARD,hwPrettyName);
+	String duino(ARDUINO_BOARD);
+	duino.replace("ESP8266_","");
+	SCI(ESPARTO_DUINO_BOARD,CSTR(duino));
+	SCII(ESPARTO_FAIL_CODE,ESPARTO_BOOT_UNCONTROLLED);
+	SCII(ESPARTO_MEM_SIZE,ESP.getFlashChipSize());
+	setConfigInt(ESPARTO_CHIP_ID,ESP.getChipId(),"%06X");
+
+	for(int i=0;i<ESPARTO_N_SOURCES;i++) {
+		ESPARTO_SYS_VAR esv=static_cast<ESPARTO_SYS_VAR>(90+i);
+		if(!_configItemExists(esv)) SCII(CSTR(__svname(esv)),0);
+		_sources[i]=CII(CSTR(__svname(esv)));
+	}
+
+	_statistics[0]=new statistic("Q",_getCapacity(),5,1,[](){ return _Q.size(); });
+	_statistics[1]=new statistic("heap",ESP.getFreeHeap()*CII(ESPARTO_HEAP_FACTOR)/100,10,0,bind(&EspClass::getFreeHeap,ESP)); // parameterise
+	_statistics[2]=new statistic("pps",30,10,0,[](){ return ESPArto::_sigmaPins; });
+	_statistics[3]=new statistic("adc",1024,8,0,bind(analogRead,A0));
+	_statistics[4]=new statistic("load",100,10,1,[](){ return H4task::getLoad(); });
+
+	_hbTicker.attach(1,[](){
+			_syncClock=true;
+			auto sock=ESPArto::_ws;
+			if(sock && sock->isAlive()){
+				string beat="beat|" + string(sock->isThrottled() ? "1":"0") + "|" + _uptime();
+				sock->textAll(CSTR(beat));				
+			}
+	});
+	
+	_setupFunction();
+	setupHardware();
+}
+
+void ESPArto::_crashPrevention(){
+	uint32_t lim=_getCapacity()/3;
+	ESPARTO_SOURCE s=ESPARTO_SRC_SYNTH;
+	while(_Q.size() > lim){
+		if(s){
+			_Q.removeSource(s);
+			s=static_cast<ESPARTO_SOURCE>(static_cast<int>(s) - 1);
+		}
+		else break;
+	}
+}
+
+void ESPArto::_lineSpooler(ESPARTO_FN_XFORM xf,string bulk){
+	vector<string> vs;
+	split(bulk,'\n',vs);
+	if(vs.back()=="") vs.pop_back();
+	for(auto const& s:vs) xf(s);
+}
+
+void ESPArto::_readConfig(){
+	if(SPIFFS.exists(CI(ESPARTO_CFG_FILE))){
+		String data=readSPIFFS(CI(ESPARTO_CFG_FILE));
+		vector<string>    params;
+		split(CSTR(data),'\n',params);
+		for(auto const& t: params){
+			vector<string> nvp;
+			split(CSTR(t),'=',nvp);
+			_config[nvp[0]]=nvp[1];
+		}
+		if(_configItemExists(ESPARTO_FAIL_CODE)) setConfigInt(ESPARTO_BOOT_REASON,CII(ESPARTO_FAIL_CODE));
+	}
+}
+
+void ESPArto::_saveConfig(){
+	string data="";
+	_forEachCI(bind([&data](string k,string v){ data+=k+"="+v+"\n";  },_1,_2));
+	data.pop_back();
+	writeSPIFFS(CI(ESPARTO_CFG_FILE),CSTR(data));
+}
+
+void ESPArto::_schedulerLoop(){
+	static uint32_t	prev=0;
+	if(GetMutex(&_qMutex)){
+		if(!_Q.empty()){
+			if(millis() < prev){ // 49-day rollover prevention
+				h4_priority_queue cq=_Q;
+				_Q={};
+				while(!cq.empty()){
+					auto q=cq.top();
+					if(q._runAt > INT_MAX) q._runAt=~q._runAt; // force "wraparound of any long-future events
+					cq.pop();
+					_Q.push(q);
+				}
+			}
+			prev=millis();
+			auto job=_Q.top();
+			int diff=job._runAt-millis(); // coercion to int forces correct unsigned arithmetic esp in wraparound
+			if(diff < 0){
+				_Q.pop();
+				ReleaseMutex(&_qMutex);
+				_callChain.push_back(&job); // clumsy
+				job.run();
+				_callChain.pop_back();
+			}
+		}
+		ReleaseMutex(&_qMutex);
+	}
+	yield();
+	ESP.wdtFeed();
+}
+
+void ESPArto::_setSpool(uint32_t plan,int src){
+	_sources[src]=plan;
+	SCII(CSTR(__svname(static_cast<ESPARTO_SYS_VAR>(90+src))),plan);
+}
+
+void ESPArto::_spoolLog(string bulk){ _lineSpooler([](string s){ SOCKSEND(ESPARTO_AP_NONE,"aat|clog|%s",CSTR(s));	}, bulk);	}
+
+void ESPArto::_spoolPublish(string bulk){
+	H4task* t=getTask();
+	_lineSpooler(bind([](H4task* t,string s){
+		String top(CSTR(s));
+		String pl;
+		if(top.indexOf("|")!=-1){
+			vector<string> vs;
+			split(s,'|',vs);
+			top=CSTR(vs[0]);
+			pl=CSTR(vs[1]);		
+		}
+		else {
+			top="log";
+			pl=CSTR(s);
+		}
+		publish(top,pl);		
+	},t,_1),bulk);
+}
+
+void ESPArto::_spoolRawData(string bulk){ _lineSpooler([](string s){ Serial.printf("%d\n",atoi(CSTR(s))); },bulk); }
+
+void ESPArto::_spoolSerial(string bulk){ _lineSpooler([](string s){ Serial.printf("SS: %s\n",CSTR(s)); },bulk); }
+
+char* ICACHE_RAM_ATTR ESPArto::_uptime(){
 	static char tmp[24];
 	int input_seconds=millis()/1000;
     int days = input_seconds / 86400;
     long hours = (input_seconds % 86400) / 3600;
     long minutes = ((input_seconds % 86400) % 3600) / 60;
     long seconds = (((input_seconds % 86400) % 3600) % 60);
-	sprintf_P(tmp,PSTR("%dd %dh %dm %ds"),days,hours,minutes,seconds);
+	sprintf_P(tmp,PSTR("%dd %02d:%02d:%02d"),days,hours,minutes,seconds);
 	return tmp;
 }
-//
-//	_pinRaw / _pinCooked
-//
-void ESPArto::_pinRaw(int p,int v) {
-	SOCKSEND(ESPARTO_AP_NONE,"%d,%d,%d",p,v,millis());
-	sigmaPins++;
-	}
-void ESPArto::_pinCooked(int p,int v) {
-	SOCKSEND(ESPARTO_AP_NONE,"%d,%d,%d",p+SP_MAX_PIN,v,millis());
-	}
-//
-//	C O N F I G
-//
-void ESPArto::_readConfig(){
-	if(SPIFFS.exists(ESPARTO_CONFIG)){
-		String data=readSPIFFS(ESPARTO_CONFIG);
-		vector<string>    params;
-		split(CSTR(data),'\n',params);
-		for(auto const& t: params){
-			vector<string> nvp;
-			split(CSTR(t),'=',nvp);
-			config[nvp[0]]=nvp[1];
-		}
-		if(config.count(SYS_FAIL_CODE)) setConfigInt(SYS_BOOT_REASON,getConfigInt(SYS_FAIL_CODE));
-	}
+
+ESPArto::ESPArto(): AsyncWebServer(CII(ESPARTO_WEB_PORT)) {
+	CreateMutex(&_qMutex);	
+	_Q.reserve(CII(ESPARTO_Q_MAX)); //
+	_hWarn=ESP.getFreeHeap() * CII(ESPARTO_HEAP_PCENT) / 100; //
+	queueFunction(_bootstrap,ESPARTO_SRC_H4,"boot");
 }
 
-void ESPArto::_saveConfig(){
-  string data;
-  for(auto const& c: config) data+=c.first+"="+c.second+"\n";    
-  data.pop_back();
-	writeSPIFFS(ESPARTO_CONFIG,CSTR(data));
-}
-//
-// set / notify
-//
-void ESPArto::setConfigstring(const char* c,string value){
-	if(config[c]!=value){
-		config[c]=value;
-		_saveConfig();	
-		_cicHandler(c,CSTR(value));
-	}
-}
-void ESPArto::setConfigInt(const char* c,int value,const char* fmt){	setConfigstring(c,stringFromInt(value,fmt)); }
-
-void ESPArto::setConfigString(const char* c,String value){ setConfigstring(c,CSTR(value)); }
-//
-// Int manipulation
-//
-int ESPArto::plusEqualsConfigInt(const char* c, int value){
-	int newValue=getConfigInt(c)+value;
-	setConfigInt(c,newValue);
-	return newValue;
-}
-int ESPArto::minusEqualsConfigInt(const char* c, int value){	return plusEqualsConfigInt(c,-1*value); }
-
-int ESPArto::decConfigInt(const char* c){	return plusEqualsConfigInt(c,-1); }
-
-int ESPArto::incConfigInt(const char* c){	return plusEqualsConfigInt(c,1); }
-//
-//	C O N S T R U C T O R + B O O T S T R A P
-//
-ESPArto::ESPArto(
-				uint32_t nSlots,
-				uint32_t hWarn,
-				SP_STATE_VALUE _cookedHook,
-				SP_STATE_VALUE _rawHook,
-				SP_STATE_VALUE _chokeHook
-				): SmartPins(nSlots, hWarn, _cookedHook, _rawHook, _chokeHook), AsyncWebServer(ESPARTO_WEB_PORT) {
-	
-	Serial.begin(74880);
-	SYNC_FUNCTION(_bootstrap);
-	}
-
-void ESPArto::_bootstrap(){
-	SPIFFS.begin();
-	CFG_MAP userDefaults=addConfig();													// get defaults from caller
-	config.insert(userDefaults.begin(),userDefaults.end());		// add to any we have already e.g. version
-	_readConfig();
-	incConfigInt(SYS_BOOT_COUNT);
-	setConfigInt(SYS_FAIL_CODE,ESPARTO_BOOT_UNCONTROLLED); 		// guilty of failure until proven innocent, e.g. by reboot for a good(controlled) reason
-	config["$brd"]=ARDUINO_BOARD;
-	config[SYS_ESPARTO_VERSION]=ESPARTO_VERSION;
-	config["$h4v"]=H4_VERSION;
-	config["$spv"]=SMARTPINS_VERSION;
-  config[SYS_ROOTWEB]=ESPARTO_ROOTWEB;
-	setConfigInt(SYS_CHIP_ID,ESP.getChipId(),"%06X");
-	setConfigInt("$mem",ESP.getFlashChipSize());
-	srcStats["invoke"]=0;
-	heartbeatTicker.attach(1,[](){
-			SOCKSEND(ESPARTO_AP_NONE,"beat");
-			SOCKSEND(ESPARTO_AP_NONE,"ibi|upt|%s", _uptime());
-		});
-	_setupFunction();
-	setupHardware();
-	setConfigInt("$tHup",millis());
-	}
-
-[[noreturn]] void ESPArto::factoryReset(){
-	onFactoryReset();
-	SPIFFS.remove(ESPARTO_CONFIG);
-	WiFi.disconnect(true); // Won't hurt in lite mode
-	ESP.eraseConfig();
-	WiFi.mode(WIFI_STA);
-	WiFi.setAutoConnect(true);
-	while(1);// deliberate crash (restart doesn't properly clear config!)
+ESPArto::ESPArto(const char* _SSID,const char* _psk, const char* _device): ESPArto(){
+	WiFi.onEvent(ESPArto::_wifiEvent);	
+	_connected=onWiFiConnect;
+	_disconnected=onWiFiDisconnect;
+	_setupFunction=bind(_setupWiFi,_SSID,_psk,_device);
 }
 
-[[noreturn]] void ESPArto::reboot(uint32_t reason){
-	setConfigInt(SYS_BOOT_REASON,reason);
-	config.erase(SYS_FAIL_CODE); // make boot reason valid	
-	_saveConfig();
-	// I don't like this, but...force STA mode if rebooting out of AP recovery mode
-	if(WiFi.getMode() & WIFI_AP) _initiateWiFi(config[SYS_SSID],config[SYS_PSK],config[SYS_DEVICE_NAME]);
-	onReboot();
-	ESP.restart(); // exception(2)??
-}
-//
-//  std3StageButton: default action < 2sec REBOOT < 5sec FACTORY RESET
-//
-void ESPArto::std3StageButton(SP_STATE shorty,uint8_t p,uint32_t db){
-	Esparto.ThreeStage(p,INPUT,db,100, // notify every 100ms
-			[](int v) {
-				if(v>1)flashLED(50);	// stage 2 (fastest)
-				else if(v) flashLED(100); // stage 1 (medium)
-				},
-			shorty, // short click (default action) is anything up to....
-			2000, // mSec, after that we got a medium click, all the way up to....
-			[](int ignore){	ESPArto::reboot(ESPARTO_BOOT_BUTTON); },
-			5000, // mSec and anything after that is LONG
-			[](int ignore){	ESPArto::factoryReset(); });	
+ESPArto::ESPArto(const char* _SSID,	const char* _psk, const char* _device, const char * _mqttIP, int _mqttPort,const char* _mqu,const char* _mqp): ESPArto(_SSID, _psk, _device){	
+	_connected=[](){
+		onWiFiConnect();
+		_mqttConnect();		
+		};
+		
+	_disconnected=[](){
+		onMqttDisconnect();
+		onWiFiDisconnect();
+		};
+
+	_mqttUiExtras=[](){
+		SOCKSEND0(ESPARTO_AP_NONE,"vis|mqtt0");
+		SOCKSEND0(ESPARTO_AP_NONE,"cbi|mqtt|ld led-%s",_mqttClient->loop()  ? "green":"red");		
+		};
+	_setupFunction=bind(_setupMQTT,_SSID,_psk,_device,_mqttIP,_mqttPort,_mqu,_mqp);
 }
 
 void ESPArto::loop(){
-	SmartPins::loop();
+	_schedulerLoop();
+	_pinsLoop();
 	_handleWiFi(); 
 	userLoop();
+	if(_syncClock){ 
+		if(_ws){
+			if(_ws->getActivePane()==ESPARTO_AP_GEAR){
+				string ibi="ibi";
+				for(auto s: _statistics ) ibi+=s->makeStats();
+				_ws->textAll(CSTR(ibi));
+			}
+		}
+		if(CII(ESPARTO_LOG_STATS)) for(auto s: _statistics ) s->pubStats();
+		_sigmaPins=0;
+		_sigmaSox=0;
+		_syncClock=false;
+	}		
 }
 
-void setup(){ userBoot(); }
+void setup(){}
 
 void loop(){ Esparto.loop(); }
+
+#ifdef ESPARTO_DEBUG_PORT
+	vector<syntheticTask*>		ESPArto::_synTasks={};
+#endif
