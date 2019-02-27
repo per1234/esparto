@@ -1,8 +1,0 @@
-HTTP/1.1 200 OK
-CONTENT-LENGTH: 0
-CONTENT-TYPE: text/xml; charset="utf-8"
-DATE: Mon, 22 Jun 2015 22:45:57 GMT
-EXT:
-SERVER: Esparto, UPnP/1.0, 2.0
-X-User-Agent: redsonic
-
