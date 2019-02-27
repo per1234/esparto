@@ -1,4 +1,4 @@
-# Ready for dowlnoad, although tweaks to documentation still being made (verifying links etc!)
+# Ready for download, although tweaks to documentation still being made (verifying links etc!)
 # Esparto v3.0 is a rapid development framework, synchronous task queue and GPIO manager (plus more) for ESP8266 devices.
 ![v3 preview](/assets/v3preview.jpg)
 # Contents
@@ -30,7 +30,7 @@ It makes short work of creating anything from a simple "blinky" to drop-in firmw
 ***
 ## Hardware Compatibility
 Esparto has been tested on a variety of hardware. It will probably run on anything with an ESP8266 in it, but the official at-a-glance list is:
-*	ESP-01 (but why would you bother when thereísÖ)
+*	ESP-01 (but why would you bother when there‚Äôs‚Ä¶)
 *	ESP-01S
 *	Wemos D1
 *	Wemos D1 mini 
@@ -94,11 +94,11 @@ Correct. All your code runs when Esparto decides it is safe to do so (within the
 | onMqttConnect      | When a successful connection is made to an MQTT broker                                                              | None                                            | You must subscribe here to any topics of interest. This is the only place where it makes sense to do so                                                                           |
 | onMqttDisconnect   | When connection to MQTT broker is lost                                                                              | None                                            |                                                                                                                                                                                   |
 | setAlexaDeviceName | During startup or when device name is changed                                                                       | None, but see notes                             | You must return a const char* containing the name Alexa will know your device as                                                                                                  |
-| onAlexaCommand     | When an ìonî or ìoffî voice command is received                                                                     | A bool set to true for ìonî and false for ìoffî |                                                                                                                                                                                   |
-| onReboot           | Badly named, should be ìjustBeforeRebootî can be initiated by webUi, MQTT command, physical hardware on GPIO0       | None                                            | On exit from your code, the device will reboot (soft reset)                                                                                                                       |
-| onFactoryReset     | Badly named, should be ìjustBeforeFactoryResetî can be initiated by webUi, MQTT command, physical hardware on GPIO0 | None                                            | On exit from your code, the device will ìhard resetî to factory settings, i.e. all configuration data and saved WiFI connections will be lost                                     |
+| onAlexaCommand     | When an ‚Äúon‚Äù or ‚Äúoff‚Äù voice command is received                                                                     | A bool set to true for ‚Äúon‚Äù and false for ‚Äúoff‚Äù |                                                                                                                                                                                   |
+| onReboot           | Badly named, should be ‚ÄújustBeforeReboot‚Äù can be initiated by webUi, MQTT command, physical hardware on GPIO0       | None                                            | On exit from your code, the device will reboot (soft reset)                                                                                                                       |
+| onFactoryReset     | Badly named, should be ‚ÄújustBeforeFactoryReset‚Äù can be initiated by webUi, MQTT command, physical hardware on GPIO0 | None                                            | On exit from your code, the device will ‚Äúhard reset‚Äù to factory settings, i.e. all configuration data and saved WiFI connections will be lost                                     |
 | addConfig          | During startup, to allow the user to add his/her own configuration Items                                            | None                                            | You must return a CFG_MAP containing your config items. See example xxx                                                                                                           |
-| onConfigItemChange | Whenever any config item changes value webUI, MQTT etc either through code,                                         | Item name, new value                            | You will ìseeî changes to system values as well as your own ñ see example xxx                                                                                                     |
+| onConfigItemChange | Whenever any config item changes value webUI, MQTT etc either through code,                                         | Item name, new value                            | You will ‚Äúsee‚Äù changes to system values as well as your own ‚Äì see example xxx                                                                                                     |
 | onPinConfigChange  | A defined GPIO pin has had its config values changed                                                                | Pin number, 1st value, 2nd value                | He values depend on the type of pin, see the relevant pin documentation                                                                                                           |
 | userLoop           | Once per main loop cycle, after all other actions complete                                                          | None                                            | This is included merely for future expansion. If you think you need to use it, you are almost certainly wrong: contact the author.                                                |
 
@@ -121,13 +121,13 @@ This enables extremely rapid development of "bomb-proof" code using mutiple simu
 * Main-loop synchronous task queue removes need to understand complex concepts `volatile`, ISRs, co-operative multitasking etc
 
 ## Rapid development
-* Most common errors and ìgotchasî avoided
+* Most common errors and ‚Äúgotchas‚Äù avoided
 * Many flexible input-pin options pre-configured e.g. fully debounced rotary encoder support with a single line of code
 * Create MQTT controlled firmware in only 7 lines of code
 * User code hugely simplified, consisting mainly of short callback functions
 * Several flexible asynchronous LED flashing functions including slow PWM, arbitrary pattern e.g. "... --- ..." for SOS, 
 
-## ìIndustrial strengthî
+## ‚ÄúIndustrial strength‚Äù
 * 24/7 Hardware functionality, irrespective of network status
 * Captive portal AP mode for initial configuration 
 * Copes resiliently with WiFi outage or total network loss, reconnecting automatically without requiring reboot
@@ -147,12 +147,12 @@ This enables extremely rapid development of "bomb-proof" code using mutiple simu
 
 ## 2 Install the following third-party libraries:
 
-Arduinoís own site has a good tutorial on adding 3rd-party libraries: https://www.arduino.cc/en/Guide/Libraries
+Arduino‚Äôs own site has a good tutorial on adding 3rd-party libraries: https://www.arduino.cc/en/Guide/Libraries
 
 * ESPAsyncTCP 1.1.0 https://github.com/me-no-dev/ESPAsyncTCP
 * ESPAsyncUDP  1.0.0 https://github.com/me-no-dev/ESPAsyncUDP
 * ESPAsyncWebserver  1.1.0 https://github.com/me-no-dev/ESPAsyncWebserver
-* PubSubClient v2.6 https://github.com/knolleary/pubsubclient. Be careful: there are two or three MQTT client libraries out there for Arduino ñ do not be tempted to use any other than the above: they simply wonít work.
+* PubSubClient v2.6 https://github.com/knolleary/pubsubclient. Be careful: there are two or three MQTT client libraries out there for Arduino ‚Äì do not be tempted to use any other than the above: they simply won‚Äôt work.
 
 ## 3 Install required tools
 
@@ -245,7 +245,7 @@ If you are going to be doing your own coding then you _must_ read in full first:
 | cmd/config/set   | varname |          | value               | Set {varname}=value and Publish data/{varname} [value]                                   |
 | cmd/factory      |         |          |                     | Perform Factory Reset WARNING: all config lost                                           |
 | cmd/info         |         |          |                     | Publish data/{varname}[value] of all variables                                           |
-| cmd/pin/add      | pin#    | Ö        | Ö                   | See separate section                                                                     |
+| cmd/pin/add      | pin#    | ‚Ä¶        | ‚Ä¶                   | See separate section                                                                     |
 | cmd/pin/cfg      | pin#    |          | v1,v2               | Reconfigure pin v1 & v2 have meaning described in [GPIO Handling](../master/api_gpio.md) |
 | cmd/pin/choke    | pin#    |          | rate                | Throttle pin @ rate per sec                                                              |
 | cmd/pin/flash    | pin#    |          | rate                | Flash pin @ rate mSec on/off symmetric                                                   |
@@ -637,7 +637,7 @@ The standard IDE does not come with hardware definitions for SONOFFs or the ESP-
 * Appendix 2 [Sample sketch / API function cross-reference](../master/appx_2.md)
 * Appendix 3 [System Variables](../master/appx_3.md)
 
-© 2019 Phil Bowles
+¬© 2019 Phil Bowles
 * philbowles2012@gmail.com
 * [Blog](https://8266iot.blogspot.com)
 * [Facebook Group](https://www.facebook.com/groups/597324830744576/)
