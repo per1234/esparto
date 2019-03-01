@@ -277,21 +277,21 @@ Generally we get: testbed/cmd/pin/add/gpio_number/pintype/options/for/each/pinty
 First pintypes:
 
 |	Pintype			|No.| Sub1 | Sub2 | Sub3 | Sub4 | Sub5 | Sub6 | Sub7 | Sub8 |
-|(not part of cmd)  |   |      |      |      |      |      |      |      |      |
+| (not part of cmd) |   |      |      |      |      |      |      |      |      |
 |-------------------|---|------|------|------|------|------|------|------|------|
-|RAW				|  1|mode  | ax   | ...  |      |      |      |      |      |
-|OUTPUT				|  2|active|initl |  ax  | ...  |      |      |      |      |
-|DEBOUNCED			|  3|mode  |dbv   |  ax  | ...  |      |      |      |      |
-|FILTERED			|  4|mode  |filter|  ax  | ...  |      |      |      |      |	
-|LATCHING			|  5|mode  |dbv   |  ax  | ...  |      |      |      |      |
-|RETRIGGERING		|  6|mode  |timout|active|  ax  | ...  |      |      |      |
-|ENCODER			|  7|mode  |pinB  |  ax  | ...  |      |      |      |      |
-|ENCODER_AUTO		|  8|mode  |pinB  |Vmin  |Vmax  |Vinc  |Vset  | ax   | ...  |
-|REPORTING			|  9|mode  |dbv   |freqcy|  ax  | ...  |      |      |      |
-|TIMED				| 10|mode  |dbv   |  ax  | ...  |      |      |      |      |
-|POLLED				| 11|mode  |freqcy|ADC   |  ax  | ...  |      |      |      |
-|DEFAULT_OUT		| 12|active|initl |  ax  | ...  |      |      |      |      |
-|STD3STG			| 13|  ax  | ...  |      |      |      |      |      |      |
+| RAW				|  1|mode  | ax   | ...  |      |      |      |      |      |
+| OUTPUT			|  2|active|initl |  ax  | ...  |      |      |      |      |
+| DEBOUNCED			|  3|mode  |dbv   |  ax  | ...  |      |      |      |      |
+| FILTERED			|  4|mode  |filter|  ax  | ...  |      |      |      |      |	
+| LATCHING			|  5|mode  |dbv   |  ax  | ...  |      |      |      |      |
+| RETRIGGERING		|  6|mode  |timout|active|  ax  | ...  |      |      |      |
+| ENCODER			|  7|mode  |pinB  |  ax  | ...  |      |      |      |      |
+| ENCODER_AUTO		|  8|mode  |pinB  |Vmin  |Vmax  |Vinc  |Vset  | ax   | ...  |
+| REPORTING			|  9|mode  |dbv   |freqcy|  ax  | ...  |      |      |      |
+| TIMED				| 10|mode  |dbv   |  ax  | ...  |      |      |      |      |
+| POLLED			| 11|mode  |freqcy|ADC   |  ax  | ...  |      |      |      |
+| DEFAULT_OUT		| 12|active|initl |  ax  | ...  |      |      |      |      |
+| STD3STG			| 13|  ax  | ...  |      |      |      |      |      |      |
 
 The additonal subtopics for each type will be found in the relevant section of the GPIO definition:[GPIO Handling](../master/api_gpio.md)
 
