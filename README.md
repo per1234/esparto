@@ -1,5 +1,5 @@
-# Ready for download, although tweaks to documentation still being made (verifying links etc!)
 # Esparto v3.0 is a rapid development framework, synchronous task queue and GPIO manager (plus more) for ESP8266 devices.
+### Click Image for youtube introduction worth 17,686 words...
 [![Youtube Introduction](https://img.youtube.com/vi/i9hjpYnfQoc/0.jpg)](https://www.youtube.com/watch?v=i9hjpYnfQoc)
 # Contents
 * [Introduction](../master/README.md#introduction)
@@ -30,7 +30,7 @@ It makes short work of creating anything from a simple "blinky" to drop-in firmw
 ***
 ## Hardware Compatibility
 Esparto has been tested on a variety of hardware. It will probably run on anything with an ESP8266 in it, but the official at-a-glance list is:
-*	ESP-01 (but why would you bother when there’s…)
+*	ESP-01 (but why would you bother when there’s…)* [ No OTA available ]
 *	ESP-01S
 *	Wemos D1
 *	Wemos D1 mini 
@@ -43,10 +43,10 @@ Esparto has been tested on a variety of hardware. It will probably run on anythi
 
 ## Arduino IDE integration
 
-It is an Arduino IDE library which presents a class object "Esparto". The Esparto API allows sophisticated control of all the GPIO pins, often with only a single line of code. It serialises all asynchronous events into a task queue which runs "on the main loop". This helps prevent cross-task contamination and common timing errors, and removes the need for beginners to understand "volatile", task synchronisation, critical sections, mutual locking and other highly complex and error-prone topics. The majority of user code is run in Esparto callbacks.
+Esparto is an Arduino IDE library which presents a class object "Esparto". The Esparto API allows sophisticated control of all the GPIO pins, often with only a single line of code. It serialises all asynchronous events into a task queue which runs "on the main loop". This helps prevent cross-task contamination and common timing errors, and removes the need for beginners to understand "volatile", task synchronisation, critical sections, mutual locking and other highly complex and error-prone topics. The majority of user code is run in Esparto callbacks.
 It provides rich functionality covering a wide range of typical IOT functions.
 
-It also comes with additional "boards.txt" entries for ESP-01S, and SONOFF devices to make development as easy for those as it is for "standard" boards.
+It also comes with additional ["boards.txt"](../master/sonoff_boards.txt) entries for ESP-01S, and SONOFF devices to make development as easy for those as it is for "standard" boards.
 
 Here, for example is all the code needed to build a simple (debounced) latching button-controlled "blinky".
 
@@ -65,7 +65,7 @@ void setupHardware(){
     Esparto.Latching(PUSHBUTTON,INPUT,15,buttonPress); // 15ms of debouncing, call buttonPress on any change
 }
 ```
-A fully-functional MQTT / Alexa / web UI / web Rest / physical button controlled firmware for a SONOFF Basic or S20 can be built with only 4 API calls in 7 lines of code:
+A fully-functional MQTT / Alexa / web UI / web Rest / physical button controlled firmware for a SONOFF Basic or S20 can be built with only a constructor and 3 Esparto API calls in a total of 7 lines of code:
 ```cpp
 #include <ESPArto.h>
 ESPArto Esparto("mySSID","password","testbed","192.168.1.4",1883);
@@ -78,7 +78,7 @@ void setupHardware(){
 This also includes the ability to reboot the SONOFF (with a "medium press" > 2sec) or factory reset  ("long press" > 5 sec) .
 
 More importantly the main design goal of Esparto is 24/7 hardware functionality with no reboots, no matter what the network does. Hardware is fully functional after typically < 0.6sec from power on, irrespective of network state. Any network outages are gracefully recovered - without rebooting - when the network becomes available again, ensuring zero hardware "downtime".
-Users running fishtanks or security systems or living in areas with poor / patchy WiFi reception will appreciate this feature.
+Users running fishtanks, security systems or ~~iron lungs~~ or living in areas with poor / patchy WiFi reception will appreciate this feature.
 It goes without saying that all devices can be updated Over-The-Air (OTA) once the intial upload has been made. 
 
 ## Wot? No ```setup()``` or ```loop()```?
@@ -140,12 +140,12 @@ This enables extremely rapid development of "bomb-proof" code using mutiple simu
 ***
 
 # Installation
-## 1 Install (or upgrade to)
+## 1 Install (or upgrade to) :computer:
 
 * Arduino IDE 1.8.7 https://www.arduino.cc/en/Main/Software
 * ESP8266 core 2.4.2 https://github.com/esp8266/arduino
 
-## 2 Install the following third-party libraries:
+## 2 Install the following third-party libraries :books:
 
 Arduino’s own site has a good tutorial on adding 3rd-party libraries: https://www.arduino.cc/en/Guide/Libraries
 
@@ -154,20 +154,24 @@ Arduino’s own site has a good tutorial on adding 3rd-party libraries: https://ww
 * ESPAsyncWebserver  1.1.0 https://github.com/me-no-dev/ESPAsyncWebserver
 * PubSubClient v2.6 https://github.com/knolleary/pubsubclient. Be careful: there are two or three MQTT client libraries out there for Arduino – do not be tempted to use any other than the above: they simply won’t work.
 
-## 3 Install required tools
+## 3 Install required tools :hammer_and_wrench:
 
 * Sketch data uploader https://github.com/esp8266/arduino-esp8266fs-plugin
 * Exception decoder https://github.com/me-no-dev/EspExceptionDecoder This last item is optional - until your code crashes! When (not _if_) it does so, you will need to provide the author with a decoded stack dump, and this is the tool to do it. See the issues / support section coming up.
 Spoiler alert: No support will be given to exception / crash issues without a decoded stack dump, so you really should install this.
 
-## 4 Install Esparto v3 itself
+## 4 Install Esparto v3 itself :herb:
 
-## 5 Copy the data folder to the root folder of any sketch you write that uses WiFi or MQTT.
+## 5 Copy the data folder to the root folder of any sketch you write that uses WiFi or MQTT :open_file_folder:
 This also applies to the sample sketches: Any that use WiFi / MQTT _must_ have the data folder copied to their root folder.
 ***
 # Getting Started
 There are 47 example sketches included with Esparto. While the full API is documented here, there is no better way to learn than by compiling and running the examples in the order they appear.
-They have been deliberately graded to build on each other, and each contains its own documentation. Thus "the documentation" consist not only this file and its linked files and appendices, but also the _*comments of the example sketches*_ so bearing in mind that support will not be provided to users who have not read the documentation, it would be a good idea to look at them run them and understand how Esparto works before dealing wiht anything you think may be a problem.
+They have been deliberately graded to build on each other, and each contains its own documentation. Thus "the documentation" consist not only this file and its linked files and appendices, but also the _*comments of the example sketches*_ so bearing in mind that support will not be provided to users who have not read the documentation, it would be a good idea to look at them run them and understand how Esparto works before dealing with anything you think may be a problem.
+
+There is also a youtube channel with instructional videos being added (slowly)
+
+ [Youtube channel (instructional videos)](https://www.youtube.com/channel/UCYi-Ko76_3p9hBUtleZRY6g)
 
 ## Decide what GPIOs you will be using.
 For each, you need to decide which Esparto pin type best matches your desired use. Having done this, write a callback routine that takes two int values:
