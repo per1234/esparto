@@ -297,24 +297,24 @@ The additonal subtopics for each type will be found in the relevant section of t
 
 Next the actions, the ... portion of the above table
 
-|     Action      |Action| Sub  | Sub  | Sub  |
-|(not part of cmd)| Code | ax+1 | ax+2 | ax+3 |
-|-----------------|------|------|------|------|
-|No Action        |    1 |      |      |      |
-|Publish Pin Value|    2 |      |      |      |
-|Output Passthru  |    3 |GPIO #|invert|      |
-|Set Var (Pin)    |    4 | var  |      |      |
-|Set Var (Param)  |    5 | var  |value |txtnum|
-|Dec Var          |    6 | var  |      |      |
-|Inc Var          |    7 | var  |      |      |
-|Command          |    8 | cmd  |pyload|      |                                                                       
-|Publish Var Value|    9 | var  |      |      |                 
-|Add to Var       |   10 | var  |      |      |
-|Sub from Var     |   11 | var  |      |      |
-|Flash LED        |   12 |GPIO #|rate  |      |
-|Flash LED PWM    |   13 |GPIO #|period|cycle |
-|Flash LED Pattern|   14 |GPIO #|tmbase|pattrn|
-|Stop LED Flash   |   15 |GPIO #|      |      |
+| Action            | Action | Sub    | Sub    | Sub    |
+|-------------------|--------|--------|--------|--------|
+| (not part of cmd) | Code   | ax+1   | ax+2   | ax+3   |
+| No Action         | 1      |        |        |        |
+| Publish Pin Value | 2      |        |        |        |
+| Output Passthru   | 3      | GPIO # | invert |        |
+| Set Var (Pin)     | 4      | var    |        |        |
+| Set Var (Param)   | 5      | var    | value  | txtnum |
+| Dec Var           | 6      | var    |        |        |
+| Inc Var           | 7      | var    |        |        |
+| Command           | 8      | cmd    | pyload |        |
+| Publish Var Value | 9      | var    |        |        |
+| Add to Var        | 10     | var    |        |        |
+| Sub from Var      | 11     | var    |        |        |
+| Flash LED         | 12     | GPIO # | rate   |        |
+| Flash LED PWM     | 13     | GPIO # | period | cycle  |
+| Flash LED Pattern | 14     | GPIO # | tmbase | pattrn |
+| Stop LED Flash    | 15     | GPIO # |        |        |
 
 ### Common Subtopic ax... values
 * GPIO # - number of GPIO pin to receive action
