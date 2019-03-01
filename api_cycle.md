@@ -345,8 +345,9 @@ if(!Esparto.wifiConnected()) { // we are not yet connected
 _*Sample sketches: view / run in the order shown*_
 [WiFi_Warning ](../master/examples/wifi/WiFi_Warning/WiFi_Warning.ino)
 ***
-
 © 2019 Phil Bowles
-* philbowles2012@gmail.com
+* esparto8266@gmail.com
+* [Youtube channel (instructional videos)](https://www.youtube.com/channel/UCYi-Ko76_3p9hBUtleZRY6g)
 * [Blog](https://8266iot.blogspot.com)
-* [Facebook Group](https://www.facebook.com/groups/597324830744576/)
+* [Facebook Support / Discussion Group](https://www.facebook.com/groups/esparto8266/)
+* [Support me on Patreon](https://patreon.com/esparto)
