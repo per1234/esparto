@@ -6,7 +6,8 @@
 		fix pin designations in Pins Tab
 		either prohibit or allow m viewers
 	Changelog:
-		03/03/2019  3.0.1	BUGFIX Hide internal configs $10=>0
+		03/03/2019 	3.0.2 	BUGFIX - missing Wemos D1 R1 pin definitions added (Thanks Peter Peters!)
+		03/03/2019  3.0.1	BUGFIX Hide internal configs $10=>0 (Thanks Adam Sharp!)
 		26/02/2019	3.0.0	dynamic pin configuration
 							combine sub-projects, MAHOOSIVE code tidy/rewrite
 							major changes to task, name, ptr etc - spooler concept

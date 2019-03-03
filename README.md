@@ -3,6 +3,7 @@
 [![Youtube Introduction](https://img.youtube.com/vi/i9hjpYnfQoc/0.jpg)](https://www.youtube.com/watch?v=i9hjpYnfQoc)
 ### What's new
 * 03/03/2019 3.0.1 BUGFIX - hide diagnostic internal variables from config tab (Thanks Adam Sharp!)
+* 03/03/2019 3.0.2 BUGFIX - missing Wemos D1 R1 pin definitions added (Thanks Peter Peters!)
 ***
 # Contents
 * [Introduction](../master/README.md#introduction)
@@ -476,13 +477,15 @@ Detailed analysis is a very complex topic and will be the subject of an upcoming
 This is a complex topic, you need to read [Adding Pins-Dynamically](../master/README.md#adding-pins-dynamically) first.
 You also need to understand the full range of Esparto GPIO types described here: [GPIO Handling](../master/api_gpio.md) even if you will not be programming them.
 
-There are some known issues regarding the resettting of the GPIO grpahic indications: You may need to go to another tab and then come back to get an accurate picture after changes.
+There are some known issues regarding the resettting of the GPIO graphic indications: You may need to go to another tab and then come back to get an accurate picture after changes.
 
-Deleting an existing pin is perfomred by clicking on the GREEN GPIO number and confirming the dialog box that pops up.
+Deleting an existing pin is perfromed by clicking on the GREEN GPIO number and confirming the dialog box that pops up.
 ***
 ## Log and Spool Tabs
 ![Esparto Logo](/assets/v3spool.jpg)
 ## Notes on Log and Spool Tabs
+* Read the section on ["Spooling" and "Crash Recovery"](../master/README.md#spooling-and-crash-recovery)
+* Also see the sample sketch [Tasks_Spoolers ](../master/examples/xpert/Tasks_Spoolers/Tasks_Spoolers.ino) for more detail.
 ***
 # Known Issues
 * This is major rewrite with major new functionality and a ".0" release - it has been compiled with diagnostics on. You may see some interesting mesages. Hopefully, you won't.
