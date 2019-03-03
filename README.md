@@ -1,6 +1,9 @@
 # Esparto v3.0 is a rapid development framework, synchronous task queue and GPIO manager (plus more) for ESP8266 devices.
 ### Click Image for youtube introduction worth 17,686 words...
 [![Youtube Introduction](https://img.youtube.com/vi/i9hjpYnfQoc/0.jpg)](https://www.youtube.com/watch?v=i9hjpYnfQoc)
+### What's new
+* 03/03/2019 3.0.1 BUGFIX - hide diagnostic internal variables from config tab (Thanks Adam Sharp!)
+***
 # Contents
 * [Introduction](../master/README.md#introduction)
 * [Main Features](../master/README.md#main-features)
@@ -79,9 +82,9 @@ This also includes the ability to reboot the SONOFF (with a "medium press" > 2se
 
 More importantly the main design goal of Esparto is 24/7 hardware functionality with no reboots, no matter what the network does. Hardware is fully functional after typically < 0.6sec from power on, irrespective of network state. Any network outages are gracefully recovered - without rebooting - when the network becomes available again, ensuring zero hardware "downtime".
 Users running fishtanks, security systems or ~~iron lungs~~ or living in areas with poor / patchy WiFi reception will appreciate this feature.
-It goes without saying that all devices can be updated Over-The-Air (OTA) once the intial upload has been made. 
+It goes without saying that all devices can be updated Over-The-Air (OTA) once the intial upload has been made. (Apart from ESP-01 which does not have enough flash memory)
 
-## Wot? No ```setup()``` or ```loop()```?
+## Wot? No `setup()` or `loop()`? :astonished:
 
 Correct. All your code runs when Esparto decides it is safe to do so (within the Esparto "lifecycle") and "calls it back". This is to ensure smooth running of multiple simultaneous events.
 ## Esparto "LifeCycle"
@@ -103,26 +106,28 @@ Correct. All your code runs when Esparto decides it is safe to do so (within the
 | userLoop           | Once per main loop cycle, after all other actions complete                                                          | None                                            | This is included merely for future expansion. If you think you need to use it, you are almost certainly wrong: contact the author.                                                |
 
 Most commonly you will define GPIOs for input and output in setupHardware. Each of these may have its own callback for when activity occurs on the pin, though many pin types have a great amount of automatic functionality already built-in. In many common scenarios, there will be little for your code to do.
-Next in onMqttConnect you will subscribe to your own topics, particular to your app (if any). Again, each topic has its own callback which Esparto will activate whenever a user publishes that topic. Esparto comes with a lot of MQTT functionality already built-in.
+Next in the `onMqttConnect` callback you will subscribe to your own topics which are specific to your app (if any). Each topic will need its own callback which Esparto will execute whenever a user publishes that topic. Esparto comes with a lot of MQTT functionality already built-in.
+
+*N.B.* Much of the MQTT functionality can be used without needing an MQTT broker, by using the web REST interface or the webUI itself
 
 Esparto also publishes frequent statistics and / or GPIO status if required and has extensive diagnostic features for advanced users
 
 In summary, you "plug in" short pieces of user code (callbacks) that make up the specifics of your app into the appropriate place in Esparto's lifecycle to respond to the relevant real-world events.
-This enables extremely rapid development of "bomb-proof" code using mutiple simultaneous complex sensors / actuators. Say goodbye to WDT resets and "random" crashes (which never actually *are* random)
+This enables extremely rapid development of "bomb-proof" code using mutiple simultaneous complex sensors / actuators. Say goodbye to WDT resets and "random" crashes (which - of course - are never actually random, but caused by bugs in your code)
 ***
 # Main Features
 ## Ease of use
 * Voice-driven compatibility with Amazon Echo (Alexa)
-* WiFi + MQTT control built-in and ready "out of the box"
+* WiFi + MQTT control built-in and ready "out of the box" (if needed: not mandatory)
 * Extremely simple programming interface with Arduino IDE, fully cross-referenced API
 * Numerous (47) working code examples, making it an ideal self-teaching tool
 * Flexibility: create apps from simple "blinky" to fully-featured, complex, resilient IOT / home automation firmware
 * Tested on a wide variety of hardware: ESP-01, SONOFF, Wemos D1, NodeMCU etc
-* Main-loop synchronous task queue removes need to understand complex concepts `volatile`, ISRs, co-operative multitasking etc
+* Main-loop synchronous task queue removes need to understand complex concepts e.g. `volatile`, ISRs, co-operative multitasking etc
 
 ## Rapid development
 * Most common errors and “gotchas” avoided
-* Many flexible input-pin options pre-configured e.g. fully debounced rotary encoder support with a single line of code
+* Many flexible GPIO options pre-configured e.g. fully debounced rotary encoder support with a single line of code
 * Create MQTT controlled firmware in only 7 lines of code
 * User code hugely simplified, consisting mainly of short callback functions
 * Several flexible asynchronous LED flashing functions including slow PWM, arbitrary pattern e.g. "... --- ..." for SOS, 
@@ -131,21 +136,20 @@ This enables extremely rapid development of "bomb-proof" code using mutiple simu
 * 24/7 Hardware functionality, irrespective of network status
 * Captive portal AP mode for initial configuration 
 * Copes resiliently with WiFi outage or total network loss, reconnecting automatically without requiring reboot
-* OTA updates
-* Main-loop synchronous queue, avoids WDT resets
-* Web UI with near-real-time GPIO status MQTT simulator
-* Numerous MQTT command / control functions
+* OTA updates (except ESP-01)
+* Main-loop synchronous queue avoids common WDT resets
+* Web UI with near-real-time GPIO status and MQTT simulator
+* Numerous command / control functions
 * Highly configurable through Web UI
-* Instant dynamic reconnect on SSID / password change, with no reboot
 ***
 
 # Installation
-## 1 Install (or upgrade to) :computer:
+## :computer: Install (or upgrade to) 
 
 * Arduino IDE 1.8.7 https://www.arduino.cc/en/Main/Software
 * ESP8266 core 2.4.2 https://github.com/esp8266/arduino
 
-## 2 Install the following third-party libraries :books:
+## :books: Install the following third-party libraries 
 
 Arduino’s own site has a good tutorial on adding 3rd-party libraries: https://www.arduino.cc/en/Guide/Libraries
 
@@ -154,15 +158,15 @@ Arduino’s own site has a good tutorial on adding 3rd-party libraries: https://ww
 * ESPAsyncWebserver  1.1.0 https://github.com/me-no-dev/ESPAsyncWebserver
 * PubSubClient v2.6 https://github.com/knolleary/pubsubclient. Be careful: there are two or three MQTT client libraries out there for Arduino – do not be tempted to use any other than the above: they simply won’t work.
 
-## 3 Install required tools :hammer_and_wrench:
+## :hammer_and_wrench: Install required tools 
 
 * Sketch data uploader https://github.com/esp8266/arduino-esp8266fs-plugin
 * Exception decoder https://github.com/me-no-dev/EspExceptionDecoder This last item is optional - until your code crashes! When (not _if_) it does so, you will need to provide the author with a decoded stack dump, and this is the tool to do it. See the issues / support section coming up.
 Spoiler alert: No support will be given to exception / crash issues without a decoded stack dump, so you really should install this.
 
-## 4 Install Esparto v3 itself :herb:
+## :herb: Install Esparto v3 itself 
 
-## 5 Copy the data folder to the root folder of any sketch you write that uses WiFi or MQTT :open_file_folder:
+## :open_file_folder: Copy the data folder to the root folder of any sketch you write that uses WiFi or MQTT 
 This also applies to the sample sketches: Any that use WiFi / MQTT _must_ have the data folder copied to their root folder.
 ***
 # Getting Started
@@ -173,8 +177,9 @@ There is also a youtube channel with instructional videos being added (slowly)
 
  [Youtube channel (instructional videos)](https://www.youtube.com/channel/UCYi-Ko76_3p9hBUtleZRY6g)
 
-## Decide what GPIOs you will be using.
-For each, you need to decide which Esparto pin type best matches your desired use. Having done this, write a callback routine that takes two int values:
+## :pushpin: Decide what GPIOs you will be using.
+For each
+ GPIO you use you need to decide which Esparto pin type best matches your requirements. Having done this, write a callback routine that takes two int values:
 
 `void myGPIOCallback(int i1, int i2){ ...do something... }` In all cases, i1 is the state of the pin that caused the callback event. In many cases i2 is the micros() value of when the event occured.
 
@@ -182,14 +187,14 @@ Decide what actions should be taken when the pin changes and add that code to th
 
 Now add the definition of the GPIO to the `setupHardware` callback
 
-## Decide on any periodic events you need
+## :stopwatch: Decide on any periodic events you need
 For each time-based event, you need to define a callback which will be a void-returing function with no parameters:
 
 `void myTimerCallback(void){ ...do something... }`
 
 Add the code to handle the event into the callback, and add the timer defintion to the `setupHardware` callback
 
-## Choose which lifecycle events you will monitor
+## :dizzy: Choose which lifecycle events you will monitor
 For each of these you will need to define the specific callback as described in the section above: [Lifecycle Callbacks](../master/README.md#esparto-lifecycle)
 
 Add your lifecycle event code to the callback.
@@ -202,46 +207,47 @@ void myTopic2(vector<string> vs){ handle topic2 }
 ```
 Full description of the callback and its parameters are given here: [Command handling & MQTT messaging](../master/api_mqtt.md)
 
-## Final check:
+## :heavy_check_mark: Final check:
 You should now have:
 * a `setupHardware` callback which initalise all your GPIOs and timers
 * a user-defined callback for each GPIO
 * a user-defined callback for each timer function
-* (optionally) some Esaprto lifecycle callbacks populated with user-written code
+* (optionally) some Esparto lifecycle callbacks populated with user-written code
 * (optionally) an MQTT callback for each user topic
 
-If your board has a choice, choose 1M SPIFFS option for any 4MB device (e.g. Wemos D1 mini etc) or 96K SPIFFS for 1M devices (ESP-01, SONOFF etc).
+If your board has a choice, choose 1M SPIFFS option for any 4MB device (e.g. Wemos D1 mini etc) or 128K SPIFFS for 1M devices (ESP-01, SONOFF etc).
 
-Compile the code. WARNING: it is best to select "Erase Flash: only sketch" in the IDE. If you select "...All Flash Contents" you will have to re-upload the sketch data (see next) every time after you compile
+Compile the code. WARNING: it is best to select "Erase Flash: only sketch" in the IDE. If you select "...All Flash Contents" you will have to re-upload the sketch data (see next) every time after you compile.
 
-## Upload the sketch data
+## :spider_web: Upload the webserver data files (Tools/ESP8266 Sketch Data Upload)
 If you are using WiFi or MQTT and you have not previously performed this step since the device was factory reset...
-Or, if you foolishly selected "Erase Flash: All Flash Contents" in the previous step, then copy the data folder to your sketch folder and use the tools menu in the IDE to upload the data to your device
+Or, if you foolishly selected "Erase Flash: All Flash Contents" in the previous step, then copy the data folder to your sketch folder and use the tools menu in the IDE to upload the data to your device.
+In theory, you should only ever need to do this once to each new device.	
 
 Now, you need to perform _*the most important step*_ before running Esparto:
 
-_*UNPLUG THE DEVICE OR OTHERWISE POWER IT OFF*_
+:electric_plug: :recycle: _*UNPLUG THE DEVICE OR OTHERWISE POWER IT OFF*_
 
 Wait a second or two, and plug the device back in, not forgetting to reopen the Serial monitor window of the IDE if you need to see diagnostic messages.
-This is required due to a bug in the ESP8266 firmware which can (and frequently _does_) cause crash / reboot the first time (and only the first time) after a Serial flash upload.
+This step is required (not just for Esparto) due to a bug in the ESP8266 firmware which can (and frequently _does_) cause crash / reboot the first time (and only the first time) after a Serial flash upload.
 
 ...which brings us nicely on to:
 
 # Command and control
-While the primary source of control commands is likely to be MQTT, Esparto will function quite happily without MQTT as it has both a web UI whiach can control it graphically and REST-like interface that simulates MQTT.
-The fundamental unit of control is a "command". In the examples we will concentrate on "reboot" because it is simple to understand. Assuming your device is "testbed" on 192.168.1.42, any of the following will cause the reboot command to run:
+While the primary source of control commands is likely to be MQTT, Esparto will function quite happily without MQTT as it has both a web UI which can control it graphically and a REST-like http interface that simulates MQTT.
+The fundamental unit of control is a "command" and it can orgiinate from a variety of sources. In the examples we will concentrate on "reboot" because it is simple to understand. Assuming your device is "testbed" on 192.168.1.42, any of the following will initiate command:
 
 * publishing testbed/cmd/reboot to MQTT
 * visiting http://192.168.1.42/cmd/reboot
 * visiting http://testbed.local and clicking on the "reboot" button (this "invokes" cmd/reboot internally)
 * visiting http://192.168.1.42, navigating to the "run" tab, selecting "cmd/reboot" from the drop-down menu and clicking "Simulate MQTT"
 * calling `Esparto.invokeCmd("cmd/reboot");` from your own code (this "invokes" cmd/reboot internally)
-* holding down GPIO0 for > 2sec if you have a std3StageButton GPIO (this "invokes" cmd/reboot internally)
+* (specific to reboot only) holding down GPIO0 for > 2sec if you have a std3StageButton defined
 
 The point here is that Esparto has a number of built-in commands which _look like_ MQTT topics, but can be invoked without having to actually have an MQTT broker.
 If you are going to be doing your own coding then you _must_ read in full first: [Command handling & MQTT messaging](../master/api_mqtt.md)
 
-# Built-in commands
+# Built-in commands and their subtopics
 
 | Command          | Sub1    | Sub2     | PAYLOAD             | Notes                                                                                    |
 |------------------|---------|----------|---------------------|------------------------------------------------------------------------------------------|
@@ -267,7 +273,7 @@ If you are going to be doing your own coding then you _must_ read in full first:
 *Examples:*
 
 * MQTT command testbed/cmd/pin/set/4 with payload of "1" sets GPIO3 HIGH and Esparto publishes testbed/gpio/4 ["1"]
-* http://testbed.local/cmd/config/set/blinkrate/150 sets Config Item "blinktrate" to "150" and publishes testbed/dta/blinkrate ["150"] see below
+* http://testbed.local/cmd/config/set/blinkrate/150 sets Config Item "blinkrate" to "150" and publishes testbed/dta/blinkrate ["150"] see below
 * webUI "run" tab dropdown cmd/pin/flash/4/300 ["   ... --- ..."] flashes S-O-S
 
 cmd/pin/add is such a complex command that it has it own section:
@@ -347,6 +353,8 @@ testbed/cmd/pin/add/12/1/1/ax/1/0
 ## note on REST-like interface
 When using commands such as: http://testbed.local/cmd/config/set/blinkrate/150 the payload is taken to be the last part of the command, i.e. 150 in this case. Technically speaking, since all commands _have_ a payload (even if its blank)
 so that cmd/info for example should be typed as http://testbed.local/cmd/info/ (note trailing "/") or it will show up as ...cmd/info with a payload of "info". This will still work since cmd/info ignores any payload, but: jus' sayin'...
+
+[Command handling & MQTT messaging](../master/api_mqtt.md) is essential reading for matery of this section.
 ***
 # "Spooling" (and "crash recovery")
 ## Definitons: Event Sources
@@ -465,6 +473,12 @@ Detailed analysis is a very complex topic and will be the subject of an upcoming
 ## Pins Tab
 ![Esparto Logo](/assets/v3pins.jpg)
 ## Notes on Pins Tab
+This is a complex topic, you need to read [Adding Pins-Dynamically](../master/README.md#adding-pins-dynamically) first.
+You also need to understand the full range of Esparto GPIO types described here: [GPIO Handling](../master/api_gpio.md) even if you will not be programming them.
+
+There are some known issues regarding the resettting of the GPIO grpahic indications: You may need to go to another tab and then come back to get an accurate picture after changes.
+
+Deleting an existing pin is perfomred by clicking on the GREEN GPIO number and confirming the dialog box that pops up.
 ***
 ## Log and Spool Tabs
 ![Esparto Logo](/assets/v3spool.jpg)
