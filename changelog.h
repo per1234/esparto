@@ -1,11 +1,14 @@
-#define ESPARTO_VN "3.0.1"
+#define ESPARTO_VN "3.0.3"
 /*
 	Authors:
 						PMB	Phil Bowles		<esparto8266@gmail.com>
 	TODO:
+		IDE 1.8.8 and 2.5.0!
 		fix pin designations in Pins Tab
-		either prohibit or allow m viewers
+		either prohibit > 1 or allow m viewers
+		prohibit webUI in low heap / throttle?
 	Changelog:
+		03/03/2019 	3.0.3 	BUGFIX - type in Esparto.h (Thanks uherting)
 		03/03/2019 	3.0.2 	BUGFIX - missing Wemos D1 R1 pin definitions added (Thanks Peter Peters!)
 		03/03/2019  3.0.1	BUGFIX Hide internal configs $10=>0 (Thanks Adam Sharp!)
 		26/02/2019	3.0.0	dynamic pin configuration

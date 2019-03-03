@@ -2,8 +2,9 @@
 ### Click Image for youtube introduction worth 17,686 words...
 [![Youtube Introduction](https://img.youtube.com/vi/i9hjpYnfQoc/0.jpg)](https://www.youtube.com/watch?v=i9hjpYnfQoc)
 ### What's new
-* 03/03/2019 3.0.1 BUGFIX - hide diagnostic internal variables from config tab (Thanks Adam Sharp!)
-* 03/03/2019 3.0.2 BUGFIX - missing Wemos D1 R1 pin definitions added (Thanks Peter Peters!)
+* 03/03/2019 3.0.3 BUGFIX - typo in Esparto.h (Thanks uherting)
+* 03/03/2019 3.0.2 BUGFIX - missing Wemos D1 R1 pin definitions added (Thanks Peter Peters)
+* 03/03/2019 3.0.1 BUGFIX - hide diagnostic internal variables from config tab (Thanks Adam Sharp)
 ***
 # Contents
 * [Introduction](../master/README.md#introduction)
