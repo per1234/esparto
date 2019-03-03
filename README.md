@@ -558,7 +558,7 @@ The API is broken down by functional area. They are laid out in the order a begi
 ## Throttling
 ### The need for (lack of) speed
 Esparto uses the magnificent [ESPAsyncWebserver](https://github.com/me-no-dev/ESPAsyncWebserver) library to provide the web UI and also the websockets that are used for the near real-time communication between the UI and the MCU.
-Many libraries have to make compromises on ESP8266 due to its restricted SRAM which only allows quite a small free heap. ESPAsyncWebserver is quite sensitve to low heap situations, as each websocket message is sent or received the library needs to allocate memory from the free heap. There is a fonote limit to:
+Many libraries have to make compromises on ESP8266 due to its restricted SRAM which only allows quite a small free heap. ESPAsyncWebserver is quite sensitve to low heap situations, as each websocket message is sent or received the library needs to allocate memory from the free heap. There is a finite limit to:
 
  * The rate at which it can do that
  * The asbsolute amount of free heap left from which it can allocate a message
@@ -579,16 +579,16 @@ If you have read ["Spooling" and "Crash Recovery"](../master/README.md#spooling-
 * You need to
 * You have already broken rule 1 of [Support and Raising Issues](../master/README.md#support-and-raising-issues) so you'd better read that too, othwerwise you wont be able to get support
 
-But if you _have_ read it, you will know that Esparto probably won't actually crash, it just goes into  "crash recovery" mode an will "chop" tasks, lock the input queue several hundred times a second, making life really really difficult.
+But if you _have_ read it, you will know that Esparto probably won't actually crash, it just goes into "crash recovery" mode and will "chop" tasks and lock the input queue several hundred times a second, making life really really difficult.
 
 ### The (partial) solution
-Any solution is only partial, beacuse we can't "magic up" a ton more SRAM and even if we could, we would still come to limit sometime. While there is some scientific debate about how many framers per second the human eye can perceive, its in the medium double to perhaps triple figures.
+Any solution is only partial, because we can't "magic up" a ton more SRAM and even if we could, we would still hit a limit at _some_ point. While there is some scientific debate about how many frames per second the human eye can perceive, it is in the medium double to perhaps triple figures.
 Film usually runs at 24fps so anything above that is wasted anyway, so if we are wanting to watch GPIO, we need to basically throw away anything over that figure.
 
 Esparto limits the total throughput to the web UI to 20 sox/s - above that and the heap starts steadily dying. This is for _all_ pins so if you have many, you are not going to get real-time flashing. Once this value is exceeded the red heartbeat turns grey to indicate that GPIO indications are being limited or "throttled".
 
 Esparto also provides the ability to throttle individual GPIO pins. see [throttlePin](../master/api_gpio.md#throttlePin) and sample sketch [Pins14_Throttling ](../master/examples/gpio/Pins14_Throttling/Pins14_Throttling.ino)
-It is up to you to set a suitable value _*if*_ you want to be able to call up the web UI. If you don't then you can let through as many transitions per second as  Esparto will allow, but of course then as soon as you opne the web UI, all hell will break loose.
+It is up to you to set a suitable value _*if*_ you want to be able to call up the web UI. If you don't then you can let through as many transitions per second as Esparto will allow, but of course then as soon as you open the web UI, all hell will break loose.
 The webUI changes to show individual pin throttling by changing the GPIO number from white to black. The rate sampling is only granular to the second, meaning that if your GPIO has exceeded its throttling rate after 1/10 of a second then all of the remaning 9/10 sec will be ignored. Then it will aloow 1/10 again etc, leading to a very "choppy" response.
 
 ## Diagnostics
@@ -641,7 +641,7 @@ You will probably never get deep enough to call anything starting with an unders
 The standard IDE does not come with hardware definitions for SONOFFs or the ESP-01S. In order to compile Esparto for these, you will need to perform the following steps:
 * 1 locate the ESP8266 core library folder. It will be something similar to: C:\Users\phil\AppData\Local\Arduino15\packages\esp8266\hardware\esp8266\2.4.2
 * 2 Edit the boards.txt you find there.
-* 3 Locate your Esparto library folder (similar to C:\Users\phil\Documents\Arduino\libraries\ESPArto) or get the file here [boards.txt](../master/boards.txt)
+* 3 Locate your Esparto library folder (similar to C:\Users\phil\Documents\Arduino\libraries\ESPArto) or get the file here [sonoff_boards.txt](../master/sonoff_boards.txt)
 * 4 Get the contents of the file from your Esparto folder (in step 3) and add it to the end of the "real" boards.txt in step 2. Save / Exit
 * 5 Copy the contents of the "variants" folder in step 3 to the variants folder in step 2
 * 6 Close / re-open the IDE. You should now see the new boards on the Tools/Board menu
@@ -650,7 +650,7 @@ The standard IDE does not come with hardware definitions for SONOFFs or the ESP-
 	(youtube video T.B.A.)
 ***
 ## Setting up automatic OTA server
-	T.B.A. in the meanwhile, see: <https://www.instructables.com/id/Set-Up-an-ESP8266-Automatic-Update-Server/>
+	T.B.A. in the meanwhile, see: https://www.instructables.com/id/Set-Up-an-ESP8266-Automatic-Update-Server
 ***
 # Appendices:
 
