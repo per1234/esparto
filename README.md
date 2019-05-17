@@ -1,15 +1,20 @@
-# Esparto v3.0 is a rapid development framework, synchronous task queue and GPIO manager (plus more) for ESP8266 devices.
+# Esparto v3.2 is a rapid development framework, synchronous task queue and GPIO manager (plus more) for ESP8266 devices.
 ### Click Image for youtube introduction worth 17,686 words...
-[![Youtube Introduction](https://img.youtube.com/vi/i9hjpYnfQoc/0.jpg)](https://www.youtube.com/watch?v=i9hjpYnfQoc)
+[![Youtube Introduction](https://img.youtube.com/vi/Wv3i_y-9Q-c/0.jpg)](https://www.youtube.com/watch?v=Wv3i_y-9Q-c)
+
 ### What's new
 # Serious problem: Recent changes in the AsyncWebserver library mean that the webUI function is completely broken
 ## I'm working hard to fix this aspect, all other functionality is fine
+## in 3.2 you will see: (and a lot more - watch the video)
 
-* 03/03/2019 3.0.3 BUGFIX - typo in Esparto.h (Thanks uherting)
-* 03/03/2019 3.0.2 BUGFIX - missing Wemos D1 R1 pin definitions added (Thanks Peter Peters)
-* 03/03/2019 3.0.1 BUGFIX - hide diagnostic internal variables from config tab (Thanks Adam Sharp)
+* HTTP authentication
+* MQTT dynamic reconfiguration
+* New functions, e.g. "repeatWhile"
+* Firmware upgrade through web UI
+
 ***
 # Contents
+# CAVEAT: NOT YET UPDATED FOR 3.2!
 * [Introduction](../master/README.md#introduction)
 * [Main Features](../master/README.md#main-features)
 * [Installation](../master/README.md#installation)
