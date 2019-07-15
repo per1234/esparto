@@ -12,48 +12,48 @@ There have been numerous changes since the (disastrous: apologies) v3.2 The best
 
 ### Internals
 
-* NEW
-	* Automatic NTP synchronisation
-	* New timers "at" and "daily" which take absolute clock time
-	* New GPIO types MultiStage, CountingLatch and CircularLatch
-	* New timers repeatWhile and repeatWhileEver
-	* Ability to specify MQTT last will topic/msg
-	* Morse code LED flashing [compile-time option]
-	* Graphs are compile-time selectable
-	* User graph easily added
-	* Firmware and SPIFFS OTA upload by user interface
-	* Amazon echo v3 support added
-	* Default "on/off" and the concept of a "thing"
+NEW
+* Automatic NTP synchronisation
+* New timers "at" and "daily" which take absolute clock time
+* New GPIO types MultiStage, CountingLatch and CircularLatch
+* New timers repeatWhile and repeatWhileEver
+* Ability to specify MQTT last will topic/msg
+* Morse code LED flashing [compile-time option]
+* Graphs are compile-time selectable
+* User graph easily added
+* Firmware and SPIFFS OTA upload by user interface
+* Amazon echo v3 support added
+* Default "on/off" and the concept of a "thing"
 
-* CHANGED
-	* Initialisation now groups all parameters into a "config block"
-	* Dynamic pin updates are now a compile-time option, not well tested and should be considered experimental
-	* Amazon echo "pairing" has major changes (see its own section XXX)
-	* Major changes to DefaultInput / DefaultOutput + "thing" functions
+CHANGED
+* Initialisation now groups all parameters into a "config block"
+* Dynamic pin updates are now a compile-time option, not well tested and should be considered experimental
+* Amazon echo "pairing" has major changes (see its own section XXX)
+* Major changes to DefaultInput / DefaultOutput + "thing" functions
 
-* REMOVED
-	* The "spooling" concept and related API calls are removed
-	* "3StageButton" removed, use MultiStage or DefaultInput
+REMOVED
+* The "spooling" concept and related API calls are removed
+* "3StageButton" removed, use MultiStage or DefaultInput
 
 ### Externals
+ webUI
+* Real (clock) time shown
+* Now has basic auth, default login is admin/admin
+* New MQTT tab allows dynamic update of all MQTT parameters
+* ESP tab has more info plus OTA buttons
+* New RTC / Timers tab allows NT configuration and setting alarms
+* Default on/off button if using DefaultInput / DefaultOutput
 
-* webUI
-	* Real (clock) time shown
-	* Now has basic auth, default login is admin/admin
-	* New MQTT tab allows dynamic update of all MQTT parameters
-	* ESP tab has more info plus OTA buttons
-	* New RTC / Timers tab allows NT configuration and setting alarms
-	* Default on/off button if using DefaultInput / DefaultOutput
+MQTT
 
-* MQTT
-	* Some commands have changed parameter layouts / payloads
-	* New commands to support new features
+* Some commands have changed parameter layouts / payloads
+* New commands to support new features
 
 ***
 
 ## Contents
 
-* [Introduction](../master/README.md#introduction)
+* [Introduction](./README.md#introduction)
 * [Main Features](../master/README.md#main-features)
 * [Installation](../master/README.md#installation)
 * [Getting Started](../master/README.md#getting-started)
@@ -665,3 +665,8 @@ If you want to be able to use OTA, then make sure you comment out ``#define ESPA
 * [Blog](https://8266iot.blogspot.com)
 * [Facebook Support / Discussion Group](https://www.facebook.com/groups/esparto8266/)
 * [Support me on Patreon](https://patreon.com/esparto)
+
+
+playpen:
+
+[docs](/docs/other_file.md)
