@@ -1,4 +1,4 @@
-# Esparto v3.3 is a rapid development framework, synchronous task queue and GPIO manager (plus more) for ESP8266 devices.
+# Esparto v3.3 is a rapid development framework, synchronous task queue and GPIO manager with a rich webUI for ESP8266 devices.
 
 ## Click Image for youtube introduction worth 21,686 words...
 
@@ -13,6 +13,7 @@ There have been numerous changes since the (disastrous: apologies) v3.2 The best
 ### Internals
 
 NEW
+
 * Automatic NTP synchronisation
 * New timers "at" and "daily" which take absolute clock time
 * New GPIO types MultiStage, CountingLatch and CircularLatch
@@ -26,17 +27,21 @@ NEW
 * Default "on/off" and the concept of a "thing"
 
 CHANGED
+
 * Initialisation now groups all parameters into a "config block"
 * Dynamic pin updates are now a compile-time option, not well tested and should be considered experimental
 * Amazon echo "pairing" has major changes (see its own section XXX)
 * Major changes to DefaultInput / DefaultOutput + "thing" functions
 
 REMOVED
+
 * The "spooling" concept and related API calls are removed
 * "3StageButton" removed, use MultiStage or DefaultInput
 
 ### Externals
+
  webUI
+
 * Real (clock) time shown
 * Now has basic auth, default login is admin/admin
 * New MQTT tab allows dynamic update of all MQTT parameters
@@ -53,17 +58,17 @@ MQTT
 
 ## Contents
 
-* [Introduction](./README.md#introduction)
-* [Main Features](../master/README.md#main-features)
-* [Installation](../master/README.md#installation)
-* [Getting Started](../master/README.md#getting-started)
-* [Command and Control](../master/README.md#command-and-control)
-* [The Web User Interface](../master/README.md#the-web-user-interface)
-* [Known Issues](../master/README.md#known-issues)
-* [Common Causes of Error](../master/README.md#common-causes-of-error)
-* [Support and Raising Issues](../master/README.md#support-and-raising-issues)
-* [Esparto v3.3 API](../master/README.md#esparto-v33-api)
-* [Advanced Topics](../master/README.md#advanced-topics)
+* [Introduction](/README.md#introduction)
+* [Main Features](/README.md#main-features)
+* [Installation](/README.md#installation)
+* [Getting Started](/README.md#getting-started)
+* [Command and Control](/README.md#command-and-control)
+* [The Web User Interface](/README.md#the-web-user-interface)
+* [Known Issues](/README.md#known-issues)
+* [Common Causes of Error](/README.md#common-causes-of-error)
+* [Support and Raising Issues](/README.md#support-and-raising-issues)
+* [Esparto v3.3 API](/README.md#esparto-v33-api)
+* [Advanced Topics](/README.md#advanced-topics)
 
 ***
 
@@ -105,7 +110,7 @@ Esparto has been tested on a variety of hardware. It will probably run on anythi
 Esparto is an Arduino IDE library which presents a class object "Esparto". The Esparto API allows sophisticated control of all the GPIO pins, often with only a single line of code. It serialises all asynchronous events into a task queue which runs "on the main loop". This helps prevent cross-task contamination and common timing errors, and removes the need for beginners to understand "volatile", task synchronisation, critical sections, mutual locking and other highly complex and error-prone topics. The majority of user code is run in Esparto callbacks.
 It provides rich functionality covering a wide range of typical IOT functions.
 
-It also comes with additional ["boards.txt"](../master/sonoff_boards.txt) entries for ESP-01S, and SONOFF devices to make development as easy for those as it is for "standard" boards.
+It also comes with additional ["boards.txt"](/sonoff_boards.txt) entries for ESP-01S, and SONOFF devices to make development as easy for those as it is for "standard" boards.
 
 Here, for example is all the code needed to build a simple (debounced) latching button-controlled "blinky".
 
@@ -284,7 +289,7 @@ Add the code to handle the event into the callback, and add the timer defintion 
 
 ## :dizzy: Choose which lifecycle events you will monitor
 
-For each of these you will need to define the specific callback as described in the section above: [Lifecycle Callbacks](../master/README.md#esparto-lifecycle)
+For each of these you will need to define the specific callback as described in the section above: [Lifecycle Callbacks](/README.md#esparto-lifecycle)
 
 Add your lifecycle event code to the callback.
 
@@ -296,7 +301,7 @@ void myTopic2(vector<string> vs){ handle topic2 }
 ...
 ```
 
-Full description of the callback and its parameters are given here: [Command handling & MQTT messaging](../master/api_mqtt.md)
+Full description of the callback and its parameters are given here: [Command handling & MQTT messaging](/api_mqtt.md)
 
 ## :heavy_check_mark: Final check:
 
@@ -345,7 +350,7 @@ The fundamental unit of control is a "command" and it can orginate from a variet
 * Default (specific to reboot only) holding down GPIO0 for > 2sec if you have a ``DefaultInput`` defined
 
 The point here is that Esparto has a number of built-in commands which _look like_ MQTT topics, but can be invoked without having to actually have an MQTT broker.
-If you are going to be doing your own coding then you _must_ read in full first: [Command handling & MQTT messaging](../master/api_mqtt.md)
+If you are going to be doing your own coding then you _must_ read in full first: [Command handling & MQTT messaging](/api_mqtt.md)
 
 ## Built-in commands
 
@@ -402,8 +407,8 @@ so that cmd/info for example should be typed as <http://testbed.local/rest/cmd/i
 
 All of the images that follow are collected together into a handy PDF "cheat sheet". Each page is designed to fit exactly onto a sheet of A4 should you wish to print any of them
 
-* [Low-res (faster download) 1MB:](../master/assets/webUI%20cheat%20sheet%20sml.pdf)
-* [High-res (better quality) 4MB:](../master/assets/webUI%20cheat%20sheet.pdf)
+* [Low-res (faster download) 1MB:](/assets/webUI%20cheat%20sheet%20sml.pdf)
+* [High-res (better quality) 4MB:](/assets/webUI%20cheat%20sheet.pdf)
 
 ## Default view (WiFi Tab)
 
@@ -429,9 +434,9 @@ The heart should "beat" once per second, to show the MCU is functioning correctl
 ## Notes on GPIO Panel
 
 * The grey unusable pins are usually the ones that are used by the external SPI Flash on most ESP8266 boards
-* For the meaning of "raw" and "cooked" see: [Raw and Cooked Pins](../master/api_gpio.md#important-concepts-raw-vs-cooked-states)
-* GPIO numbers go black when GPIO pin is "throttled" and return to white when throttling clears. This is related to, but not the same as the web UI throttling on the previous screen, see [GPIO Throttling](../master/api_gpio.md#important-concepts-throttling)
-* For non-programmers, GPIO pins can be added on the [Pins Tab](../master/README.md#pins-tab) although with (of course) more limited functionality than creating them via code
+* For the meaning of "raw" and "cooked" see: [Raw and Cooked Pins](/api_gpio.md#important-concepts-raw-vs-cooked-states)
+* GPIO numbers go black when GPIO pin is "throttled" and return to white when throttling clears. This is related to, but not the same as the web UI throttling on the previous screen, see [GPIO Throttling](/api_gpio.md#important-concepts-throttling)
+* For non-programmers, GPIO pins can be added on the [Pins Tab](/README.md#pins-tab) although with (of course) more limited functionality than creating them via code
 
 ***
 ## CPU Tab
@@ -443,7 +448,7 @@ The heart should "beat" once per second, to show the MCU is functioning correctl
 * This will mostly be used by developers to make sure their Esparot code behaves properly and co-operates well with other tasks, Especially those that Esparto needs to function.
 Detailed analysis is a very complex topic and will be the subject of an upcoming Youtube video, as it is far easier to explain while watching real-life apps, especially how to spot potential problems wiht your code
 * The graphs start from the right-hand side each time you revisit the tab
-* Setting the system variable ESPARTO_LOG_STATS to 1 causes Esparto to send all the CPU stats to MQTT 1x per second See: [System Variables](../master/appx_3.md) and [setConfigInt](../master/api_timer.md#setConfigInt)
+* Setting the system variable ESPARTO_LOG_STATS to 1 causes Esparto to send all the CPU stats to MQTT 1x per second 
 
 ***
 
@@ -464,7 +469,7 @@ Detailed analysis is a very complex topic and will be the subject of an upcoming
 
 ## Notes on Config Tab
 
-* This is the visual front-end to the  [configuration system](../master/api_timer.md#the-configuration-system)
+* This is the visual front-end to the  [configuration system](/api_timer.md#the-configuration-system)
 * Value is updated as soon as you exit the field
 * Your code is notified and can react instantly
 * New value published to MQTT
@@ -510,9 +515,9 @@ Detailed analysis is a very complex topic and will be the subject of an upcoming
 
 * flashing an LED so ridiculously fast that it either leaves no time for Esparto to manage its affairs or prevents WiFi from running when it needs to
 
-* any use of `delay()` or messing with the watchdog _**in any way whatsoever**_: Use Esparto timer functions!  See: [Timers, task scheduling, configuration](../master/api_timer.md)
+* any use of `delay()` or messing with the watchdog _**in any way whatsoever**_: Use Esparto timer functions!  See: [Timers, task scheduling, configuration](/api_timer.md)
 
-* doing anything in a tight loop: Use Esparto timer functions! See [Timers, task scheduling, configuration](../master/api_timer.md)
+* doing anything in a tight loop: Use Esparto timer functions! See [Timers, task scheduling, configuration](/api_timer.md)
 
 * entering wild values in MQTT commands or the web UI MQTT simulator. Much validation is already done, but I'm sure some enterprising soul will find a way to enter value that's so nuts no-one else could have ever sensibly predicted it...
 
@@ -572,23 +577,23 @@ In summary I am happy to try to help, provided you show willing by reading the d
 
 # Esparto v3.3 API
 
-The API is broken down by functional area. It is described here in the order a beginner might start experimentation, but certainly "ground up" as far as understanding an mastering Esparto. Try as far as possible to adhere to that order.
+The API is broken down by functional area. It is described here in the order a beginner might start experimentation, but certainly "ground up" as far as understanding and mastering Esparto. Try as far as possible to adhere to that order.
 
-* [Contructor and utilities](../master/api_utils.md)
+* [Contructor and utilities](/api_utils.md)
 
-* [Simple LED Flashing functions](../master/api_flash.md)
+* [Simple LED Flashing functions](/api_flash.md)
 
-* [LifeCycle callbacks](../master/api_cycle.md)
+* [LifeCycle callbacks](/api_cycle.md)
 
-* [Timers, task scheduling, configuration](../master/api_timer.md)
+* [Timers, task scheduling, configuration](/api_timer.md)
 
-* [GPIO Handling](../master/api_gpio.md)
+* [GPIO Handling](/api_gpio.md)
 
-* [Command handling & MQTT messaging](../master/api_mqtt.md)
+* [Command handling & MQTT messaging](/api_mqtt.md)
 
-* [Amazon echo (Alexa) handling](../master/api_alexa.md)
+* [Amazon echo (Alexa) handling](/api_alexa.md)
 
-* [Miscellaneous, Advanced, Diagnostics etc](../master/api_expert.md) TBA
+* [Miscellaneous, Advanced, Diagnostics etc](/api_expert.md) TBA
 
 ***
 
@@ -602,9 +607,9 @@ Esparto uses the (mostly) magnificent [ESPAsyncWebserver](https://github.com/me-
 
 Many libraries have to make compromises on ESP8266 due to its restricted SRAM which only allows quite a small free heap. ESPAsyncWebserver is quite sensitve to low heap situations, as each SSE message is sent or received the library needs to allocate memory from the free heap. There is a finite limit to:
 
- * The rate at which it can do that
+* The rate at which it can do that
 
- * The absolute amount of free heap left from which it can allocate space for a new message
+* The absolute amount of free heap left from which it can allocate space for a new message
 
 It rapidly becomes obvious that if the SSE messages are sent faster than it takes ESPAsyncWebserver to release the space and return the memory to the free heap, then the free heap is going to get smaller and smaller as the queue of waiting messages builds up.
 
@@ -618,7 +623,7 @@ Any solution is only partial, because we can't "magic up" a ton more SRAM and ev
 
 Esparto limits the total throughput to the web UI to about 20 messages per second - above that and the heap starts steadily dying. This is for _all_ pins so if you have many, you are not going to get real-time flashing.
 
-Esparto also provides the ability to "throttle" individual GPIO pins. see [throttlePin](../master/api_gpio.md#throttlePin) and sample sketch [Pins14_Throttling ](../master/examples/gpio/Pins14_Throttling/Pins14_Throttling.ino)
+Esparto also provides the ability to "throttle" individual GPIO pins. see [throttlePin](/api_gpio.md#throttlePin) and example sketch [gpio/Pins14_Throttling](/examples/gpio/Pins14_Throttling/Pins14_Throttling.ino)
 
 It is up to you to set a suitable value _*if*_ you want to be able to call up the web UI. If you don't then you can let through as many transitions per second as Esparto will allow, but of course then as soon as you open the web UI, all hell might break loose if your code is taking up all the system resources in handling 14000 transitions per second...
 
@@ -632,7 +637,7 @@ The standard IDE does not come with hardware definitions for SONOFFs or the ESP-
 
 * 2 Edit the boards.txt you find there.
 
-* 3 Locate your Esparto library folder (similar to C:\Users\phil\Documents\Arduino\libraries\ESPArto) or get the file here [sonoff_boards.txt](../master/sonoff_boards.txt)
+* 3 Locate your Esparto library folder (similar to C:\Users\phil\Documents\Arduino\libraries\ESPArto) or get the file here [sonoff_boards.txt](/sonoff_boards.txt)
 
 * 4 Get the contents of the file from your Esparto folder (in step 3) and add it to the end of the "real" boards.txt in step 2. Save / Exit
 
@@ -646,15 +651,15 @@ If you want to be able to use OTA, then make sure you comment out ``#define ESPA
 
 ## Detailed monitoring of "gear" tab / heap usage
 
-	(youtube video T.B.A.)
+(youtube video T.B.A.)
 
 ***
 
 ## Setting up automatic OTA server
 
-	T.B.A. in the meanwhile, see: 
+T.B.A. in the meanwhile, see: 
 
-    https://www.instructables.com/id/Set-Up-an-ESP8266-Automatic-Update-Server
+<https://www.instructables.com/id/Set-Up-an-ESP8266-Automatic-Update-Server>
 
 ***
 (c) 2019 Phil Bowles
@@ -665,8 +670,3 @@ If you want to be able to use OTA, then make sure you comment out ``#define ESPA
 * [Blog](https://8266iot.blogspot.com)
 * [Facebook Support / Discussion Group](https://www.facebook.com/groups/esparto8266/)
 * [Support me on Patreon](https://patreon.com/esparto)
-
-
-playpen:
-
-[docs](/docs/other_file.md)
