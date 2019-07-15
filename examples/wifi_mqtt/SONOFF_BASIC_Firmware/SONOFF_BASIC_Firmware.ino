@@ -2,9 +2,11 @@
  MIT License
 
 Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
-                      blog     https://8266iot.blogspot.com     
-                support group  https://www.facebook.com/groups/esp8266questions/
-                
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/ 
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -23,6 +25,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+#define RELAY 12
 #include <ESPArto.h>
 //
 //  Demonstrates the combination of Esparto features to rapidly produce drop-in Firmware
@@ -53,32 +56,34 @@ SOFTWARE.
 //
 //      then browse to http://testbed.local IF you have avahi / bonjour / other mDNS on your network
 //      otherwise you will have to watch the serial window and find the IP address
-//      then browse to http://<wha.tev.ver.IP>
+//      then browse to http://<wha.tev.er.IP>
 //
-const char* yourSSID="LaPique";
-const char* yourPWD="";
-const char* yourDevice="testbed";
-const char* yourMQTTIP="192.168.1.4";
-const int   yourMQTTPort=1883;
-const char* yourMQTTUser="";
-const char* yourMQTTPass="";
-
-ESPArto Esparto(yourSSID,yourPWD,yourDevice,yourMQTTIP,yourMQTTPort,yourMQTTUser,yourMQTTPass);
+ESPARTO_CONFIG_BLOCK cb={
+    {CONFIG(ESPARTO_SSID),"XXXXXXXX"},
+    {CONFIG(ESPARTO_PASSWORD),"XXXXXXXX"},
+    {CONFIG(ESPARTO_DEVICE_NAME),""},
+    {CONFIG(ESPARTO_ALEXA_NAME),"Salon Desk Lamp"},
+    {CONFIG(ESPARTO_WEB_USER),"admin"},
+    {CONFIG(ESPARTO_WEB_PASS),"admin"},   
+    {CONFIG(ESPARTO_MQTT_SRV),"192.168.1.4"},
+    {CONFIG(ESPARTO_MQTT_PORT),"1883"},
+    {CONFIG(ESPARTO_MQTT_USER),""},
+    {CONFIG(ESPARTO_MQTT_PASS),""},    
+    {CONFIG(ESPARTO_WILL_TOPIC),"lwt"},
+    {CONFIG(ESPARTO_WILL_MSG),"Esparto has crashed!"},
+    {CONFIG(ESPARTO_NTP_SRV1),"0.fr.pool.ntp.org"},  
+    {CONFIG(ESPARTO_NTP_SRV2),"192.168.1.4"},
+    {CONFIG(ESPARTO_NTP_TZ),"2"}
+};  
+ESPArto Esparto(cb);
 //
-void relay(int v1, int v2){
-    Serial.printf("RELAY %d\n",v1);
-    Esparto.digitalWrite(BUILTIN_LED,!v1);     // make the LED match (but its active LOW, so opposite
-    Esparto.publish("state",v1); // tell the world
-}
+//  LED is active LOW, so has to be opposite state to RELAY
+//  So, after "the Thing" has done its thing...invert the LED
 //
-//  What we want Alexa to know us as:
-//
-const char*  setAlexaDeviceName(){ return "sonoff basic";  }
+pinThing  sonoff(RELAY,HIGH,OFF,[](int a,int b){ Esparto.digitalWrite(BUILTIN_LED,!a); });
 
 void setupHardware(){
-  Serial.begin(74880); 
-  Serial.printf("Esparto SONOFF Firmware example %s\n",__FILE__);
-  Esparto.Output(BUILTIN_LED);          
-  Esparto.DefaultOutput(RELAY,HIGH,OFF,relay);    
-  Esparto.std3StageButton();
+  ESPARTO_HEADER(Serial);
+  Esparto.DefaultOutput(sonoff);          
+  Esparto.DefaultInput(25);
 }

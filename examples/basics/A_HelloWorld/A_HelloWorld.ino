@@ -2,9 +2,11 @@
  MIT License
 
 Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
-                      blog     https://8266iot.blogspot.com     
-                support group  https://www.facebook.com/groups/esp8266questions/
-                
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/ 
+ 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -32,7 +34,7 @@ SOFTWARE.
 ESPArto  Esparto;
 
 void setupHardware() {
-  Serial.begin(74880);
+  ESPARTO_HEADER(Serial); // not necessary, just helps does the Serial begin for you
   Serial.println("Hello Esparto World");
   Serial.println("I have no setup() or loop() functions");
   Serial.println("But I still work!");

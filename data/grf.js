@@ -36,7 +36,12 @@ class graph{
 		this.width=g.width;
 		this.nPoints=this.width/base;
 		this.points=[];
+		this.strikes=[];
 		for(var i=0;i<this.nPoints;i++)	this.points[i]=0;		
+	}
+	
+	strike(c){
+		this.strikes.push({c: c, n: this.width});	
 	}
 	
 	norm(v){
@@ -77,5 +82,17 @@ class graph{
 		c.fillStyle="#f00";
 		c.font = '8px sans-serif';
 		c.fillText(avg.toFixed(this.dp),this.width / 2 ,this.norm(avg) - 3);
+		
+		for(var i=0;i<this.strikes.length;i++){
+			this.strikes[i].n-=slide;
+			if(this.strikes[i].n<slide) this.strikes.shift();
+			else {
+				c.beginPath();		
+					c.strokeStyle=this.strikes[i].c;
+					c.moveTo(this.strikes[i].n,0);
+					c.lineTo(this.strikes[i].n,this.height);
+				c.stroke();						
+			}
+		}
 	}				
 }

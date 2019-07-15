@@ -1,9 +1,13 @@
 /*
  MIT License
 
-Copyright (c) 2018 Phil Bowles <esparto8266@gmail.com>
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
+Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/ 
+    
+ Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
@@ -40,20 +44,21 @@ SOFTWARE.
 #include<ESPArto.h>
 ESPArto Esparto;
 //
-//  pulseLED is all very good, but it only(!) has millisecond granularity
-//  even the cheapest sound sensors will be signalling at low-microsecond speeds
+//  Even the cheapest sound sensors will be sending thousands of signals per second
 //
-//  we can get a much better and more subtle representation of the music if we "replay"
-//  the signals as microsecond pulses.
+//    There are limits to what the ESP8266 can do, and high rates like this will "slug" other tasks
+//    taking processor time. 
 //
-//  firstly, we only select the longer pulses, and we can vary how long "long" is with an encoder
-//  then we "stretch" the pulse a little (again this is arbitrary, but seems to work well, try others)
+//   "throttling" allows you to limit the rate of input so that other tasks get a chance to run
 //
-//  Play your favourite song LOUD and "tweak" the encoder to get the best effect
+//  Play your favourite song LOUD and "tweak" the encoder to throttle the pin. Notice how the
+//    sound is "clipped" at very low throttle values
 //
 int  minDelta=9999999;
 int  pinCount=0;
 int  peakCount=0;
+int  cma=0;
+int  allpins=0;
 
 uint32_t      rate=300;
 ESPARTO_ENC_AUTO eea;
@@ -77,27 +82,41 @@ void encoderChange(int value,int ignore){
   Serial.printf("SET v=%d\n",value);    
   Esparto.throttlePin(MIC,value);
 }
-
+/*
+ * compare min delta, latency , throughput etc with actual interrupts
+ * min  delta on my system is 5uS with INTR 26uS using  Esparto Raw Pin
+ * max peak                 3500-6000           2500-3000           
+ */
+//#define INTR
+int N=0;
 void setupHardware(){
-    Serial.begin(74880);
-    Serial.printf("Esparto %s\n",__FILE__);      
+    ESPARTO_HEADER(Serial);       
     Serial.printf("Esparto Pin Throttling Example based on VUMeter - play some LOUD music!\n");
     Esparto.every(1000,[](){
       if(pinCount){
         peakCount=max(peakCount,pinCount);
-        Serial.printf("T=%d pinCount/s=%d peak=%d minDelta=%d\n",millis(),pinCount,peakCount,minDelta);
+        Serial.printf("T=%d pinCount/s=%d cma=%d peak=%d minDelta=%d\n",millis(),pinCount,cma,peakCount,minDelta);
+        uint32_t tc=pinCount+(cma*N++);
+        cma=(tc/N);
         pinCount=0;        
       }
     });
-    Esparto.Debounced(0,INPUT_PULLUP,20,[](int hilo,int b){  // zero totals
+    Esparto.Debounced(0,INPUT,20,[](int hilo,int b){  // zero totals
       if(!hilo){
+        Serial.printf("TOTALS zeroed\n");
         minDelta=9999999;
-        pinCount=0;
-        peakCount=0;       
+        pinCount=peakCount=cma=N=0;       
       }
     });
-    Esparto.Output(LED_BUILTIN);                       
+    Esparto.Output(LED_BUILTIN);
+    eea=Esparto.EncoderAuto(A,B,INPUT,encoderChange,100,3500,10);
+ #ifdef INTR
+    Serial.printf("Using attachInterrupt\n");    
+    attachInterrupt(MIC,rawChange,CHANGE); 
+ #else
+    Serial.printf("Using Esparto Raw pin\n");                   
     Esparto.Raw(MIC,INPUT,bind([](int a, int b){ rawChange(); },42,666));
-    eea=Esparto.EncoderAuto(A,B,INPUT,encoderChange,100,2000,10);
     Esparto.throttlePin(MIC,eea->getValue());
+ #endif
+
 }

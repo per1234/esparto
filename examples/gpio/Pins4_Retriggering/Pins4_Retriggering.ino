@@ -2,9 +2,11 @@
  MIT License
 
 Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
-                      blog     https://8266iot.blogspot.com     
-                support group  https://www.facebook.com/groups/esp8266questions/
-                
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/ 
+        
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -63,31 +65,30 @@ ESPArto  Esparto;
  *   
  *   
  */
-#define PUSHBUTTON  D6
-#define TIMEOUT 15000
+#define RETRIGGER  D2
+#define TIMEOUT 20000
 //
 //  Gets called when pin configuration changes
 //
 void onPinConfigChange(uint8_t pin,int v1,int v2){
-  if(pin==PUSHBUTTON){
+  if(pin==RETRIGGER){
     Serial.printf("Pin %d timeout value has changed v1=%d v2=%d\n",pin,v1,v2);
   } else Serial.printf("Pin %d??? how did THAT happen?\n",pin);
 }
 void pinChange(int hilo,int v2){
-  Serial.printf("T=%d Retriggering: state=%d v2=%d\n",millis(),hilo,v2);
+  Serial.printf("T=%d pinChange: state=%d v2=%d\n",millis(),hilo,v2);
   if(hilo) Esparto.flashLED(250);  // this example is active HIGH
   else Esparto.stopLED();
-}
+ }
 
 void setupHardware(){
-    Serial.begin(74880);
-    Serial.printf("Esparto %s\n",__FILE__);  
-    Serial.printf("Esparto Retriggering Example, pin=%d timeout=%dms\n",PUSHBUTTON,TIMEOUT); 
+    ESPARTO_HEADER(Serial); 
+    Serial.printf("Esparto Retriggering Example, pin=%d timeout=%dms\n",RETRIGGER,TIMEOUT); 
     Esparto.Output(BUILTIN_LED);
-    Esparto.Retriggering(PUSHBUTTON,INPUT_PULLUP,TIMEOUT,pinChange,HIGH);       // no external pullup resistor , active HIGH  
+    Esparto.Retriggering(RETRIGGER,INPUT,TIMEOUT,pinChange,HIGH);  
 //  sometime between 1:10s and 1:30 change timeout value to half 
     Esparto.onceRandom(70000,90000,[](){
       Serial.printf("T=%d set timeout to %d\n",millis(),TIMEOUT / 2);
-      Esparto.reconfigurePin(PUSHBUTTON,TIMEOUT / 2);
+      Esparto.reconfigurePin(RETRIGGER,TIMEOUT / 2);
       });
 }

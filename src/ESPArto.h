@@ -1,8 +1,12 @@
 /*
  MIT License
 
-Copyright (c) 2019 Phil Bowles
-
+Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/
+                		  
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -23,44 +27,37 @@ SOFTWARE.
 */
 #ifndef ESPArto_H
 #define ESPArto_H
-
-#define ESPARTO_DEBUG_PORT Serial
-
-#ifdef ESPARTO_DEBUG_PORT
-	#define DIAG(...) ESPARTO_DEBUG_PORT.printf( __VA_ARGS__ )
-	#define USE_TP ESPARTO_TASK_PTR t=ESPArto::getTask();
-	#define TP_PRINT(x) if(t) t->print(x)
-	#define TP_PRINTLN(x) if(t) t->println(x)
-	#define TP_PRINTF(...) if(t) t->printf( __VA_ARGS__ )
-	#define TP_PRINTWIFIDIAG WiFi.printDiag(reinterpret_cast<Print&>(*t));
-	#define TP_SETNAME(x) if(t) t->setName(x)
-#else
-	#define DIAG(...)
-	#define USE_TP
-	#define TP_PRINT(x)
-	#define TP_PRINTLN(x)
-	#define TP_PRINTF(...)
-	#define TP_PRINTWIFIDIAG
-	#define TP_SETNAME(x)
-#endif
-
-#include <Arduino.h>
+//
 #include "changelog.h"
+#include "config.h"
+//
+#include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ESPAsyncUDP.h>
 #include <PubSubClient.h>
 #include <ArduinoOTA.h>
 #include <ESPAsyncWebServer.h>
 #include <DNSServer.h>
-#include <Ticker.h>
 #include <map>
 #include <queue>
 #include <vector>
 #include <string>
 #include <functional>
+#include "sntp.h"
+
 using namespace std;
 using namespace std::placeholders;
 
+#define ESPARTO_HEADER(x) x.begin(74880); \
+  x.println(F(" _____                      _                _____  _____"));\
+  x.println(F("| ____|___ _ __   __ _ _ __| |_ ___   __   _|___ / |___ /"));\
+  x.println(F("|  _| / __| '_ \\ / _` | '__| __/ _ \\  \\ \\ / / |_ \\   |_ \\ "));\
+  x.println(F("| |___\\__ \\ |_) | (_| | |  | || (_) |  \\ V / ___) | ___) |"));\
+  x.println(F("|_____|___/ .__/ \\__,_|_|   \\__\\___/    \\_/ |____(_)____/")); \
+  x.println(F("          |_| ")); \ 
+  x.printf("%s\n",__FILE__);\
+  x.printf("%s\n\n",CSTR(ESP.getFullVersion()));
+ 
 #define CI(x) ESPArto::getConfig(x)
 #define CII(x) ESPArto::getConfigInt(x)
 #define CIs(x) ESPArto::getConfigstring(x)
@@ -71,62 +68,76 @@ using namespace std::placeholders;
 #define SCIs(x,y) ESPArto::setConfigstring(x,y)
 #define SCIS(x,y) ESPArto::setConfigString(x,y)
 
+#define ASYNC_PUSH(x) ESPArto::_spoolers[ESPARTO_OUTPUT_EVENT]->print((x))
 #define CSTR(x) x.c_str()
+#define ME ESPArto::context
+#define MY(x) ESPArto::context->x
 #define PARAM(x) STOI(vs[x])
 #define PAYLOAD_INT STOI(vs.back())
-#define SOCKSEND(i,f, ...) if(ESPArto::_ws) ESPArto::_ws->sockSend_P(i,PSTR(f), ##__VA_ARGS__)
-#define SOCKSEND0(i,f, ...) if(ESPArto::_ws) ESPArto::_ws->sockSend0(i,PSTR(f), ##__VA_ARGS__)
+#define SPOOL(x) ESPArto::_spoolers[ESPARTO_OUTPUT_##x]
 #define	STOI(y) atoi(CSTR(y))
 #define THIS_IP TXTIP(WiFi.localIP())
 #define TXTIP(x) CSTR(x.toString())
+#define CONFIG(x) string("$")+stringFromInt(x)
 
-#define ESPARTO_N_PINS	17
-#define ESPARTO_MAX_PIN	ESPARTO_N_PINS + 1
+#ifdef ESPARTO_LOG_EVENTS
+	#define EVENT(f, ...) ESPArto::logEvent(F(f), ##__VA_ARGS__ )
+#else
+	#define EVENT
+#endif
 
-enum ESPARTO_LOGICAL_STATE: uint8_t {
+enum ESPARTO_OP_MODE: uint8_t {
+	ESPARTO_OM_NAKED,
+	ESPARTO_OM_WIFI,
+	ESPARTO_OM_MQTT,
+};
+
+enum ESPARTO_LOGICAL_STATE: int {
 	OFF,
 	ON
 };
 
 enum ESPARTO_SYS_VAR: int {
-	ESPARTO_VERSION,
-	ESPARTO_BOOT_COUNT,
+	ESPARTO_GPIO0_DBV = 10,
 	ESPARTO_LOG_STATS,
-	ESPARTO_IP_ADDRESS,
-	ESPARTO_AP_FALLBACK	,
-	ESPARTO_DNS_PORT,
-	ESPARTO_HEAP_FACTOR,
-	ESPARTO_HEAP_HOLD,
-	ESPARTO_HEAP_PCENT,
-	ESPARTO_IDLE_TIME,
-	ESPARTO_SYS_LOCKED,
-	ESPARTO_MQTT_RETRY,
-	ESPARTO_PIN_HOLD,
-	ESPARTO_Q_MAX,
-	ESPARTO_SOX_HOLD,
-	ESPARTO_SOX_LIMIT,
-	ESPARTO_SOX_OVRIDE,
-	ESPARTO_SOX_PEAK,
-	ESPARTO_WEB_PORT,
-	ESPARTO_MQTT_USER,
+	ESPARTO_LOG_VARS,
+	ESPARTO_ALEXA_KNOWN,
+//
+	ESPARTO_ALEXA_NAME=100,
+	ESPARTO_DEVICE_NAME ,
+	ESPARTO_MQTT_SRV,
 	ESPARTO_MQTT_PASS,
-	ESPARTO_ALEXA_NAME,
+	ESPARTO_MQTT_PORT,
+	ESPARTO_MQTT_USER,
+	ESPARTO_PSK ,
+	ESPARTO_SSID,
+	ESPARTO_WEB_USER,
+	ESPARTO_WEB_PASS,
+	ESPARTO_WILL_TOPIC, // 110
+	ESPARTO_WILL_MSG,
+	ESPARTO_NTP_TZ, // 112
+	ESPARTO_NTP_SRV1, // 113
+	ESPARTO_NTP_SRV2, // 114
+//
+	ESPARTO_BOOT_COUNT=200,
 	ESPARTO_BOOT_REASON,
 	ESPARTO_CHIP_ID ,
-	ESPARTO_DEVICE_NAME ,
-	ESPARTO_FAIL_CODE ,
-	ESPARTO_PSK ,
-	ESPARTO_ROOTWEB ,
-	ESPARTO_UNUSED_28,
-	ESPARTO_SSID,
-	ESPARTO_CMD_HASH ,
-	ESPARTO_TXT_HTM ,
-	ESPARTO_CFG_FILE,
+	ESPARTO_DUINO_BOARD,
+	ESPARTO_LWIP_VER, //204
+	ESPARTO_IP_ADDRESS,
 	ESPARTO_MEM_SIZE,
-	ESPARTO_MQTT_IP,
-	ESPARTO_MQTT_PORT,
 	ESPARTO_PRETTY_BOARD,
-	ESPARTO_DUINO_BOARD
+	ESPARTO_VERSION,
+	ESPARTO_MAX_FLASH, // 209
+	ESPARTO_MAX_SPIFFS, // 210
+	ESPARTO_FLASH_FREQ, // 211
+	ESPARTO_FLASH_MODE, // 212
+	ESPARTO_SDK_VER, // 213
+	ESPARTO_CORE_VER, // 214
+	ESPARTO_SKETCH_SIZE, // 215
+	ESPARTO_RTC_DATE, // 216
+	ESPARTO_TEMP_VALUE=999,
+	ESPARTO_PASSWORD = ESPARTO_PSK
 };
 
 enum ESPARTO_PIN_STYLES {
@@ -136,6 +147,8 @@ enum ESPARTO_PIN_STYLES {
 	ESPARTO_STYLE_DEBOUNCED,
 	ESPARTO_STYLE_FILTERED,
 	ESPARTO_STYLE_LATCHING,
+	ESPARTO_STYLE_NLATCH,
+	ESPARTO_STYLE_CIRCLATCH,
 	ESPARTO_STYLE_RETRIGGERING,
 	ESPARTO_STYLE_ENCODER,
 	ESPARTO_STYLE_ENCODER_AUTO,
@@ -143,10 +156,9 @@ enum ESPARTO_PIN_STYLES {
 	ESPARTO_STYLE_TIMED,
 	ESPARTO_STYLE_POLLED,
 	ESPARTO_STYLE_DEFOUT,
-	ESPARTO_STYLE_STD3STAGE,
+	ESPARTO_STYLE_DFLTIN,
 	ESPARTO_STYLE_ENCODER_B,
-	ESPARTO_STYLE_3STAGE,
-	ESPARTO_STYLE_MAX
+	ESPARTO_STYLE_MULTI
 };
 
 enum ESPARTO_PIN_TYPES{
@@ -163,78 +175,53 @@ enum ESPARTO_PIN_TYPES{
 	ESPARTO_TYPE_NONAME
 };
 
-enum ACTIVE_PANE_TYPES {
-	ESPARTO_AP_NONE,
-	ESPARTO_AP_WIFI,
-	ESPARTO_AP_GEAR,
-	ESPARTO_AP_TOOL,
-	ESPARTO_AP_RUN,
-	ESPARTO_AP_DYNP,
-	ESPARTO_AP_LOG,
-	ESPARTO_AP_SPOOL
+enum ESPARTO_OUTPUT {
+	ESPARTO_OUTPUT_NULL=0,
+	ESPARTO_OUTPUT_EVENT=1,
+	ESPARTO_OUTPUT_LOG=2,
+	ESPARTO_OUTPUT_SERIAL=4,
+	ESPARTO_OUTPUT_PUBLISH=8,
+	ESPARTO_OUTPUT_RAWDATA=16
 };
-
-enum ESPARTO_BOOT_CODES {
-	ESPARTO_BOOT_USERCODE,
-	ESPARTO_BOOT_UI,
-	ESPARTO_BOOT_MQTT,
-	ESPARTO_BOOT_BUTTON,
-	ESPARTO_FACTORY_RESET,		
-	ESPARTO_BOOT_UPGRADE,		
-	ESPARTO_BOOT_UNCONTROLLED
-};
-
-#define ESPARTO_SPOOLER_NULL 0
-enum ESPARTO_SPOOLER_ID {
-	ESPARTO_SPOOLER_SERIAL=1,
-	ESPARTO_SPOOLER_LOG=2,
-	ESPARTO_SPOOLER_PUBLISH=4,
-	ESPARTO_SPOOLER_RAWDATA=8
-};
-
-enum ESPARTO_SOURCE: int {
-	ESPARTO_SRC_H4,
-	ESPARTO_SRC_GPIO,
-	ESPARTO_SRC_MQTT,
-	ESPARTO_SRC_WEB,
-	ESPARTO_SRC_REST,
-	ESPARTO_SRC_ALEXA,
-	ESPARTO_SRC_USER,
-	ESPARTO_SRC_SYNTH,
-	ESPARTO_N_SOURCES
-};
-
-#define ESPARTO_N_STATS 5
 
 class 	flasher;
-class	H4task;
+class	task;
 class   spEncoderAuto;
 
-using	ESPARTO_TASK_PTR	=H4task*;
-using	ESPARTO_TIMER		=uint32_t;
+using	ESPARTO_TASK_PTR	=task*;
+using	ESPARTO_TIMER		=ESPARTO_TASK_PTR;
 using	ESPARTO_ENC_AUTO	=spEncoderAuto*;
 
 using 	ESPARTO_FN_AXION	=function<void(uint8_t,int,int,int)>;
-using 	ESPARTO_FN_CIC 		=function<void(const char*,const char*)>;
-using 	ESPARTO_FN_FLASH 	=function<bool(flasher*)>;
+using	ESPARTO_FN_IBOOL	=function<void(bool)>;
+using	ESPARTO_FN_OBOOL	=function<bool(void)>;
+using 	ESPARTO_FN_FE_CFG	=function<void(string,string)>;
+using 	ESPARTO_FN_FLASH 	=function<void(flasher*)>;
 using 	ESPARTO_FN_MSG 		=function<void(vector<string>)>;
-using 	ESPARTO_FN_PSV		=function<void(uint8_t,int,int)>;
-using	ESPARTO_FN_SAWS		=function<void(const char*)>;
 using 	ESPARTO_FN_SV		=function<void(int,int)>;
+using	ESPARTO_FN_TIF		=function<bool(task*)>;
 using	ESPARTO_FN_VOID		=function<void(void)>;
-using	ESPARTO_FN_WHEN		=function<uint32_t(void)>;
-using 	ESPARTO_FN_WSOCK	=function<void(string)>;
-using 	ESPARTO_FN_XFORM	=function<void(string)>;
+using	ESPARTO_FN_COUNT	=function<uint32_t()>;
+using	ESPARTO_FN_GRAPH	=function<uint32_t(void)>;
 
-#include "mutex.h"
+// cheezy hack: fix later
+using fsS2V=function<vector<string>(const string)>;
+using fsV2S=function<string(vector<string>)>;
+using fsS2S=function<string(const string)>;
+using fsS2x=function<void(const string)>;
+using fsV2V=function<vector<string>(const vector<string>)>;
+using fsPred=function<bool(string)>;
+//
+using 	ESPARTO_STAGE_TABLE = vector<pair<uint32_t,ESPARTO_FN_SV>>;
+
+//
 #include "utils.h"
 #include "subClasses.h"
-#include "pintypes.h"
+#include "pinTypes.h"
 
 struct spPin {
 	uint8_t 				D;
 	uint8_t 				type;
-	hwPin*					h;
 };
 
 struct command{
@@ -242,161 +229,192 @@ struct command{
 	ESPARTO_FN_MSG 			fn;
 };
 
-struct uiPanel{
-	int 					pane;
-	ESPARTO_FN_VOID			f;
-};
-
-struct dpItem {
-	int						np;
-	ESPARTO_FN_VOID			f;
-};
-
+#ifdef ESPARTO_CONFIG_DYNAMIC_PINS
 struct axion{
 	int						np;
 	vector<string>			params;
 	ESPARTO_FN_AXION		f;
 };
+#endif
 
-using 	ESPARTO_CFG_MAP 	=std::map<string,string>;
+using 	ESPARTO_CONFIG_BLOCK=std::map<string,string>;
 using 	ESPARTO_CMD_MAP		=std::map<string,command>;
-using 	ESPARTO_SRC_MAP 	=std::map<string,uint32_t>;
-using 	ESPARTO_UI_MAP		=std::map<string,uiPanel>;
-using 	ESPARTO_WSH_MAP		=std::map<char,ESPARTO_FN_WSOCK>;
+using 	ESPARTO_UI_MAP		=std::map<string,tab*>;
+using	ESPARTO_AJAX_MAP	=std::map<string,function<void(ESPARTO_CONFIG_BLOCK)>>;
+using 	ESPARTO_PIN_MAP		=std::map<uint8_t,hwPin*>;
+using	ESPARTO_SPOOL_MAP	=std::map<uint32_t,spooler*>;
+using	ESPARTO_FLASHER_MAP	=std::map<uint8_t,flasher*>;
 
-using 	ESPARTO_FE_CFG_FN	=function<void(string,string)>;
-
-class ESPArto: AsyncWebServer{
-		friend	class	easyWebSocket;
+class ESPArto: public AsyncWebServer{
 		friend	class	flasher;
-		friend	class	H4task;
 		friend	class	hwPin;
+		friend	class	pinThing;
+		friend	class	pq;
+		friend 	class	_smoothed;
+		friend 	class	spDefaultInput;
 		friend 	class	spDefaultOutput;
 		friend 	class	spEncoder;
 		friend 	class	spEncoderAuto;
+		friend	class	spPolled;
+		friend	class	spReporting;
+		friend	class	spRetriggering;		
 		friend	class	statistic;
+		friend	class	task;
 		
+		friend	class	tab;
+		friend	class	gearTab;
+		friend	class	rtcTab;
+		friend	class	runTab;
+		friend	class	toolTab;
+		friend	class	wifiTab;
+		
+		friend 	class	spoolerEvent;		
+		friend 	class	spoolerAjax;
+		friend 	class	spoolerLog;
+		friend 	class	spoolerRest;
+		friend 	class	spoolerTab;
+	
 #ifdef ESPARTO_DEBUG_PORT
 		static 	const char* 		types[]; 
 		static 	const char* 		styles[];
-		static  const array<string,ESPARTO_N_SOURCES> _srcNames;
+		static  const vector<string> _spoolNames;
+		static  const vector<string> _srcNames;
 		static	const vector<string> svnames;
 #endif
+
+#ifdef ESPARTO_ALEXA_SUPPORT
+		static AsyncUDP 			_udp;
+		static String				_wemo;
+		static String				_echo;
+		static String				_upnp;
+		
+		static function<void(bool)> _alexaCmd;
+		static function<bool(void)> _alexaState;
+				
+		static	void 				_alexaName();
+		static 	void				_makeDiscoverable(vector<string> vs={});		
+		static	void				_webServerInitAlexa();
+#endif
+//
+//		tci
+//
+		static	String      		_tciCfg;
+		static	string				_tciAppJson;		
+		static	String				_tciTextHtml;		
+		static	String				_tciTextXml;		
+		static	string				_tciCmdHash;
+		static	String				_tciWsHtm;		
 //
 //	Timers, Queue, Scheduling, control / workflow / basic facilities
 //
-		static 	h4_priority_queue	_Q;
-		static	vector<H4task*>		_callChain;
-		
-		static	ESPARTO_FN_VOID		NOOP_V;								
-		static 	ESPARTO_FN_CIC		_cicHandler;													
 		static	ESPARTO_CMD_MAP		_cmds;
-		static 	ESPARTO_CFG_MAP		_config;
-		static	uint32_t			_cpuLoad;
-		static 	Ticker				_hbTicker;
-		static	bool				_heapChoke;
-		static 	uint32_t			_hWarn;
-		static 	mutex_t	volatile 	_qMutex;	
-		static 	ESPARTO_FN_VOID		_setupFunction;
-		static	bool volatile		_syncClock;		
+		static 	ESPARTO_CONFIG_BLOCK _config;
+		static 	ESPARTO_OP_MODE		_opMode;
+		static 	pq				 	_Q;
+		static  uint32_t			_rtcSync;
+		static  uint32_t			_ss00;
+		static 	ESPARTO_SPOOL_MAP 	_spoolers;
 		
-		static 	vector<ESPARTO_FN_XFORM> 			_spoolers;
-		static 	array<uint32_t,ESPARTO_N_SOURCES> 	_sources;
-		
-		static	String				_wemoReply;
-		static	String				_wemoXML;
+		static	ESPARTO_TASK_PTR	_tpIfAPMode;
+		static	ESPARTO_TASK_PTR 	_tpIfDNS;		
+		static	ESPARTO_TASK_PTR 	_tpIfH4;		
+		static	ESPARTO_TASK_PTR 	_tpIfMQTT;		
+		static	ESPARTO_TASK_PTR 	_tpIfMQretry;
+		static	ESPARTO_TASK_PTR 	_tpIfWiFi;		
 //
-		static 	ESPARTO_TIMER		__queueTask(H4task);
-		static	ESPARTO_TIMER 		__heapThrottle();
+		static	void				__closeSSE();									
 		static	string				__svname(ESPARTO_SYS_VAR v){ return string("$")+stringFromInt(v); }
-	
-		static 	void				_bootstrap( );
+		static	String 				__xform(String s);
+		static	String 				__xformFile(const char* f){ return __xform(CSTR(readSPIFFS(f))); }
+
+		static 	bool				_configItemEmpty(ESPARTO_SYS_VAR c){ return _config.count(__svname(c)) && _config[__svname(c)]!=""; }
 		static 	bool				_configItemExists(ESPARTO_SYS_VAR c){ return _config.count(__svname(c)); }
-		static 	bool				_configItemHasValue(ESPARTO_SYS_VAR c){ return _configItemExists(c) && CIs(c)!=""; }		
-		static	void 				_crashPrevention();
-		static 	void 				_forEachCI(ESPARTO_FE_CFG_FN f){ for(auto const& ci:_config) f(ci.first,ci.second); }; // FIX
-		static	uint32_t			_getCapacity(){ return _Q.capacity(); }
-		static	void 				_lineSpooler(ESPARTO_FN_XFORM xf,string s);
+		static	void 				_dumpTopics(vector<string> vs){ _forEachTopic([](string top){ printf("%s",CSTR(top)); }); }
+		static	void 				_forEachTopic(function<void(string)> fn);		
+		static	void 				_matchTasks(ESPARTO_FN_TIF p,function<void(task*)> f);
+//		static  void 				_dumpQ();		
+		static	uint32_t 			_msDue(string rtc);	// publicise?			
 		static 	void 				_readConfig();	
 		static 	void				_saveConfig();
-		static 	void				_schedulerLoop();
-		static	void 				_setSpool(uint32_t plan,int src);	
-		static	void				_spoolLog(string bulk);
-		static	void				_spoolPublish(string bulk);
-		static	void				_spoolRawData(string bulk);
-		static	void				_spoolSerial(string bulk);
-		static 	char* 				_uptime();		
-//
+		static	void 				_simulatePayload(string flat,const char* jname="sim");		
+		static	void				_synchroStart();	
+		static	void 				_syncTick();
 //============================================================================================================
 //
 //	Pins
 //
 //============================================================================================================
-		static spPin 				_spPins[];
+const	static spPin 				_spPins[];
+		static ESPARTO_PIN_MAP		_pinMap;
 		static uint32_t				_sigmaPins;	
-		static uint32_t				_sigmaSox;	
-		const static array<int,ESPARTO_STYLE_MAX>	_npList;
-		static ESPARTO_FN_SV 		_gpio0Default;
+		static uint32_t				_sigmaLoops;	
+		static uint32_t				_sigmaIdle;	
+		static thing*				_core;	
 //
-		static void 				__killPin(uint8_t p);
-		static void					__killPinCore(hwPin* h);		
-		static void					__showPin(uint8_t p,int v1);						
 //
-		static uint8_t	 			_getDno(uint8_t i);
-		static bool					_getPinActive(uint8_t i);
-		static int					_getStyle(uint8_t i);
-		static uint8_t	 			_getType(uint8_t i);
-		static hwPin* 				_isOutputPin(uint8_t i);
-		static hwPin*				_isSmartPin(uint8_t i);
-		static bool 				_isUsablePin(uint8_t i);
-		static 	void				_pinsLoop();		
+		static 	hwPin* 				_isOutputPin(uint8_t i);
+		static 	hwPin*				_isSmartPin(uint8_t i);
 		static 	void				_uCreatePin(uint8_t _p,int _type,uint8_t _mode,ESPARTO_FN_SV _callback,...);
-//============================================================================================================
 //
-//	Flashing
-//
-//============================================================================================================
-		static 	vector<flasher*>	_fList;		
-//
-		static 	bool 				_doFlasher(uint8_t pin,ESPARTO_FN_FLASH fn);
-		static 	void 				_flash(int period,int duty,uint8_t pin=LED_BUILTIN,ESPARTO_FN_VOID fn=[]{});
+		static 	void 				_flash(uint32_t period,uint8_t duty,uint8_t pin=LED_BUILTIN);
 //============================================================================================================
 //
 // 	WIFI
 //
 //============================================================================================================
-		static function<void(bool)> _defaultAlexa;
-		static ESPARTO_FN_VOID		_connected;			// "manual virtual" upcall on WiFi connect - default is public onWiFi...
-		static ESPARTO_FN_VOID		_disconnected;  	// overriden by MQTT to get those notifications BEFORE user
 		static bool					_discoNotified;
-		static DNSServer*			_dnsServer;
-		static ESPARTO_TIMER		_fallbackToAP;
-		static ESPARTO_FN_VOID		_handleCaptive;		// NOOP_V except in AP mode
-		static ESPARTO_FN_VOID		_handleWiFi;		// NOOP_V while WiFi disconnected, =event loop function while connected
-		static AsyncUDP 			_udp;
+		static String				_four04;		
+		static int					_otaCmd;
 //
-		static	void				__alexaCore(bool b);
-		static 	void				__fallbackToAPFunction();
-		
-		static 	void				_changeDevice(const char*  d,const char*  lex,const char*  ssid,const char*  psk);			
-		static 	void 				_initiateWiFi(string ssid,string psk,string device);
-		static 	void				_setupWiFi(const char* _SSID,const char* _psk, const char* _device);	
-		static 	void 				_wifiCicHandler(const char* i,const char* v);		
+		static 	void				__fallbackToAP();
+		static	ip_addr_t* 			__ntpSetServer(int n,const char* ntp);
+
+		static	void				_cancelFallback();
+		static 	void				_changeDevice(vector<string>);
+		static	void 				_changeNTP(vector<string> vs);		
+		static	void				_cleanStart();
+		static	void				_gotIP();
+		static	void				_initiateFallback();		
+		static 	void 				_initiateWiFi(string ssid,string psk);
+		static	void				_lostIP();
+		static	void 				_timeKeeper();		
+		static	void				_useNTP(int,const char*,const char*);	
+		static  void				_wifiBasics(string _SSID,string _psk,string device);		
 		static	void 				_wifiEvent(WiFiEvent_t event);
-		static 	void				_wifiHandler();
+//
 //
 //		WebServer / UI
 //
-		static	array<axion,15>		_axionVec; /// fix this! **************************
-		static	ESPARTO_UI_MAP		_panes;
-		static	ESPARTO_WSH_MAP		_wshMap;
-		static	array<statistic*,ESPARTO_N_STATS> _statistics;
-		static 	easyWebSocket* 		_ws;
+		static	ESPARTO_AJAX_MAP	_ajaxMap;
+		static  AsyncEventSource*	_evts;
+		static	bool volatile		_forceClosed;
+		static	vector<statistic> 	_statistics;
+		static	ESPARTO_UI_MAP		_tab;
+		static 	size_t				_tempMQL;
 //
+		static	void 				_ajax(AsyncWebServerRequest *request);	
+		static	void				_ajaxAlarm(ESPARTO_CONFIG_BLOCK);
+		static	void				_ajaxCmd(ESPARTO_CONFIG_BLOCK);
+		static	void				_ajaxForm(ESPARTO_CONFIG_BLOCK);
+		static	void				_ajaxNike(ESPARTO_CONFIG_BLOCK);
+		static	void				_ajaxPing(ESPARTO_CONFIG_BLOCK);
+		static	void				_ajaxSched(ESPARTO_CONFIG_BLOCK);
+		static	void				_ajaxSetVar(ESPARTO_CONFIG_BLOCK);
+//
+#ifdef ESPARTO_CONFIG_DYNAMIC_PINS
+		static	vector<axion>		_axionVec;
+		static	vector<int>			_npList;
+  
+		static	void				_ajaxDpin(ESPARTO_CONFIG_BLOCK);
+		static	void				_ajaxVars(ESPARTO_CONFIG_BLOCK);
+		static	void				_ajaxKill(ESPARTO_CONFIG_BLOCK);
+
 		static 	void 				__axAddVar(uint8_t pin,int iv,int a);
 		static 	void 				__axSetVarInt(uint8_t pin,int v1,int a);
-//
-		static	void				_alexaChangeName(const char* host,const char* newname);
+		static 	void 				__mqAddPinCore(vector<string> vs);	
+		
+		static 	void 				__killPin(uint8_t p);
+		static 	void				__killPinCore(hwPin* h);
 		
 		static 	void 				_axAddToVar(uint8_t pin,int v1,int v2,int a);
 		static 	void 				_axDecVar(uint8_t pin,int v1,int v2,int a);
@@ -406,56 +424,58 @@ class ESPArto: AsyncWebServer{
 		static 	void 				_axIncVar(uint8_t pin,int v1,int v2,int a);
 		static 	void 				_axInvoke(uint8_t pin,int v1,int v2,int a);
 		static 	void 				_axPassthru(uint8_t pin,int v1,int v2,int a);
+		static	void 				_axPulseLED(uint8_t pin,int v1,int v2,int a);
 		static 	void 				_axPublish(uint8_t pin,int v1,int v2,int a);
 		static 	void 				_axPubVar(uint8_t pin,int v1,int v2,int a);
 		static 	void 				_axSetVarFromParam(uint8_t pin,int v1,int v2,int a);
 		static 	void 				_axSetVarFromPin(uint8_t pin,int v1,int v2,int a);
 		static 	void 				_axStopLED(uint8_t pin,int v1,int v2,int a);
-		static 	void 				_axSubFromVar(uint8_t pin,int v1,int v2,int a);		
-//
-		static 	void 				_handleWebSocketTXT( string data);	
-		static 	void				_initialPins( );				
-		static 	void 				_pinLabels(int i,int offset=0);
-		static 	void				_pinLabelsCooked(int i);
-		static	void				_rest(AsyncWebServerRequest *request);
-		static 	String				_uiTemplateConfigItem(String var);
+		static 	void 				_axSubFromVar(uint8_t pin,int v1,int v2,int a);
+		
+		static	void 				_formDynp(ESPARTO_CONFIG_BLOCK);
+		static 	void 				_mqAddPin(vector<string> );
+		static 	void 				_mqKillPin(vector<string>);																
 		static 	void 				_updatePin(uint8_t pin);
+#endif
+		static	void 				_cOtaEnd(int c);
+		static	void 				_cOtaError(ota_error_t error);	
+		static	void 				_cOtaProgress(int c,uint32_t);
+		static	void 				_cOtaStart(int c);			
+		static	void 				_formMQTT(ESPARTO_CONFIG_BLOCK);
+		static	void 				_formRTC(ESPARTO_CONFIG_BLOCK);
+		static	void				_formWiFi(ESPARTO_CONFIG_BLOCK);		
+		static	void 				_handleUpdate(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);		
+		static 	void				_initialPins(AsyncEventSourceClient*);
+		static	string				_light(uint8_t i);
+		static	void 				_logUrl(AsyncWebServerRequest *request);
+		static	void 				_newPane(AsyncEventSourceClient* c,string tab);
+		static	string				_pinLabels(uint8_t i);
+		static	void 				_progressBar(uint32_t n);
+		static	void				_rebuff();
+		static	void				_rest(AsyncWebServerRequest *request);
+		static	string				_showStatus();		
+		static 	String				_uiTemplateConfigItem(String var);
+		static	bool				_webAuth(AsyncWebServerRequest *request);
 		static	void 				_webRoot(AsyncWebServerRequest *request);	
-		static 	void 				_webServerInit();
-		static 	void 				_wshCmds(string);
-		static 	void 				_wshConfig(string);
-		static 	void 				_wshDynPin(string);
-		static 	void 				_wshGimme(string);
-		static 	void 				_wshInvoke(string);
-		static 	void 				_wshKillPin(string);
-		static 	void 				_wshSpool(string);
-		static 	void 				_wshVarList(string);
-		static 	void				_wsGearPane();
-		static 	void				_wsRunPane();
-		static 	void				_wsToolPane();
-//
+		static 	void 				_webServerInit();		
 //============================================================================================================
 //
 //		MQTT
 //
 //============================================================================================================
-		static	ESPARTO_FN_VOID		_autoSubSwitch;
-		static	ESPARTO_FN_VOID		_handleMQTT;
+//		static	ESPARTO_FN_VOID		_autoSubSwitch;
 		static	PubSubClient*		_mqttClient;
-		static	ESPARTO_TIMER		_mqttRetry;
-		static	ESPARTO_FN_VOID		_mqttUiExtras;
-		static	WiFiClient     		_wifiClient;
+		static	WiFiClient 			_wifiClient;
 //
-		static 	void 				__mqAddPinCore(uint8_t pin,vector<string> vs);	
-		static 	void				__mqFlattenCmds(string,string,function<void(string)>);					
+		static	void 				__mqAlarmCore(vector<string> vs,bool b);
+		static 	void				__mqFlattenCmds(string,string,function<void(string)>);
+		static	void 				__mqClientCore();		
 		static 	void 				__mqGuardPin(vector<string>,function<void(uint8_t,vector<string>)>);
 		static 	void 				__publishPin(uint8_t p,int v );
 //		
-		static 	void				_forEachTopic(function<void(string)>);
-		static 	void 				_mqttConnect( );
-		static 	void 				_mqttDisconnect( );
+		static 	void 				_mqttConnect();
 		static 	void 				_mqttDispatch(vector<string> );
-		static 	void 				_mqAddPin(vector<string> );
+		static	void 				_mqttReconnect(vector<string> vs);
 		static 	void				_mqChangeDevice(vector<string>);
 		static 	void 				_mqCfgPin(vector<string>);
 		static 	void 				_mqConfigGet(vector<string>);
@@ -464,155 +484,182 @@ class ESPArto: AsyncWebServer{
 		static 	void 				_mqFlashPin(vector<string>);
 		static 	void 				_mqGetPin(vector<string>);														
 		static 	void 				_mqInfo(vector<string>);
-		static 	void 				_mqKillPin(vector<string>);														
+		static 	void 				_mqNTP(vector<string>);
 		static 	void 				_mqPatternPin(vector<string>);
+//		static 	void 				_mqPing(vector<string>);
 		static 	void 				_mqPWMPin(vector<string>);
 		static 	void 				_mqSetPin(vector<string>);					
-		static 	void 				_mqSpool(vector<string>);					
-		static 	void 				_mqStopPin(vector<string>);					
-		static 	void 				_publish(String topic,String payload,bool retained=false);
+		static 	void 				_mqStopPin(vector<string>);								
+		static 	void 				_mqTat(vector<string>);					
+		static 	void 				_mqTdaily(vector<string>);					
+		static 	void 				_mqTime(vector<string>);					
+		static 	void 				_mqTT(vector<string>);					
+		static 	void 				_publish(String topic,String payload,bool retained=false);	
 		static 	void				_rawPublish(string topic,string payload="",bool retained=false);		
-		static 	void				_setupMQTT(const char* _SSID,const char* _psk, const char* _device,const char * _mqttIP,int _mqttPort,const char* _mqu="", const char* _mqp="");
-		static	void 				_sync_mqttMessage(string topic, string payload );		
-
+		static	void 				_setupMQTTClient(string _mqttIP,int _mqttPort,string _mqu,string _mqp, string _wt="lwt", string _wm="");
+		static	void 				_sync_mqttMessage(string topic, string payload );
+		static	void				_syncTime();
 	public:
-		ESPArto();
+		static	task*				context;
+	
+		ESPArto(ESPARTO_CONFIG_BLOCK cb={});
+//
+//		Timers, Queue
+//
+		static	ESPARTO_TASK_PTR 	at(string rtc,ESPARTO_FN_VOID fn=[](){ ESPArto::device(ON); },ESPARTO_FN_VOID fnc=nullptr,spooler* sp=nullptr,uint32_t u=0);
+		static	ESPARTO_TASK_PTR 	daily(string rtc,ESPARTO_FN_VOID fn=[](){ ESPArto::device(ON); },ESPARTO_FN_VOID fnc=nullptr,spooler* sp=nullptr,uint32_t u=0);		
+		static	ESPARTO_TASK_PTR 	every(uint32_t msec,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc=nullptr,spooler* sp=nullptr,uint32_t u=0);
+		static 	ESPARTO_TASK_PTR	everyRandom(uint32_t Rmin,uint32_t Rmax,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc=nullptr,spooler* sp=nullptr,uint32_t u=0);
+		static 	ESPARTO_TASK_PTR 	nTimes(uint32_t n,uint32_t msec,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc=nullptr,spooler* sp=nullptr,uint32_t u=0);
+		static 	ESPARTO_TASK_PTR 	nTimesRandom(uint32_t n,uint32_t msec,uint32_t Rmax,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc=nullptr,spooler* sp=nullptr,uint32_t u=0);
+		static 	ESPARTO_TASK_PTR 	once(uint32_t msec,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc=nullptr,spooler* sp=nullptr,uint32_t u=0);
+		static 	ESPARTO_TASK_PTR 	onceRandom(uint32_t Rmin,uint32_t Rmax,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc=nullptr,spooler* sp=nullptr,uint32_t u=0);
+		static	ESPARTO_TASK_PTR 	queueFunction(ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc=nullptr,spooler* sp=nullptr,uint32_t u=0);
+		static 	ESPARTO_TASK_PTR 	randomTimes(uint32_t tmin,uint32_t tmax,uint32_t msec,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc=nullptr,spooler* sp=nullptr,uint32_t u=0);
+		static 	ESPARTO_TASK_PTR 	randomTimesRandom(uint32_t tmin,uint32_t tmax,uint32_t msec,uint32_t Rmax,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc=nullptr,spooler* sp=nullptr,uint32_t u=0);
+		static	ESPARTO_TASK_PTR	repeatWhile(ESPARTO_FN_COUNT w,uint32_t msec,ESPARTO_FN_VOID fn=[](){},ESPARTO_FN_VOID fnc=nullptr,spooler* sp=nullptr,uint32_t u=0);
+		static	ESPARTO_TASK_PTR 	repeatWhileEver(ESPARTO_FN_COUNT w,uint32_t msec,ESPARTO_FN_VOID fn=[](){},ESPARTO_FN_VOID fnc=nullptr,spooler* sp=nullptr,uint32_t u=0);
 
-		ESPArto(const char* _SSID,const char* _psk, const char* _device);
-		
-		ESPArto(const char* _SSID,const char* _psk, const char* _device,const char * _mqttIP,	int _mqttPort, const char* mqu="", const char* mqp="");
+		static 	ESPARTO_TASK_PTR 	cancel(ESPARTO_TASK_PTR t=context)						{ return _Q.endK(t); }
+		static	void 				cancelAll(ESPARTO_FN_VOID fn=nullptr);
+		static 	uint32_t 			finishEarly(ESPARTO_TASK_PTR t=context)					{ return _Q.endF(t); }
+		static 	uint32_t 			finishNow(ESPARTO_TASK_PTR t=context)	 				{ return _Q.endU(t); }
+		static 	bool			 	finishIf(ESPARTO_TASK_PTR t,ESPARTO_FN_TIF f)			{ return _Q.endC(t,f); }
 //
-//		Timers, Queue, Scheduling
+//		Real-time stuff
 //
-		static	void				asyncQueueFunction(ESPARTO_FN_VOID sfn,ESPARTO_SOURCE src=ESPARTO_SRC_H4,const char* name="async");
-		static 	void		 		cancel(ESPARTO_TIMER t);
-		static 	void 				cancelAll(ESPARTO_FN_VOID fn=nullptr);
-		static	ESPARTO_TIMER 		every(uint32_t msec,ESPARTO_FN_VOID fn,ESPARTO_SOURCE src=ESPARTO_SRC_USER,const char* name="every");
-		static 	ESPARTO_TIMER		everyRandom(uint32_t Rmin,uint32_t Rmax,ESPARTO_FN_VOID fn,ESPARTO_SOURCE src=ESPARTO_SRC_USER,const char* name="async");
-		static	ESPARTO_TASK_PTR	getTask(){ return _callChain.size() ? _callChain.back():nullptr; }
-		static	string				getTaskName();		
-		static	int					getTaskSource();		
-		static 	ESPARTO_TIMER 		nTimes(uint32_t n,uint32_t msec,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID chain=nullptr,ESPARTO_SOURCE src=ESPARTO_SRC_USER,const char* name="nTimes");
-		static 	ESPARTO_TIMER 		nTimesRandom(uint32_t n,uint32_t msec,uint32_t Rmax,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID chain=nullptr,ESPARTO_SOURCE src=ESPARTO_SRC_USER,const char* name="nTimesRandom");
-		static 	ESPARTO_TIMER 		once(uint32_t msec,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID chain=nullptr,ESPARTO_SOURCE src=ESPARTO_SRC_USER,const char* name="once");
-		static 	ESPARTO_TIMER 		onceRandom(uint32_t Rmin,uint32_t Rmax,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID chain=nullptr,ESPARTO_SOURCE src=ESPARTO_SRC_USER,const char* name="onceRandom");
-		static	void 				queueFunction(ESPARTO_FN_VOID fn,ESPARTO_SOURCE src=ESPARTO_SRC_USER,const char* name="queueFunction");
-		static 	ESPARTO_TIMER 		randomTimes(uint32_t tmin,uint32_t tmax,uint32_t msec,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID chain=nullptr,ESPARTO_SOURCE src=ESPARTO_SRC_USER,const char* name="randomTimes");
-		static 	ESPARTO_TIMER 		randomTimesRandom(uint32_t tmin,uint32_t tmax,uint32_t msec,uint32_t Rmax,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID chain=nullptr,ESPARTO_SOURCE src=ESPARTO_SRC_USER,const char* name="randomTimesRandom");
-		static	void				runWithSpooler(ESPARTO_FN_VOID f,ESPARTO_SOURCE src,const char* name,ESPARTO_FN_XFORM spf);
-		static	void				setAllSpoolDestination(uint32_t plan);
-		static	void				setSrcSpoolDestination(uint32_t plan,ESPARTO_SOURCE src=ESPARTO_SRC_USER);
-		static 	void				when(ESPARTO_FN_WHEN,ESPARTO_FN_VOID fn,ESPARTO_SOURCE src=ESPARTO_SRC_USER);
-		static 	void				whenever(ESPARTO_FN_WHEN,ESPARTO_FN_VOID fn,ESPARTO_SOURCE src=ESPARTO_SRC_USER);
+		static	String 				clockTime(){ return _ss00 ? strTime(secSinceMidnight()):"0"; }
+		static	String				getDate();
+		static	long				getRawTimestamp(){ return sntp_get_current_timestamp(); }
+		static	bool				hasRTC(){ return _ss00; }
+		static 	uint32_t		 	msSinceMidnight(){ return _ss00 + millis(); }
+		static	uint32_t 			parseTime(const char* ts);
+		static 	uint32_t		 	secSinceMidnight(){ return msSinceMidnight() / 1000; }
+		static	String 				strTime(uint32_t t);				
+		static	String 				upTime();
+//
+//		Task / Spooling 
+//
+		static 	void				printf(const char* fmt,...);		
+		static	void 				printf(const string&);
+		static	void 				printf(const String&);
+		static 	void				println(const char* fmt="");		
+		static	void 				println(const string&);
+		static	void 				println(const String&);
 //
 //		config / control / workflow / basic facilities
 //
 		static void 				addCmd(const char * cmd,ESPARTO_FN_MSG fn);
+		static bool					configItemExists(string s){ return _config.count(s); }		
+		static bool					configItemExists(String s){ return _config.count(CSTR(s)); }		
 		static int 					decConfigInt(const char* c);
-		static void 				factoryReset();
+		static int 					decConfigInt(ESPARTO_SYS_VAR c);
+		static void 				factoryReset(vector<string> vs={});
 		static int					getConfigInt(const char* c) { return atoi(CSTR(_config[c])); }	
 		static string				getConfigstring(const char* c) { return _config[c];	}
 		static String				getConfigString(const char* c) { return String(CSTR(_config[c]));	}
 		static const char *			getConfig(const char* c) { return (_config[c]).c_str();	}
 		static int 					incConfigInt(const char* c);
-		static int 					decConfigInt(ESPARTO_SYS_VAR c);
+		static void 				invokeCmd(String topic,String payload="",const char* name="invoke");
 		static int					getConfigInt(ESPARTO_SYS_VAR c) { return atoi(CSTR(_config[__svname(c)])); }	
 		static string				getConfigstring(ESPARTO_SYS_VAR c) { return _config[__svname(c)];	}
 		static String				getConfigString(ESPARTO_SYS_VAR c) { return String(CSTR(_config[__svname(c)]));	}
 		static const char *			getConfig(ESPARTO_SYS_VAR c) { return (_config[__svname(c)]).c_str();	}
-		static int 					incConfigInt(ESPARTO_SYS_VAR c);	
-		static void 				invokeCmd(String topic,String payload="",ESPARTO_SOURCE src=ESPARTO_SRC_USER,const char* name="invoke");				
+		static uint32_t				getSpeed(){ return _sigmaLoops; }
+		static int 					incConfigInt(ESPARTO_SYS_VAR c);
 		static void 				loop();		
 		static int 					minusEqualsConfigInt(const char* c, int value);
-		static int 					plusEqualsConfigInt(const char* c, int value);
-		static void 				reboot(uint32_t reason=ESPARTO_BOOT_USERCODE);
-		static void					setConfig(const char*,const char* value); // ************************* overload / rationalise!
-		static void					setConfigInt(const char*,int value,const char* fmt="%d");
-		static void					setConfigstring(const char*,string value);
-		static void					setConfigString(const char*,String value);
-//
 		static int 					minusEqualsConfigInt(ESPARTO_SYS_VAR, int value);
+		static int 					plusEqualsConfigInt(const char* c, int value);
 		static int 					plusEqualsConfigInt(ESPARTO_SYS_VAR, int value);
+		static void 				reboot(vector<string> vs={});
+		static void					setConfig(const char*,const char* value); // ************************* overload / rationalise!
 		static void					setConfig(ESPARTO_SYS_VAR,const char* value); // ************************* overload / rationalise!
+		static void					setConfigInt(const char*,int value,const char* fmt="%d");
 		static void					setConfigInt(ESPARTO_SYS_VAR,int value,const char* fmt="%d");
+		static void					setConfigstring(const char*,string value);
+		static void					setConfigstring(string name,string value);
 		static void					setConfigstring(ESPARTO_SYS_VAR,string value);
+		static void					setConfigString(const char*,String value);
 		static void					setConfigString(ESPARTO_SYS_VAR,String value);
 //
-//		PIN-RELATED
+//		PIN and "thing" RELATED 
 //	
+		static void					device(bool b){ _core->turn(b);	}
 		static void 				digitalWrite(uint8_t pin,uint8_t value);
+		static uint32_t				getPinCount(uint8_t _p);
 		static int	 				getPinValue(uint8_t _p);
+		static bool	 				isPinThrottled(uint8_t _p);
 		static void 				logicalWrite(uint8_t pin,uint8_t onoff);
 		static void 				reconfigurePin(uint8_t _p,int v1, int v2=0);
+		static bool					state(){ return _core->status(); }
 		static void 				throttlePin(uint8_t _p,uint32_t lim);
+		static bool					toggle(){ _core->toggle(); }
 //		
 //		the pins
 //
+		static void 				CircularLatch(uint8_t _p,uint8_t _mode,uint32_t _debounce,uint32_t nStates,ESPARTO_FN_SV _callback);
+		static void 				CountingLatch(uint8_t _p,uint8_t _mode,uint32_t _debounce,ESPARTO_FN_SV _callback);
 		static void 				Debounced(uint8_t _p,uint8_t _mode,uint32_t _debounce,ESPARTO_FN_SV _callback);
+		static void 				DefaultInput(uint32_t dbv=20,ESPARTO_FN_IBOOL f=[](bool b){ });
 		static void 				DefaultOutput(uint8_t _p=BUILTIN_LED,bool active=LOW,ESPARTO_LOGICAL_STATE initial=OFF,ESPARTO_FN_SV _callback=[](int,int){});
+		static void 				DefaultOutput(thing& riot);
+		static void 				DefaultOutput(thing* piot);
 		static void 				Encoder(uint8_t _pA,uint8_t _pB,uint8_t mode,ESPARTO_FN_SV _callback);	
 		static void 				Encoder(uint8_t _pA,uint8_t _pB,uint8_t mode,int * pV);	
 		static ESPARTO_ENC_AUTO 	EncoderAuto(uint8_t _pin,uint8_t _pinB,uint8_t _mode,ESPARTO_FN_SV _callback,int _Vmin=0,int _Vmax=100,int _Vinc=1,int _Vset=0);	
 		static ESPARTO_ENC_AUTO		EncoderAuto(uint8_t _pin,uint8_t _pinB,uint8_t _mode,int * pV,int _Vmin=0,int _Vmax=100,int _Vinc=1,int _Vset=0);
 		static void 				Filtered(uint8_t _p,uint8_t _mode,bool _filter,ESPARTO_FN_SV _callback);
 		static void 				Latching(uint8_t _p,uint8_t _mode,uint32_t _debounce,ESPARTO_FN_SV _callback);
+		static void					MultiStage(uint8_t _p,uint8_t mode,uint32_t _debounce,uint32_t f,ESPARTO_FN_SV _callback,ESPARTO_STAGE_TABLE _st);
 		static void 				Output(uint8_t _p,bool active=LOW,ESPARTO_LOGICAL_STATE initial=OFF,ESPARTO_FN_SV _callback=[](int,int){});		
 		static void 				Polled(uint8_t _p,uint8_t _mode,uint32_t freq,ESPARTO_FN_SV _callback,bool adc=false);
 		static void 				Raw(uint8_t _p,uint8_t _mode,ESPARTO_FN_SV _callback);
-		static void 				Reporting(uint8_t _p,uint8_t mode,uint32_t _debounce,uint32_t _freq,ESPARTO_FN_SV _callback, bool twoState=true);	
+		static void 				Reporting(uint8_t _p,uint8_t mode,uint32_t _debounce,uint32_t _freq,ESPARTO_FN_SV _callback, bool twoState=false);	
 		static void 				Retriggering(uint8_t _p,uint8_t _mode,uint32_t _timeout,ESPARTO_FN_SV _callback,bool active=HIGH);
-		static void					std3StageButton(ESPARTO_FN_SV f=_gpio0Default,uint32_t db=15);
-		static void					ThreeStage(uint8_t _p,uint8_t mode,uint32_t _debounce,uint32_t f,ESPARTO_FN_SV _callback,ESPARTO_FN_SV _sf,uint32_t _m,ESPARTO_FN_SV _mf,uint32_t _l,ESPARTO_FN_SV _lf);
 		static void 				Timed(uint8_t _p,uint8_t mode,uint32_t _debounce,ESPARTO_FN_SV _callback, bool twoState=true);
 //
 //		LED Flashing
 //
-		static void 				flashPWM(int period,int duty,uint8_t pin=LED_BUILTIN);	
-		static void 				flashLED(int rate,uint8_t pin=LED_BUILTIN);	
-		static void 				flashPattern(const char * pattern,int timebase,uint8_t pin=LED_BUILTIN);
+		static void 				flashLED(uint32_t rate,uint8_t pin=LED_BUILTIN);
+		static void 				flashMorse(const char * pattern,uint32_t timebase,uint8_t pin=LED_BUILTIN);
+		
+#ifdef ESPARTO_MORSE_SUPPORT
+		static std::map<char,string> _morse; // tidy
+		static void 				flashMorseText(const char * pattern,uint32_t timebase,uint8_t pin=LED_BUILTIN);
+#endif
+		static void 				flashPattern(const char * pattern,uint32_t timebase,uint8_t pin=LED_BUILTIN);
+		static void 				flashPWM(uint32_t period,uint8_t duty,uint8_t pin=LED_BUILTIN);	
 		static bool 				isFlashing(uint8_t pin=LED_BUILTIN);
-		static void 				pulseLED(int period,uint8_t pin=LED_BUILTIN);
+		static void 				pulseLED(uint32_t period,uint8_t pin=LED_BUILTIN);
 		static void 				stopLED(uint8_t pin=LED_BUILTIN);				
 //
-		static bool					wifiConnected(){ return THIS_IP!="0.0.0.0"; }
+//		wifi-specific
+//
+#ifdef	ESPARTO_ALEXA_SUPPORT
+		static bool					alexaInUse() { return _alexaCmd ? true:false; }		
+		static void 				useAlexa(const char* friendly,ESPARTO_FN_OBOOL s=state,ESPARTO_FN_IBOOL d=device);
+#endif
+		static void					graph(const char* metric,int max,int interval,int dp,ESPARTO_FN_GRAPH fn);
+		static void					vBar(string c="#f000");		
+		static bool					wifiConnected(){ return _tpIfWiFi; }
 //
 //		mqtt-related TODO: inherit from pubsubclient and either lose or specialise these
 //
-		static void 				publish(String topic,String payload="",bool retained=false);
-		static void 				publish(String topic,int payload,bool retained=false);
-		static void 				publish(const char* topic,const char* payload="",bool retained=false);
-		static void 				publish(const char* topic,int payload,bool retained=false);
+		static void 				publish(const string topic, const string payload,const bool retained=false);
+		static void 				publish(const String topic,const String payload="",const bool retained=false);
+		static void 				publish(const String topic,const int payload,const bool retained=false);
+		static void 				publish(const char* topic,const char* payload="",const bool retained=false);
+		static void 				publish(const char* topic,const int payload,const bool retained=false);
 		static void 				publish_v(const char* fmt,const char * payload,...);
 		static void 				subscribe(const char * topic,ESPARTO_FN_MSG fn,const char* prefix="");
-
-#ifdef ESPARTO_DEBUG_PORT
-		#define ESPARTO_N_REASONS	7
-		static	const array<string,ESPARTO_N_REASONS> 	_reasons;
-		static	vector<syntheticTask*>					_synTasks;
-	
-		static	string 			__getArduinoPin(uint8_t i);
-		static 	void			__dumper(string type){ invokeCmd(CSTR(string("cmd/dump/"+type)),"",ESPARTO_SRC_USER,"__dumper"); }
-		static	void 			__dq(H4task q);
-		static 	void 			_bustClrQ(vector<string> vs);
-		static 	void 			_bustQ(vector<string> vs);
-		static 	void 			_bustSynRampUp(vector<string> vs);
-		static 	void 			_bustSynRampDown(vector<string> vs);
-		static 	void 			_bustSynRandom(vector<string> vs);
-		static 	void 			_bustSynSteady(vector<string> vs);
-		static 	void 			_dumpConfig(vector<string> vs);
-		static 	void 			_dumpFlashers(vector<string> vs);
-		static	void 			_dumpPins(vector<string> vs);
-		static	void 			_dumpQ(vector<string> vs);
-		static 	void 			_dumpSources(vector<string> vs);
-		static 	void 			_dumpTopics(vector<string> vs);
-		
-		static	void 			dumpConfig()	{ __dumper("config"); }
-		static	void 			dumpFlashers()	{ __dumper("flash"); }
-		static	void 			dumpPins()		{ __dumper("pins"); }
-		static	void 			dumpQ()			{ __dumper("Q"); }
-		static	void 			dumpSources()	{ __dumper("sources"); }
-		static	void 			dumpTopics()	{ __dumper("topics"); }
+//
+//		conditional
+//
+#ifdef ESPARTO_LOG_EVENTS
+		static void					logEvent(const __FlashStringHelper * fmt,...);	 // ????
 #endif
 };
 extern ESPArto Esparto;
+
 #endif // ESPArto_H

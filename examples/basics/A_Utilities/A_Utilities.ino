@@ -1,10 +1,12 @@
 /*
- MIT License
+MIT License
 
 Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
-                      blog     https://8266iot.blogspot.com     
-                support group  https://www.facebook.com/groups/esp8266questions/
-                
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/ 
+                           
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -37,17 +39,18 @@ ESPArto  Esparto;
 const int bufferLen=10;
 byte buffer[bufferLen]={'0','1','2','3','4','5','6','7','8','9'};
 
-void Demo(){
+void setupHardware() {
+  ESPARTO_HEADER(Serial); // not necessary, just helps does the Serial begin for you
+  
   int fortytwo=42;
   vector<string> vs={"life","universe","everything",stringFromInt(fortytwo)};
-  Serial.printf("join vs %s\n",CSTR(join(vs)));
-  writeSPIFFS("/thgttg",CSTR(join(vs)));
+  Serial.printf("join vs %s\n",CSTR(join(vs,"/")));
+  writeSPIFFS("/thgttg",CSTR(join(vs,"/")));
   String getitback=readSPIFFS("/thgttg");
-  String ucSPIFFS=replaceBetween(getitback,"e/","/e","UNIVERSE");
-  Serial.printf("reading back from SPIFFS (partly in uppercase) = %s\n",CSTR(ucSPIFFS));
-  string zaphod(CSTR(ucSPIFFS)); // convert String to string for split
-  vector<string> marvin;
-  split(zaphod,'/',marvin);
+  getitback.replace("universe","UNIVERSE");
+  Serial.printf("reading back from SPIFFS (partly in uppercase) = %s\n",CSTR(getitback));
+  string zaphod(CSTR(getitback)); // convert String to string for split
+  vector<string> marvin=split(zaphod,"/");
   for(auto const& m:marvin) Serial.printf("M: %s\n",CSTR(m));
   Serial.printf("If all went well, this should say Forty-Two: %d\n",atoi(CSTR(marvin[3])));
   String sbl=StringFromInt(bufferLen);
@@ -59,10 +62,4 @@ void Demo(){
   Serial.printf("NOW its a String!!! %s\n",CSTR(realString));
   Serial.printf("NOW its a string!!! %s\n",CSTR(stringFromBuff(buffer,bufferLen)));
   SPIFFS.remove("/thgttg"); // cleanup
-}
-
-void setupHardware() {
-  Serial.begin(74880);
-  Serial.printf("Esparto Utilities %s\n",__FILE__);
-  Demo();
 }

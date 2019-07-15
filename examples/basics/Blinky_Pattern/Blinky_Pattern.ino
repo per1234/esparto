@@ -1,9 +1,11 @@
 /*
- MIT License
+MIT License
 
 Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
-                      blog     https://8266iot.blogspot.com     
-                support group  https://www.facebook.com/groups/esp8266questions/
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/ 
                 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,26 +27,23 @@ SOFTWARE.
 */
 
 /*
- *    Demonstrates LED flashing with dot-dash pattern, similar in concept to Morse code
- *    "." is a short pulse
- *    "-" is a long pulse
- *    " " is a gap
- *    so "   ... --- ..." would be S-O-S in Morse Code
- *    note ^              start with 3 gaps to break up repeating pattern up stop one running into the next 
- *    note      ^   ^     same idea here to make the groups distinct from each other  
+ *    Demonstrates LED flashing with arbitrary 1/0 pattern
  *    
- *   Flashing the pattern requires a "timebase" (in mSec)  - this is just the speed @ which
- *   each dot/dash/space is acted upon. Lower values make the whole ppattern repeat faster, larger values make it slower
- *   300 is a good choice to start, try varying it
+ *    The LED will be on when there is a 1 in the pattern and off when there is a 0
+ *    the pattern is cycled continously at a speed decided by the user (the "timebase"
+ *    
+ *    A pattern of "10" with a timebase of 1000ms will be exactly like a standard "blinky"
+ *    as you lower the timebase, the faster the flashing gets
+ *    A pattern of "1000000000" will produce vary short "blip" on every 10th cycle of the timebase
+ *    (2.5s)
  */
 #include <ESPArto.h>
 ESPArto  Esparto;
 
 void setupHardware() {
-  Serial.begin(74880);
-  Serial.printf("Esparto %s\n",__FILE__);
+  ESPARTO_HEADER(Serial); // not necessary, just helps does the Serial begin for you
   // define BUILTIN_LED as output. Most ESP8266 have LED as "active LOW" i.e. it is ON when pin is 0
   // and is OFF when pin is 1
   Esparto.Output(BUILTIN_LED);
-  Esparto.flashPattern("   ... --- ...",300); // timebase = 300ms, try lower and/or higher
+  Esparto.flashPattern("1000000000",250); // = 250 ms blip then 9x250ms darkness
 }

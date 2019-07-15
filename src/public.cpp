@@ -1,8 +1,12 @@
 /*
  MIT License
 
-Copyright (c) 2018 Phil Bowles
-
+Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/
+                			  
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -23,78 +27,152 @@ SOFTWARE.
 */
 #include <ESPArto.h>
 
-void 			__attribute__((weak)) onPinConfigChange(uint8_t pin,int v1,int v2){};
-void 			__attribute__((weak)) onFactoryReset(void){}
-void 			__attribute__((weak)) onReboot(void){}
+extern void 	onConfigItemChange(const char* id,const char* value);
+extern void 	onFactoryReset(void);
+extern void 	onPinConfigChange(uint8_t pin,int v1,int v2);
+extern void 	onReboot(void);
+//
+//		tasks
+//
+void ESPArto::cancelAll(ESPARTO_FN_VOID fn){
+	_Q.clear();
+	if(fn) fn(); // a chance to resurrect
+}
 
+void ESPArto::invokeCmd(String topic,String payload,const char* name){ _sync_mqttMessage(string(name)+"/"+CSTR(topic),string(CSTR(payload))); }
+//
+//  rtc
+//
+String	ESPArto::getDate(){ return CIS(ESPARTO_RTC_DATE); }
+
+uint32_t ESPArto::parseTime(const char* ts){
+	string t(ts);
+	uint32_t  h=0;
+	uint32_t  m=0;
+	uint32_t  s=0;
+	vector<string> parts=split(t,":");
+	if(parts.size() < 4){
+	if(parts.size() > 2) s=atoi(CSTR(parts[2]));
+		m=atoi(CSTR(parts[1]));
+		h=atoi(CSTR(parts[0]));  
+		}
+	return 1000*(s+(m*60) + (h*3600));
+}
+
+String ESPArto::strTime(uint32_t t){
+	char buf[9];
+	sprintf(buf,"%02d:%02d:%02d",(t%86400)/3600,(t/60)%60,t%60);
+	return String(buf);
+}
+
+String ESPArto::upTime(){
+	uint32_t t=millis()/1000;
+	return StringFromInt(t / 86400,"%02d:")+strTime(t);
+}
+
+#define TAG(x) (u+((x)*100))
+
+ESPARTO_TASK_PTR ESPArto::at(string rtc,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,spooler* sp,uint32_t u){ return _ss00 ? _Q.add(fn,_msDue(rtc),0,H4(1),fnc,sp,TAG(1)):nullptr; }
+
+ESPARTO_TASK_PTR ESPArto::daily(string rtc,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,spooler* sp,uint32_t u){
+	if(_ss00){
+		uint32_t msDue=_msDue(rtc);						
+		return _Q.add(fn,msDue,msDue,H4(1),fnc,sp,TAG(2));
+	} else return nullptr;
+}
+		
+ESPARTO_TASK_PTR ESPArto::every(uint32_t msec,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,spooler* sp,uint32_t u){ return _Q.add(fn,msec,0,nullptr,fnc,sp,TAG(3)); }
+
+ESPARTO_TASK_PTR ESPArto::everyRandom(uint32_t Rmin,uint32_t Rmax,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,spooler* sp,uint32_t u){ return _Q.add(fn,Rmin,Rmax,nullptr,fnc,sp,TAG(4)); }
+		
+ESPARTO_TASK_PTR ESPArto::nTimes(uint32_t n,uint32_t msec,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,spooler* sp,uint32_t u){ return _Q.add(fn,msec,0,H4(n),fnc,sp,TAG(5)); }
+
+ESPARTO_TASK_PTR ESPArto::nTimesRandom(uint32_t n,uint32_t Rmin,uint32_t Rmax,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,spooler* sp,uint32_t u){ return _Q.add(fn,Rmin,Rmax,H4(n),fnc,sp,TAG(6)); }
+
+ESPARTO_TASK_PTR ESPArto::once(uint32_t msec,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,spooler* sp,uint32_t u){ return _Q.add(fn,msec,0,H4(1),fnc,sp,TAG(7)); }
+
+ESPARTO_TASK_PTR ESPArto::onceRandom(uint32_t Rmin,uint32_t Rmax,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,spooler* sp,uint32_t u){ return _Q.add(fn,Rmin,Rmax,H4(1),fnc,sp,TAG(8)); }
+
+ESPARTO_TASK_PTR ESPArto::queueFunction(ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,spooler* sp,uint32_t u){ return _Q.add(fn,0,0,H4(1),fnc,sp,TAG(9)); }
+
+ESPARTO_TASK_PTR ESPArto::randomTimes(uint32_t tmin,uint32_t tmax,uint32_t msec,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,spooler* sp,uint32_t u){ return _Q.add(fn,msec,0,H4Random(tmin,tmax),fnc,sp,TAG(10)); }
+
+ESPARTO_TASK_PTR ESPArto::randomTimesRandom(uint32_t tmin,uint32_t tmax,uint32_t Rmin,uint32_t Rmax,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,spooler* sp,uint32_t u){ return _Q.add(fn,Rmin,Rmax,H4Random(tmin,tmax),fnc,sp,TAG(11)); }
+
+ESPARTO_TASK_PTR ESPArto::repeatWhile(ESPARTO_FN_COUNT fncd,uint32_t msec,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,spooler* sp,uint32_t u){ return _Q.add(fn,msec,0,fncd,fnc,sp,TAG(12)); }
+
+ESPARTO_TASK_PTR ESPArto::repeatWhileEver(ESPARTO_FN_COUNT fncd,uint32_t msec,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,spooler* sp,uint32_t u){
+  return _Q.add(fn,msec,0,fncd,
+				bind([](ESPARTO_FN_COUNT fncd,uint32_t msec,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,spooler* sp,uint32_t u){
+					fnc();
+					repeatWhileEver(fncd,msec,fn,fnc,sp,u);					
+				},fncd,msec,fn,fnc,sp,u),
+			sp,TAG(13));
+}
+//
+//		Task / Spooling 
+//
+void ESPArto::printf(const char* fmt,...){
+	char buf[1024];
+	va_list args;
+	va_start(args, fmt);
+	vsnprintf(buf, 1023, fmt, args);
+	if(context) context->print(buf);
+	else ASYNC_PUSH(buf);
+	va_end (args);
+}
+
+void ESPArto::printf(const string& s){ printf("%s",CSTR(s)); }
+
+void ESPArto::printf(const String& s){ printf(CSTR(s)); }
+
+void ESPArto::println(const char* s){ printf("%s\n",s); }
+
+void ESPArto::println(const string& s){ println(CSTR(s)); }
+
+void ESPArto::println(const String& s){ println(CSTR(s)); }
+
+//
+//		config / control / workflow / basic facilities
+//
 void ESPArto::addCmd(const char * cmd,ESPARTO_FN_MSG fn){
 	String topic(cmd);
 	topic.replace("/#","");
 	_cmds[CSTR(topic)]={0,fn};	
 }
 
-void ICACHE_RAM_ATTR ESPArto::asyncQueueFunction(ESPARTO_FN_VOID fn,ESPARTO_SOURCE src,const char* name){
-	if(GetMutex(&_qMutex)){
-		__queueTask(H4task(0,fn,H4Countdown(1),0,nullptr,0,src,name));
-		ReleaseMutex(&_qMutex);
-	}
-}
-
-void ESPArto::cancel(ESPARTO_TIMER uid){ _Q.remove(uid); }
-
-void ESPArto::cancelAll(ESPARTO_FN_VOID fn){
-	_Q.clear();
-	if(fn) fn();
-}
-
-ESPARTO_TIMER ESPArto::every(uint32_t msec,ESPARTO_FN_VOID fn,ESPARTO_SOURCE src,const char* name)			{ return __queueTask(H4task(msec,fn,nullptr,0,nullptr,0,src,name)); }
-
-ESPARTO_TIMER ESPArto::everyRandom(uint32_t Rmin,uint32_t Rmax,ESPARTO_FN_VOID fn,ESPARTO_SOURCE src,const char* name){ return __queueTask(H4task(Rmin,fn,nullptr,Rmax,nullptr,0,src,name)); }
-		
-string	 	ESPArto::getTaskName(){
-	ESPARTO_TASK_PTR t=getTask();
-	if(t) return t->getName();
-	return "";
-}
-
-int ESPArto::getTaskSource(){
-	ESPARTO_TASK_PTR t=getTask();
-	if(t) return t->getSource();
-	return 0;
-}
-
-ESPARTO_TIMER ESPArto::nTimes(uint32_t n,uint32_t msec,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,ESPARTO_SOURCE src,const char* name){ return __queueTask(H4task(msec,fn,H4Countdown(n),0,fnc,0,src,name)); }
-
-ESPARTO_TIMER ESPArto::nTimesRandom(uint32_t n,uint32_t Rmin,uint32_t Rmax,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,ESPARTO_SOURCE src,const char* name){ return __queueTask(H4task(Rmin,fn,H4Countdown(n),Rmax,fnc,0,src,name)); }
-
-ESPARTO_TIMER ESPArto::once(uint32_t msec,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,ESPARTO_SOURCE src,const char* name)	{	return __queueTask(H4task(msec,fn,H4Countdown(1),0,fnc,0,src,name));	}
-
-ESPARTO_TIMER ESPArto::onceRandom(uint32_t Rmin,uint32_t Rmax,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,ESPARTO_SOURCE src,const char* name){	return __queueTask(H4task(Rmin,fn,H4Countdown(1),Rmax,fnc,0,src,name)); }
-
-void ESPArto::queueFunction(ESPARTO_FN_VOID fn,ESPARTO_SOURCE src,const char* name){ __queueTask(H4task(0,fn,H4Countdown(1),0,nullptr,0,src, name));	}
-
-ESPARTO_TIMER ESPArto::randomTimes(uint32_t tmin,uint32_t tmax,uint32_t msec,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,ESPARTO_SOURCE src,const char* name){ return __queueTask(H4task(msec,fn,H4RandomCountdown(tmin,tmax),0,fnc,0,src,name)); }
-
-ESPARTO_TIMER ESPArto::randomTimesRandom(uint32_t tmin,uint32_t tmax,uint32_t Rmin,uint32_t Rmax,ESPARTO_FN_VOID fn,ESPARTO_FN_VOID fnc,ESPARTO_SOURCE src,const char* name){ return __queueTask(H4task(Rmin,fn,H4RandomCountdown(tmin,tmax),Rmax,fnc,0,src,name)); }
-
-void ESPArto::when(ESPARTO_FN_WHEN w,ESPARTO_FN_VOID fn,ESPARTO_SOURCE src){	__queueTask(H4task(ESPARTO_IDLE_TIME,[]( ){ yield(); },w,0,fn,0,src,"when"));	}
-
-void ESPArto::whenever(ESPARTO_FN_WHEN w,ESPARTO_FN_VOID fn,ESPARTO_SOURCE src){
-  when(w,bind([](ESPARTO_FN_WHEN w,ESPARTO_FN_VOID fn,ESPARTO_SOURCE src){
-		fn();
-		whenever(w,fn,src);
-		},w,fn,src));
-}
-
 int ESPArto::decConfigInt(const char* c){ return plusEqualsConfigInt(c,-1); }
 
 int ESPArto::decConfigInt(ESPARTO_SYS_VAR c){ return plusEqualsConfigInt(c,-1); }
+
+[[noreturn]] void ESPArto::factoryReset(vector<string> vs){
+	onFactoryReset();
+	SPIFFS.remove(CSTR(_tciCfg));
+	SPIFFS.end();
+	_cleanStart();
+	ESP.restart();
+//	Serial.printf("ESPArto::factoryReset DROPTHRU!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+	*((int *)0xffffffff)=0;
+}
 
 int ESPArto::incConfigInt(const char* c){ return plusEqualsConfigInt(c,1); }
 
 int ESPArto::incConfigInt(ESPARTO_SYS_VAR c){ return plusEqualsConfigInt(c,1); }
 
-void ESPArto::invokeCmd(String topic,String payload,ESPARTO_SOURCE src,const char* name){ _sync_mqttMessage(string(name)+"/"+CSTR(topic),string(CSTR(payload))); }
+#ifdef ESPARTO_LOG_EVENTS
+void ESPArto::logEvent(const __FlashStringHelper * fmt,...){
+	string ct=string(CSTR(clockTime()))+" ";
+	char buf[512];
+	strcpy(buf,CSTR(ct));
+	va_list args;
+	va_start(args, fmt);
+	vsnprintf_P(&buf[hasRTC() ? 9:2], 511, (PGM_P) fmt, args);
+	_spoolers[ESPARTO_OUTPUT_LOG]->print(buf);
+	_spoolers[ESPARTO_OUTPUT_SERIAL]->print(buf);
+//	_spoolers[ESPARTO_OUTPUT_PUBLISH]->print(buf);
+	va_end (args);
+}
+#endif
 
 int ESPArto::minusEqualsConfigInt(const char* c, int value){ return plusEqualsConfigInt(c,-1*value); }
 
@@ -108,6 +186,13 @@ int ESPArto::plusEqualsConfigInt(const char* c, int value){
 
 int ESPArto::plusEqualsConfigInt(ESPARTO_SYS_VAR c, int value){	return plusEqualsConfigInt(CSTR(__svname(c)),value); }
 
+[[noreturn]] void ESPArto::reboot(vector<string> vs){
+	onReboot();
+	ESP.restart();
+//	Serial.printf("ESPArto::reboot DROPTHRU!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+	*((int *)0xffffffff)=0;
+}
+
 void ESPArto::setConfig(const char* c,const char* value){ setConfigstring(c,string(value));	}
 
 void ESPArto::setConfig(ESPARTO_SYS_VAR c,const char* value){ setConfigstring(c,string(value));	}
@@ -120,38 +205,67 @@ void ESPArto::setConfigstring(const char* c,string value){
 	if(_config[c]!=value){
 		_config[c]=value;
 		_saveConfig();
-		_cicHandler(c,CSTR(value));
+		if(_opMode > ESPARTO_OM_NAKED){
+			string safeC(c);
+			if(safeC[0]=='$'){
+				safeC[0]='X'; // $ invalid in  lot of places
+				int in=atoi(CSTR(strim(string(c))));
+				switch(in){
+					case ESPARTO_WEB_USER:
+					case ESPARTO_WEB_PASS:
+						EVENT("ADMIN DETAILS CHANGED");
+						break;
+	#ifdef ESPARTO_ALEXA_SUPPORT				
+					case ESPARTO_ALEXA_NAME:
+						if(_alexaCmd){
+							EVENT("ALEXA NAME CHANGE %s",CSTR(value));
+							_alexaName();
+							ASYNC_PUSH(jNamedObjectM("lex",{{"value",value}}));
+							_makeDiscoverable();
+							EVENT("Say \"Alexa, discover devices!\"");						
+						} //else Serial.printf("ALEXA NOT IN USE...\n");
+						break;
+	#endif
+				}				
+			}
+			else {
+				onConfigItemChange(c,CSTR(value)); // user last bite of cherry
+				if(_opMode > ESPARTO_OM_WIFI && CII(ESPARTO_LOG_VARS)) ESPArto::_spoolers[ESPARTO_OUTPUT_PUBLISH]->print(string("data|")+safeC+"="+value);		   
+			}
+			string vset=jNamedObjectM("vset",{{"name",safeC},{"value",value}});
+//			Esparto.println(vset);
+			ASYNC_PUSH(vset);		
+		}
 	}
 }
 
 void ESPArto::setConfigstring(ESPARTO_SYS_VAR c,string value){ setConfigstring(CSTR(__svname(c)),value); }
 
+void ESPArto::setConfigstring(string c,string value){ setConfigstring(CSTR(c),value); }
+
 void ESPArto::setConfigString(const char* c,String value){ setConfigstring(c,CSTR(value)); }
 
 void ESPArto::setConfigString(ESPARTO_SYS_VAR c,String value){ setConfigstring(c,CSTR(value)); }
+//
+//		PIN and "thing" RELATED 
+//	
+void ESPArto::digitalWrite(uint8_t pin,uint8_t value){ if(_isOutputPin(pin)) static_cast<spOutput*>(_pinMap[pin])->digitalWrite(value); }
 
-void ESPArto::std3StageButton(ESPARTO_FN_SV shorty,uint32_t db){
-	Esparto.ThreeStage(0,INPUT_PULLUP,db,100, // notify every 100ms
-			[](int v1,int v2) {
-				if(v1>1)flashLED(50);	// stage 2 (fastest)
-				else if(v1) flashLED(100); // stage 1 (medium)
-				},
-			shorty, // short click (default action) is anything up to....
-			2000, // mSec, after that we got a medium click, all the way up to....
-			[](int v1,int v2){ ESPArto::reboot(ESPARTO_BOOT_BUTTON); },
-			5000, // mSec and anything after that is LONG
-			[](int v1,int v2){ ESPArto::factoryReset();	});
-	_spPins[0].h->setStyle(ESPARTO_STYLE_STD3STAGE);
+uint32_t ESPArto::getPinCount(uint8_t _p){
+	if(hwPin* h=_isSmartPin(_p))	return h->getPinCount();
+	return 0;
 }
-
-void ESPArto::digitalWrite(uint8_t pin,uint8_t value){ if(_isOutputPin(pin)) static_cast<spOutput*>(_spPins[pin].h)->digitalWrite(value); }
-
-int ESPArto::getPinValue(uint8_t _p){ // hoist this
+int ESPArto::getPinValue(uint8_t _p){
 	if(hwPin* h=_isSmartPin(_p))	return h->getPinValue();
 	return -666;
 }
 
-void ESPArto::logicalWrite(uint8_t pin,uint8_t value){ if(_isOutputPin(pin)) static_cast<spOutput*>(_spPins[pin].h)->logicalWrite(value); }
+bool ESPArto::isPinThrottled(uint8_t _p){
+	if(hwPin* h=_isSmartPin(_p)) return h->throttled;
+	return false;
+}
+
+void ESPArto::logicalWrite(uint8_t pin,uint8_t value){ if(_isOutputPin(pin)) static_cast<spOutput*>(_pinMap[pin])->logicalWrite(value); }
 
 void ESPArto::reconfigurePin(uint8_t _p,int v1, int v2){
 	if(hwPin* h=_isSmartPin(_p)) {
@@ -160,19 +274,41 @@ void ESPArto::reconfigurePin(uint8_t _p,int v1, int v2){
 	}
 }
 
-void ESPArto::throttlePin(uint8_t _p,uint32_t lim){	if(hwPin* h=_isSmartPin(_p)) h->setThrottle(lim); }
+void ESPArto::throttlePin(uint8_t _p,uint32_t lim){	if(hwPin* h=_isSmartPin(_p)) h->maxRate=lim; }
+//		
+//		the pins
+//
+void ESPArto::CircularLatch(uint8_t _p,uint8_t _mode,uint32_t _debounce,uint32_t nStates,ESPARTO_FN_SV _callback){ _uCreatePin(_p,ESPARTO_STYLE_CIRCLATCH,_mode,_callback,_debounce,nStates); }
 
-void ESPArto::Debounced(uint8_t _p,uint8_t _mode,uint32_t _debounce,ESPARTO_FN_SV _callback){	_uCreatePin(_p,ESPARTO_STYLE_DEBOUNCED,_mode,_callback,_debounce); }
+void ESPArto::CountingLatch(uint8_t _p,uint8_t _mode,uint32_t _debounce,ESPARTO_FN_SV _callback){ _uCreatePin(_p,ESPARTO_STYLE_NLATCH,_mode,_callback,_debounce); }
 
-void ESPArto::DefaultOutput(uint8_t _p,bool active,ESPARTO_LOGICAL_STATE initial,ESPARTO_FN_SV _callback){ _uCreatePin(_p,ESPARTO_STYLE_DEFOUT,OUTPUT,_callback,active,initial); }
+void ESPArto::Debounced(uint8_t _p,uint8_t _mode,uint32_t _debounce,ESPARTO_FN_SV _callback){ _uCreatePin(_p,ESPARTO_STYLE_DEBOUNCED,_mode,_callback,_debounce); }
 
-void ESPArto::Encoder(uint8_t _pA,uint8_t _pB,uint8_t _mode,ESPARTO_FN_SV _callback){	_uCreatePin(_pA,ESPARTO_STYLE_ENCODER,_mode,_callback,(int) _pB); }
+void ESPArto::DefaultInput(uint32_t dbv,ESPARTO_FN_IBOOL shorty){
+	_uCreatePin(0,ESPARTO_STYLE_DFLTIN,INPUT_PULLUP,
+				bind([](ESPARTO_FN_IBOOL shorty,int b,int z){ shorty(b); },shorty,_1,_2),
+				dbv);
+}
 
-void ESPArto::Encoder(uint8_t _pA,uint8_t _pB,uint8_t _mode,int* pV){	Encoder(_pA,_pB,_mode,bind([](int* pV,int v){ *pV+=v; },pV,_1)); }
+void ESPArto::DefaultOutput(uint8_t _p,bool active,ESPARTO_LOGICAL_STATE initial,ESPARTO_FN_SV _callback){
+	if(_core) delete _core;
+	_core=new pinThing(_p,active,initial,_callback);
+}
+
+void ESPArto::DefaultOutput(thing* iot){
+	if(_core) delete _core;	
+	_core=iot;
+}
+
+void ESPArto::DefaultOutput(thing& iot){ DefaultOutput(&iot); }
+
+void ESPArto::Encoder(uint8_t _pA,uint8_t _pB,uint8_t _mode,ESPARTO_FN_SV _callback){ _uCreatePin(_pA,ESPARTO_STYLE_ENCODER,_mode,_callback,(int) _pB); }
+
+void ESPArto::Encoder(uint8_t _pA,uint8_t _pB,uint8_t _mode,int* pV){ Encoder(_pA,_pB,_mode,bind([](int* pV,int v){ *pV+=v; },pV,_1)); }
 
 spEncoderAuto* ESPArto::EncoderAuto(uint8_t _pA,uint8_t _pB,uint8_t _mode,ESPARTO_FN_SV _callback,int _Vmin,int _Vmax,int _Vinc,int _Vset){
 	_uCreatePin(_pA,ESPARTO_STYLE_ENCODER_AUTO,_mode,_callback,(int) _pB,_Vmin,_Vmax,_Vinc,_Vset);
-	return reinterpret_cast<spEncoderAuto*>(_spPins[_pA].h);
+	return reinterpret_cast<spEncoderAuto*>(_pinMap[_pA]);
 }
 
 spEncoderAuto* ESPArto::EncoderAuto(uint8_t _pA,uint8_t _pB,uint8_t _mode,int* pV,int _Vmin,int _Vmax,int _Vinc,int _Vset){
@@ -193,69 +329,95 @@ void ESPArto::Reporting(uint8_t _p,uint8_t _mode,uint32_t _debounce,uint32_t _fr
 
 void ESPArto::Retriggering(uint8_t _p,uint8_t _mode,uint32_t _timeout,ESPARTO_FN_SV _callback,bool _active){ _uCreatePin(_p,ESPARTO_STYLE_RETRIGGERING,_mode,_callback,_timeout,_active); }
 
-void ESPArto::ThreeStage(uint8_t _p,uint8_t mode,uint32_t _debounce,uint32_t f,ESPARTO_FN_SV _callback,ESPARTO_FN_SV _sf,uint32_t _m,ESPARTO_FN_SV _mf,uint32_t _l,ESPARTO_FN_SV _lf){
-	if(!_isSmartPin(_p))	_spPins[_p].h=new spThreeStage( _p, mode, _debounce, f, _callback, _m, _l, _sf, _mf, _lf);		
+void ESPArto::MultiStage(uint8_t _p,uint8_t mode,uint32_t _debounce,uint32_t f,ESPARTO_FN_SV _callback,ESPARTO_STAGE_TABLE _st){
+	if(!_isSmartPin(_p))	_pinMap[_p]=new spMultiStage( _p, mode, _debounce, f, _callback, _st);		
 }
 
 void ESPArto::Timed(uint8_t _p,uint8_t _mode,uint32_t _debounce,ESPARTO_FN_SV _callback,bool twoState){	_uCreatePin(_p,ESPARTO_STYLE_TIMED,_mode,_callback,_debounce,twoState); }
+//////////////////////////////////////////////////
+//
+//		LED Flashing
+//
+//////////////////////////////////////////////////
+void ESPArto::flashLED(uint32_t period,uint8_t pin){ _flash(period*2,50,pin); }// simple symmetric SQ wave on/off
 
-void ESPArto::flashPattern(const char* pattern,int timebase,uint8_t pin){// flash arbitrary pattern
+void ESPArto::flashMorse(const char* _pattern,uint32_t _timebase,uint8_t pin){// flash arbitrary pattern ... --- ... convert dot / dash into Farnsworth Timing
+	string ms;
+	vector<string> sym=split(_pattern," ");
+	for(auto const& s:sym) {
+		for(auto const& c:s) ms+=c == '.' ? "10":"1110";
+		ms+="00";
+	}
+	ms+="00000";
+	flashPattern(CSTR(ms),_timebase,pin);
+}
+
+#ifdef ESPARTO_MORSE_SUPPORT
+void ESPArto::flashMorseText(const char* letters,uint32_t timebase,uint8_t pin){
+	string ditdah;
+	for(auto const& c:string(letters)) {
+		char lc=tolower(c);
+		ditdah+=_morse.count(lc) ? _morse[lc]+" ":" ";
+	}
+	flashMorse(CSTR(ditdah),timebase,pin);
+}
+#endif
+
+void ESPArto::flashPattern(const char* _pattern,uint32_t _timebase,uint8_t pin){// flash arbitrary pattern 10000111000110
 	if(_isOutputPin(pin)){
-		if(_doFlasher(pin,bind([](flasher* p,const char* pattern,int timebase){ p->flashPattern(timebase,pattern); return true; },_1,pattern,timebase)));
-		else _fList.push_back(new flasher(pin,pattern,timebase));
+		ESPArto::stopLED(pin);
+		flasher::_flashMap[pin]=new flasher(pin,_pattern,_timebase);
 	}
 }
 
-void ESPArto::flashPWM(int period,int duty,uint8_t pin){ _flash(period,duty,pin);	}// flash "PWM"
+void ESPArto::flashPWM(uint32_t period,uint8_t duty,uint8_t pin){ _flash(period,duty,pin);	}// flash "PWM"
 
-void ESPArto::flashLED(int period,uint8_t pin){ flashPWM(period*2,50,pin);	}// simple symmetric SQ wave on/off
+bool ESPArto::isFlashing(uint8_t pin){ if(_isOutputPin(pin)) return flasher::_flashMap.count(pin); }
 
-bool ESPArto::isFlashing(uint8_t pin){ if(_isOutputPin(pin)) return _doFlasher(pin,[](flasher* p){ return p->isFlashing(); });	}
-
-void ESPArto::pulseLED(int period,uint8_t pin){ _flash(period,0,pin); }
+void ESPArto::pulseLED(uint32_t period,uint8_t pin){ _flash(period,0,pin); }
 
 void ESPArto::stopLED(uint8_t pin){
-	if(_isOutputPin(pin)){
-		_doFlasher(pin,[](flasher* p)->bool{
-			p->stop();
-			delete p;
-			});
-		_fList.erase( remove_if(_fList.begin(), _fList.end(),[pin](flasher* p) {return pin==p->_pin;} ),_fList.end());
-	}			
+	if(flasher::_flashMap.count(pin)) {
+		flasher::_flashMap[pin]->stop();
+		delete flasher::_flashMap[pin];
+		flasher::_flashMap.erase(pin);
+	}
 }
+//
+//		wifi-specific
+//
+void ESPArto::graph(const char* metric,int vmax,int interval,int dp,ESPARTO_FN_GRAPH fn){ _statistics.push_back(statistic(metric,vmax,interval,dp,fn)); }
 
-[[noreturn]] void ESPArto::factoryReset(){
-	onFactoryReset();
-	SPIFFS.remove(getConfigString(ESPARTO_CFG_FILE));
-	WiFi.disconnect(true);
-	ESP.eraseConfig();
-	WiFi.mode(WIFI_STA);
-	WiFi.setAutoConnect(true);
-	while(1);// deliberate crash (restart doesn't properly clear config!)
+#ifdef	ESPARTO_ALEXA_SUPPORT
+void ESPArto::useAlexa(const char* friendly,function<bool(void)> status,function<void(bool)> action){
+	SCI(ESPARTO_ALEXA_NAME,friendly);
+	_alexaState=status;
+	_alexaCmd=action;
+	_upnp=readSPIFFS("/upnp.xml");	
+	_alexaName();	
+	if(!CII(ESPARTO_ALEXA_KNOWN)) _makeDiscoverable();
 }
+#endif
 
-[[noreturn]] void ESPArto::reboot(uint32_t reason){
-	onReboot();
-	SCII(ESPARTO_BOOT_REASON,reason);
-	_config.erase(__svname(ESPARTO_FAIL_CODE)); // make boot reason valid	
-	_saveConfig();
-	if(WiFi.getMode() & WIFI_AP) _initiateWiFi(_config[__svname(ESPARTO_SSID)],_config[__svname(ESPARTO_PSK)],_config[__svname(ESPARTO_DEVICE_NAME)]);
-	ESP.restart(); // exception(2)??
-}
+void ESPArto::vBar(string color){ ASYNC_PUSH(jNamedObjectM("vbar",{ {"c",color} }));}
+//
+//		mqtt-related TODO: inherit from pubsubclient and either lose or specialise these
+//
+void ESPArto::publish(const char * topic, const char * payload,const bool retained){ _publish(String(topic),String(payload),retained); }
 
-void ESPArto::publish(const char * topic, const char * payload,bool retained){ _publish(String(topic),String(payload),retained); }
+void ESPArto::publish(const string topic, const string payload,const bool retained){ publish(CSTR(topic),CSTR(payload),retained); }
 
-void ESPArto::publish(String topic, String payload,bool retained){ publish(CSTR(topic),CSTR(payload),retained);	}
+void ESPArto::publish(const String topic, const String payload,const bool retained){ publish(CSTR(topic),CSTR(payload),retained);	}
 
-void ESPArto::publish(String topic, int payload,bool retained){ publish(CSTR(topic),String(payload).toInt(),retained); }
+void ESPArto::publish(const String topic, const int payload,const bool retained){ publish(CSTR(topic),String(payload).toInt(),retained); }
 
-void ESPArto::publish(const char * topic, int payload,bool retained){ publish(topic,CSTR(String(payload)),retained); }
+void ESPArto::publish(const char * topic, const int payload,const bool retained){ publish(topic,CSTR(String(payload)),retained); }
 
 void ESPArto::publish_v(const char * fmt,const char * payload,...){
-	char buf[128];
+	char buf[129]; // refakta
 	va_list args;
 	va_start(args, fmt);
-	vsnprintf(buf, 126, fmt, args);
+	vsnprintf(buf,128, fmt, args);
 	publish(buf,payload);
 	va_end (args);
 }
@@ -263,20 +425,5 @@ void ESPArto::publish_v(const char * fmt,const char * payload,...){
 void ESPArto::subscribe(const char * topic,ESPARTO_FN_MSG fn,const char* any){
 	addCmd(topic,fn);
 	string prefix=any;
-	_mqttClient->subscribe(prefix=="" ? CSTR(string(CIs(ESPARTO_DEVICE_NAME) + "/" + topic)):CSTR(string(prefix+"/"+ topic)));
-	_mqttClient->loop();
+	if(_mqttClient->loop()) _mqttClient->subscribe(prefix=="" ? CSTR(string(CIs(ESPARTO_DEVICE_NAME) + "/" + topic)):CSTR(string(prefix+"/"+ topic)));
 }
-
-void ESPArto::runWithSpooler(ESPARTO_FN_VOID f,ESPARTO_SOURCE src,const char* name,ESPARTO_FN_XFORM spf){
-	uint32_t mask=1 << _spoolers.size();
-	_spoolers.push_back(spf);
-	_sources[src]|=mask;	
-	__queueTask(H4task(0,f,H4Countdown(1),0,bind([](ESPARTO_SOURCE src,uint32_t mask){
-		ESPArto::_sources[src]&=~mask;
-		ESPArto::_spoolers.pop_back();
-		},src,mask),0,src, name));	
-}
-
-void ESPArto::setAllSpoolDestination(uint32_t plan){ for(int i=0;i<ESPARTO_N_SOURCES;i++) _setSpool(plan,i); }
-
-void ESPArto::setSrcSpoolDestination(uint32_t plan,ESPARTO_SOURCE src){ _setSpool(plan,src); }

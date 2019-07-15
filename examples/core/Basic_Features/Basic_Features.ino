@@ -2,9 +2,11 @@
  MIT License
 
 Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
-                      blog     https://8266iot.blogspot.com     
-                support group  https://www.facebook.com/groups/esp8266questions/
-                
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/
+                       
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -29,6 +31,7 @@ SOFTWARE.
  *    
  *    This and many subsequent examples (unless otherwise specified) assume a simple "tact"
  *    switch on GPIO (temporary push-to-make) which pulls directly to GND when pressed
+ *    This is treated as the "Default Input"
  *    
  *    First we see the "three-stage" functionality of this button.
  *    if pressed for a "short" period, a user defined function is called
@@ -38,22 +41,24 @@ SOFTWARE.
  *    "short" is up to 2 seconds
  *    "medium" is 2-5secs WARNING! Will reboot the device!
  *    "long" is over 5s WARNING will reset device, erase all configuration data and WiFI credentials!
+ *    
+ *    NB there is a well-know bug that prevents normal reboot the first time after a serial upload
+ *    so befiore testing the medmium press to reboot and the long press to "factory reset"
+ *    make sure you power off and back on at least once atfer uploading this sketch
  */
 #include <ESPArto.h>
 ESPArto  Esparto;
 //
 // This user-defined callback gets called on every "short" press
 //
-void shortPress(int v1,int v2){
-  Serial.printf("Short press - button state is %d, was pressed for %d mSec\n",v1,v2);
+void shortPress(bool b){
+  Serial.printf("Short press - button state is %s\n",b ? "ON":"OFF");
   digitalWrite(BUILTIN_LED,!digitalRead(BUILTIN_LED)); // toggle LED on each short press
 }
 //
 // This Esparto callback gets called just before reboot occurs
 //
-void onReboot(){
-   Serial.println("Device is going to reboot"); 
-}
+void onReboot(){ Serial.println("Device is going to reboot"); }
 //
 // This Esparto callback gets called just before Factory Reset
 // it will look like a WDT reset, this is deliberate
@@ -64,13 +69,13 @@ void onFactoryReset(){
 }
 
 void setupHardware() {
-  Serial.begin(74880);
-  Serial.printf("Esparto %s\n",__FILE__);
+  ESPARTO_HEADER(Serial); // not necessary, just helps does the Serial begin for you
 //
   Serial.println("Press button briefly (less than 2 sec) a few times - will toggle LED");
   Serial.println("Hold down more than 2 sec: device will reboot");
   Serial.println("Hold down more than 5 sec: device will factory reset"); 
+  Serial.println("Remember to power-cycle at least once if necessary"); 
 //
   Esparto.Output(BUILTIN_LED);
-  Esparto.std3StageButton(shortPress); // call shortPress (NOTE, NOT "shortPress()" ) this is a callback, just function NAME
+  Esparto.DefaultInput(25,shortPress); // call shortPress (NOTE, NOT "shortPress()" ) this is a callback, just function NAME
 }

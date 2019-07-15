@@ -1,8 +1,12 @@
 /*
  MIT License
 
-Copyright (c) 2018 Phil Bowles
-
+Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/
+                			  
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -23,55 +27,67 @@ SOFTWARE.
 */
 #include <ESPArto.h>
 
+extern const char* 	hwPrettyName;
+
+#ifdef ESPARTO_CONFIG_DYNAMIC_PINS ///////////////////////////////////////
+
 #define AX_PARAM_STRING(x) (_axionVec[a].params[x])
 #define AX_PARAM(x) STOI(_axionVec[a].params[x])
-//
-//	Caller MAY override:
-//
-AsyncWebHandler* 	__attribute__((weak)) addWebHandler(){ return nullptr; }
 
-array<axion,15> 						ESPArto::_axionVec= {{
-	{0,{},[](uint8_t p,int v1,int v2,int a){ }}, // NOOP
-	{0,{},_axPublish}, 	// "Publish State"
-	{2,{},_axPassthru }, // "Output Passthru",
-	{1,{},_axSetVarFromPin },
-	{2,{},_axSetVarFromParam },
-	{1,{},_axDecVar },
-	{1,{},_axIncVar },
-	{2,{},_axInvoke },
-	{1,{},_axPubVar },
-	{1,{},_axAddToVar },
-	{1,{},_axSubFromVar },	
-	{2,{},_axFlashLED },	
-	{3,{},_axFlashPWM },	
-	{3,{},_axFlashPattern },
-	{1,{},_axStopLED }	
-}};
+void ESPArto::_updatePin(uint8_t pin){ ASYNC_PUSH(jNamedArray("gpio",{_light(pin)})+jNamedArray("pins",{_pinLabels(pin)})); }
+// yukkiepoo - fix this!
+#define AX_OFFSET 3
+void ESPArto::_mqAddPin(vector<string> vs){ if(vs.size()>6)	__mqAddPinCore(vector<string>(vs.begin()+2,vs.end())); }
+void ESPArto::_mqKillPin  (vector<string> vs){ __mqGuardPin(vs,[](uint8_t pin,vector<string> vs){ __killPin(pin); }); }
 
-ESPARTO_UI_MAP 							ESPArto::_panes={				
-	{"gear",{ESPARTO_AP_GEAR,_wsGearPane}},
-	{"esp",{ESPARTO_AP_NONE,[]{}}},
-	{"wifi",{ESPARTO_AP_WIFI,[]{}}},
-	{"run",{ESPARTO_AP_RUN,_wsRunPane}},
-	{"tool",{ESPARTO_AP_TOOL,_wsToolPane}},
-	{"dynp",{ESPARTO_AP_DYNP,[](){}}},
-	{"logs",{ESPARTO_AP_LOG,[](){}}},
-	{"spool",{ESPARTO_AP_SPOOL,[](){}}}
-};
+void ESPArto::__mqAddPinCore(vector<string> vs){
+//	for(auto const& v:vs) Serial.printf("%s\n",CSTR(v));
+	uint8_t pin=PARAM(0);
+	if(!_isSmartPin(pin)) {
+		if(vs.size() > AX_OFFSET){
+			int style=PARAM(1);					
+			int mode=PARAM(2);
+			if(style < _npList.size()){
+				if(mode < 3){
+					int persist=PAYLOAD_INT;
+					vs.pop_back();
+					auto start=vs.begin()+AX_OFFSET;
+					auto pos=find(start, vs.end(),"ax");
+					if(pos!=vs.end()){
+						vector<string> ap(start, pos);
+						vector<string> ax(++pos,vs.end());
+						int axs=ax.size();
+						if(axs){
+							int a=atoi(CSTR(ax[0]))-1;
+							int nx=1+(_axionVec[a].np);
+							if(a < _axionVec.size()){
+								int np=_npList[style]; /// fix this should live in...?								
+								if(np==ap.size()){								
+									if(nx==axs){										
+										int pads=AX_OFFSET-ap.size();
+										int api[AX_OFFSET];
+										for(int i=0;i<AX_OFFSET;i++) api[i]=i < (AX_OFFSET-pads) ? atoi(CSTR(ap[i])):777;
+										_axionVec[a].params=ax;
+										_uCreatePin(pin,style,mode,bind(_axionVec[a].f,pin,_1,_2,a),api[0],api[1],api[2],api[3],api[4]);
+										_updatePin(pin);							
+										if(style == ESPARTO_STYLE_ENCODER || style == ESPARTO_STYLE_ENCODER_AUTO) _updatePin(api[0]);// also update 2nd pin for encoders
+										if(persist){ // don't do twice! null out persist payload
+											string tj=join(vs,"/");
+											String pre=CSTR(tj);
+											pre.replace("/1add","/cmd/pin/add");
+											_rawPublish(CSTR(pre),"1",true);
+										}									
+									} //else Serial.printf("_mqAddPin AXION(%d) parameter count mismatch, expecting %d, got %d\n",a,nx,axs);	
+								} //else Serial.printf("_mqAddPin style %d parameter count mismatch, expecting %d, got %d\n",style,np,ap.size());
+							}  //else Serial.printf("FU - invalid action code %d\n",a);
+						}  //else Serial.printf("FU2 - no action code\n");					
+					} //else Serial.printf("No Action!!! POS=WTF???");
+				}  //else Serial.printf("_mqAddPin mode value %d > 2\n",mode);					
+			}  //else Serial.printf("_mqAddPin style value %d > max [%d]\n",style,ESPARTO_STYLE_MAX);
+		} //else Serial.printf("_mqAddPin vs.size() =%d \n",vs.size());
+	}  //else Serial.printf(" _mqAddPin: already mapped pin %d\n",pin);
+}
 
-easyWebSocket*							ESPArto::_ws=nullptr;
-
-ESPARTO_WSH_MAP 						ESPArto::_wshMap={ // pseudo ajax
-	{'+',_wshCmds},
-	{'!',_wshConfig},
-	{'.',_wshDynPin},
-	{'*',_wshGimme},
-	{'-',_wshKillPin},
-	{'?',_wshInvoke},
-	{'^',_wshSpool},
-	{'~',_wshVarList}
-};
-//
 void ESPArto::__axSetVarInt(uint8_t pin,int v1,int a){
 	string name=AX_PARAM_STRING(1);
 	setConfigInt(CSTR(name),v1);
@@ -94,7 +110,7 @@ void ESPArto::_axInvoke(uint8_t pin,int v1,int v2,int a){
 	String topic=CSTR(AX_PARAM_STRING(1));
 	topic.replace("#","/");
 	string payload=AX_PARAM_STRING(2);
-	invokeCmd(CSTR(topic),CSTR(payload),ESPARTO_SRC_USER,"dpax");
+	invokeCmd(CSTR(topic),CSTR(payload),"dpax");
 }
 
 void ESPArto::_axPassthru(uint8_t pin,int v1,int v2,int a){
@@ -103,11 +119,13 @@ void ESPArto::_axPassthru(uint8_t pin,int v1,int v2,int a){
 	digitalWrite(pp,invert ? !v1:v1);
 }
 
+void ESPArto::_axPulseLED(uint8_t pin,int v1,int v2,int a){ _flash(AX_PARAM(2),0,AX_PARAM(1)); }
+
 void ESPArto::_axPublish(uint8_t p,int v1,int v2,int a){ __publishPin(p,v1); }
 
 void ESPArto::_axPubVar(uint8_t pin,int v1,int v2,int a){
 	string v=AX_PARAM_STRING(1);
-	publish_v("data/%s",getConfig(CSTR(v)),CSTR(v));
+	printf("data|%s=%s",getConfig(CSTR(v)),CSTR(v));
 }
 
 void ESPArto::_axSetVarFromParam(uint8_t pin,int v1,int v2,int a){
@@ -121,233 +139,328 @@ void ESPArto::_axStopLED(uint8_t pin,int v1,int v2,int a){ stopLED(AX_PARAM(1));
 
 void ESPArto::_axSubFromVar(uint8_t pin,int v1,int v2,int a){ __axAddVar(pin,-1 * getPinValue(pin),a); }
 
-void ESPArto::_handleWebSocketTXT(string data){
-	USE_TP;
-	if(isalpha(data[0])) {		
-		vector<string>	formData;
-		split(CSTR(data),',',formData);
-		if(formData[0]=="cd"){
-			TP_SETNAME("creds");
-			bool reconnect=false;
-			if(formData[1]!=getConfig(ESPARTO_DEVICE_NAME)) reconnect=true;
-			if(formData[2]!=getConfig(ESPARTO_ALEXA_NAME)) reconnect=true;			
-			if(formData[3]!=getConfig(ESPARTO_SSID)) reconnect=true;
-			if(formData[4]!=getConfig(ESPARTO_PSK)) reconnect=true;
-			if(reconnect) _changeDevice(CSTR(formData[1]),CSTR(formData[2]),CSTR(formData[3]),CSTR(formData[4]));
-		}
-		else {
-			if(formData[0]=="dp"){
-				TP_SETNAME("dynp");
-				string topic="cmd/pin/add/"+formData[1];
-				invokeCmd(String(CSTR(topic)),String(CSTR(formData[2]))); // web
-			}
-			else {
-				if(formData[0]=="sp"){
-					TP_SETNAME("spool");
-					vector<string>	plans;
-					split(formData[1],'/',plans);
-					reverse(plans.begin(),plans.end());
-					uint32_t src=atoi(CSTR(plans.back()));
-					if(src < ESPARTO_N_SOURCES) {
-						plans.pop_back();
-						uint32_t plan=0;
-						reverse(plans.begin(),plans.end());					
-						for(int i=0;i<plans.size();i++) plan|=(atoi(CSTR(plans[i])) << i);			
-						setSrcSpoolDestination(plan,static_cast<ESPARTO_SOURCE>(src));						
-					}
-				}			
-			}				
-		}
-	}
-	else {
-		char c=data[0];
-		if(isdigit(c)) {
-			uint8_t pin=atoi(CSTR(data));
-			switch(pin){
-				case 40: reboot(ESPARTO_BOOT_UI);
-				case 64: factoryReset();
-				default: digitalWrite(pin,!digitalRead(pin));
-			}			
-		}
-		else if(_wshMap.count(c)) _wshMap[c](string (++data.begin(),data.end()));
+void ESPArto::_formDynp(ESPARTO_CONFIG_BLOCK params){
+	params.erase("clid");	
+	vector<string> vs;
+	for(auto const& p:params) vs.push_back(p.second);
+	__mqAddPinCore(vs);
+	printf(jNamedObjectM("dynx",{{"pin",vs[0]}}) );
+	printf(jNamedArray("pins",{_pinLabels(atoi(CSTR(vs[0])))}) );
+}
+
+void ESPArto::_ajaxVars(ESPARTO_CONFIG_BLOCK params){
+	vector<string>	vxcmds={};
+	for(auto const& c:_config) if(c.first[0]!='$') vxcmds.push_back( jObjectM({{"disp",c.first}}) );				
+
+	string vars=jNamedObjectM("aso",{ // hang off
+		{"id","vars"},
+		{"ho","varsh"},
+		{"name",params["fld"]},
+		{"tit","Var Name"},
+		{"opts",jArray(vxcmds)}
+	});
+	printf(vars);
+}
+
+void ESPArto::_ajaxDpin(ESPARTO_CONFIG_BLOCK params){ printf(prop("dpin",_pinLabels(atoi(CSTR(params["pin"]))))); }
+
+void ESPArto::_ajaxKill(ESPARTO_CONFIG_BLOCK params){
+	uint8_t pin=atoi(CSTR(params["pin"]));
+	__killPin(pin);
+	printf( prop("kill",_pinLabels(pin)) );
+}
+#endif // dynamic pins //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ESPArto::_ajax(AsyncWebServerRequest *request){
+	queueFunction(bind([](AsyncWebServerRequest *request){
+			_logUrl(request);
+			if(request->hasHeader("X-Esparto-Client")){
+				AsyncWebHeader* h = request->getHeader("X-Esparto-Client");
+				AsyncEventSourceClient* c=reinterpret_cast<AsyncEventSourceClient*>(atoi(CSTR(h->value())));
+				if(tab::clientMap.count(c)){
+					string currentTab=tab::clientMap[c].first;
+					string preparts=CSTR(request->url());
+					if(preparts.back()=='/') preparts.pop_back();
+					vector<string> parts=split(strim(preparts),"/");
+//					for(auto const& p:parts) Serial.printf("AJP: %s => %s\n",CSTR(request->url()),CSTR(p));
+					if(parts.size()>1) {
+						string cmd=parts[1];
+						if(_tab.count(cmd)){
+							_tab[currentTab]->removeWatcher();
+							_newPane(c,cmd);						
+						}
+						else {
+							if(request->method()==HTTP_POST){
+								ESPARTO_CONFIG_BLOCK tajx={{"clid",stringFromInt((uint32_t) c)}};
+								int params = request->params();
+								for(int i=0;i<params;i++){
+									AsyncWebParameter* p = request->getParam(i);
+									tajx[CSTR(p->name())]=CSTR(p->value());
+								}
+								if(_ajaxMap.count(cmd)) _ajaxMap[cmd](tajx);
+							} 
+						}
+						printf(jNamedObjectM("ajok",{{"cmd",cmd}})); // remove from new pane
+					} 
+				} else _rebuff();
+			}		
+		},request),nullptr,
+		new spoolerAjax(request)
+	);
+}
+
+void ESPArto::_ajaxCmd(ESPARTO_CONFIG_BLOCK params){ _sync_mqttMessage(CSTR(string("ui/")+params["act"]),string(CSTR(params["pl"]))); }
+
+void ESPArto::_ajaxForm(ESPARTO_CONFIG_BLOCK params){
+	if(params.count("fid")){
+		string fid=params["fid"];
+		params.erase("fid");
+		if(_ajaxMap.count(fid)) _ajaxMap[fid](params);
 	}
 }
 
-void ESPArto::_initialPins( ){
-	int ssm=CII(ESPARTO_SOX_LIMIT);
-	SCII(ESPARTO_SOX_LIMIT,CII(ESPARTO_SOX_PEAK));
-	_mqttUiExtras();
-	once(100,[]( ){ for(int i=0;i<ESPARTO_MAX_PIN;i++) if(_isSmartPin(i)) _pinLabelsCooked(i);	});
+void ESPArto::_ajaxNike(ESPARTO_CONFIG_BLOCK params){	
+	uint32_t pin=atoi(CSTR(params["do"]));
+	switch(pin){
+#ifdef	ESPARTO_ALEXA_SUPPORT		
+		case 50:
+			_makeDiscoverable();
+			break;
+#endif		
+		case 40: reboot(); // never comes back!
+			break;
+		case 64: factoryReset(); // never comes back
+			break;
+		case 99:
+			toggle();
+			EVENT("Web UI Default button %s",state() ? "ON":"OFF");
+			_showStatus();
+			break;
+		default:
+			if(_pinMap[pin]->style==ESPARTO_STYLE_DEFOUT){
+				toggle();
+				EVENT("Web UI pin click %s",state() ? "ON":"OFF");
+				_showStatus();
+			}					
+			Esparto.logicalWrite(pin,!getPinValue(pin));
+			break;
+	}
+}
+
+void ESPArto::_ajaxPing(ESPARTO_CONFIG_BLOCK params){ tab::clientMap[reinterpret_cast<AsyncEventSourceClient*>(atoi(CSTR(params["clid"])))].second=millis(); }
+
+void ESPArto::_ajaxAlarm(ESPARTO_CONFIG_BLOCK params){
+//	Serial.printf("ALARMED %s r=%d b=%d\n",CSTR(params["t"]),atoi(CSTR(params["r"])),atoi(CSTR(params["b"])));
+	__mqAlarmCore({params["t"]+","+params["b"]},atoi(CSTR(params["r"])));
+	_tab["rtc"]->reply();
+}
+
+void ESPArto::_ajaxSched(ESPARTO_CONFIG_BLOCK params){
+	task* t=reinterpret_cast<task*>(atoi(CSTR(params["k"])));
+	cancel(t);
+	_tab["rtc"]->reply();
+}
+
+void ESPArto::_ajaxSetVar(ESPARTO_CONFIG_BLOCK params){ SCIs(CSTR(params["name"]),params["value"]); }
+
+void ESPArto::_formMQTT(ESPARTO_CONFIG_BLOCK params){ _mqttReconnect({params["mqi"],params["mqn"],params["mqu"],params["mqp"],params["mwt"],params["mwm"]}); }
+
+void ESPArto::_formRTC(ESPARTO_CONFIG_BLOCK params){ _changeNTP({params["tz"],params["srv1"],params["srv2"]}); }
+
+void ESPArto::_formWiFi(ESPARTO_CONFIG_BLOCK params){
+//	for(auto const& p:params) Serial.printf("FORM %s=%s\n",CSTR(p.first),CSTR(p.second));
+	SCIs(ESPARTO_WEB_USER,params["au"]);
+	SCIs(ESPARTO_WEB_PASS,params["ap"]);
+#ifdef ESPARTO_ALEXA_SUPPORT	
+	SCIs(ESPARTO_ALEXA_NAME,params["lexname"]);
+#endif
+	vector<string> vs={params["newname"],params["ssid"],params["pw"]};
+	queueFunction(bind([](vector<string> vs){ _changeDevice(vs); },vs));	
+}
+
+void ESPArto::_initialPins(AsyncEventSourceClient* c){
+	static ESPARTO_TASK_PTR netFlix=0;
+	static ESPARTO_TASK_PTR sweep=0;
+//		claw back dynamic data - none of these needed any more
+	_config.erase(__svname(ESPARTO_PRETTY_BOARD));
+	_config.erase(__svname(ESPARTO_MEM_SIZE));
+	_config.erase(__svname(ESPARTO_SKETCH_SIZE));
+	_config.erase(__svname(ESPARTO_BOOT_REASON));
+	_config.erase(__svname(ESPARTO_FLASH_FREQ));
+	_config.erase(__svname(ESPARTO_FLASH_MODE));
+	_config.erase(__svname(ESPARTO_CORE_VER));
+	_config.erase(__svname(ESPARTO_SDK_VER));
+	_config.erase(__svname(ESPARTO_LWIP_VER));
+	_tempMQL*=3;
+	tab::clientMap[c]=make_pair("0",millis());
+
+	EVENT("Viewer %08x cnx from %s N=%d",(uint32_t) c,TXTIP(c->client()->remoteIP()),tab::nViewers());
+	printf(jNamedObjectM("init",{
+		{"clid",stringFromInt((int) c)},
+		{"kafq",stringFromInt(ESPARTO_KEEP_ALIVE)},
+		{"om0",stringFromInt(CII(ESPARTO_MAX_FLASH))},
+		{"om100",stringFromInt(CII(ESPARTO_MAX_SPIFFS))},
+		{"dio",stringFromInt(_core->dio)}
+	}));
 	
-	once(100,[]( ){
+	{
+		vector<string> temp;
+		for(auto const& t:_tab) temp.push_back(wrap(t.first,"\"","\"")); // refactor
+		printf(jNamedArray("tabs",temp));
+	}
+	
+	{
+		vector<string> vxpins={};
+		vector<string> vxgpio={};
 		for(int i=0;i < ESPARTO_MAX_PIN;i++){
-			if(_isSmartPin(i) || (!_isUsablePin(i))){
-				__showPin(i,digitalRead(i));
-				_pinLabels(i);
-			}
+			vxpins.push_back(_pinLabels(i));
+			if(_isSmartPin(i)) vxgpio.push_back(_light(i));
 		}
-	});
-	
- 	once(100,[](){
-		SOCKSEND(ESPARTO_AP_WIFI,"clr|ssid");
-		WiFi.scanNetworksAsync(bind([](int n){
-			for (uint8_t i = 0; i < n; i++){
-			SOCKSEND(ESPARTO_AP_WIFI,"aso|ssid|%s|%s %s ch:%2d (%3ddBm)",
-					 CSTR(WiFi.SSID(i)),
-					 CSTR(WiFi.SSID(i)),
-					 WiFi.encryptionType(i) == ENC_TYPE_NONE ? "open" : "",
-					 WiFi.channel(i),
-					 WiFi.RSSI(i));
+		printf(jNamedArray("pins",vxpins));
+		printf(jNamedArray("gpio",vxgpio));
+	}
+	printf(_showStatus());	
+
+	cancel(netFlix);
+	netFlix=repeatWhile(
+		[](){ return tab::nViewers(); },
+		ESPARTO_FRAME_RATE,
+		[](){
+			vector<string> cp;
+			for(auto const& p:_pinMap) {
+				hwPin* h=p.second;
+				if(h->dirty) cp.push_back(_light(p.first));					
+				h->dirty=false;		
 			}
-			WiFi.scanDelete();
-			SOCKSEND(ESPARTO_AP_WIFI,"sso|ssid|%s",CSTR(WiFi.SSID()));
-		},_1));
-	});
+			if(cp.size()) printf(jNamedArray("gpio",cp));
+		},
+		nullptr,
+		SPOOL(EVENT),36);
 	
-	once(CII(ESPARTO_SOX_OVRIDE),bind([](int restore){ setConfigInt(ESPARTO_SOX_LIMIT,restore);	},ssm),NOOP_V,ESPARTO_SRC_WEB,CSTR(getTaskName()));
+	cancel(sweep);
+	sweep=repeatWhile(
+		[](){ return tab::nViewers(); },
+		ESPARTO_SCAVENGE_AGE,
+		tab::scavenge,
+		nullptr,
+		SPOOL(EVENT),37);
+	
+	_newPane(c,"wifi");
 }
 
-void ESPArto::_pinLabels(int i,int offset){	SOCKSEND(ESPARTO_AP_NONE,"%d:%d %d %d",i+offset,_getDno(i),_getType(i),_getStyle(i)); }
-
-void ESPArto::_pinLabelsCooked(int p){
-	__showPin(p+ESPARTO_MAX_PIN,getPinValue(p));
-	_pinLabels(p,ESPARTO_MAX_PIN);	
+string ESPArto::_light(uint8_t i){ // /optimise....only those changes?
+	ESPARTO_CONFIG_BLOCK xpin={};
+	xpin["p"]=stringFromInt(i);
+	xpin["r"]=stringFromInt(digitalRead(i));
+	xpin["c"]=stringFromInt(getPinValue(i));	
+	xpin["x"]=stringFromInt(isPinThrottled(i));
+	return jObjectM(xpin);
 }
+
+void ESPArto::_logUrl(AsyncWebServerRequest *request){ EVENT("HTTP: %s from %s",CSTR(request->url()),CSTR(request->client()->remoteIP().toString())); }
+
+void ESPArto::_newPane(AsyncEventSourceClient* c,string newTab){
+	EVENT("Viewer %08x now on %s",(uint32_t) c,CSTR(newTab));
+	tab::clientMap[c]=make_pair(newTab,millis());
+	_tab[newTab]->addWatcher();
+}
+
+string ESPArto::_pinLabels(uint8_t i){
+	return jObjectM({
+		{"p",stringFromInt(i)},
+		{"s",stringFromInt( _isSmartPin(i) ? _pinMap[i]->style:ESPARTO_STYLE_UNUSED )},
+		{"t",stringFromInt(_spPins[i].type)},
+		{"d",stringFromInt(_spPins[i].D)}
+	});
+}
+
+void ESPArto::_rebuff(){ printf(jNamedObjectM("die",{{"clid","0"}})); }
 
 void ESPArto::_rest(AsyncWebServerRequest *request){
-	string from=CSTR(request->host());
-	string url=CSTR(request->url());
-	vector<string> vs;
-	split(string(++url.begin(),url.end()),'/',vs);
-	String pload=CSTR(vs.back());
-	vs.pop_back();
-	string topic=join(vs,'/');
-	ESPARTO_FN_XFORM restSpool=bind([](AsyncWebServerRequest *request,string s){ request->send(200, "text/plain",CSTR(s)); },request,_1);
-	ESPARTO_FN_VOID restFn=bind([](string topic,String pload,ESPARTO_SOURCE src,string tag){
-		USE_TP;TP_PRINTF("Esparto %s rcvd %s[%s] from %s\n",CI(ESPARTO_VERSION),CSTR(topic),CSTR(pload),CSTR(tag));
-		invokeCmd(CSTR(topic),pload,src,CSTR(tag));
-		},topic,pload,ESPARTO_SRC_REST,from);			
-	runWithSpooler(restFn,ESPARTO_SRC_REST,CSTR(from),restSpool);
+	queueFunction(bind([](AsyncWebServerRequest *request){
+		_logUrl(request);
+		String chop=request->url();
+		chop.replace("/rest/","");
+		printf("%s from %s\n",CSTR(chop),TXTIP(request->client()->remoteIP())); // guarantee non-empty response
+		_simulatePayload(CSTR(chop),"rest");
+		},request),nullptr,new spoolerRest(request));
+}
+
+bool ESPArto::_webAuth(AsyncWebServerRequest *request){
+	if(!_configItemEmpty(ESPARTO_WEB_USER)){
+		if(!request->authenticate(CI(ESPARTO_WEB_USER),CI(ESPARTO_WEB_PASS))) {
+			request->requestAuthentication();
+			return false;
+		}
+	} return true;
 }
 
 void ESPArto::_webRoot(AsyncWebServerRequest *request){
-	asyncQueueFunction(bind([](AsyncWebServerRequest *request){
-		request->send(SPIFFS,CI(ESPARTO_ROOTWEB), CI(ESPARTO_TXT_HTM), false, _uiTemplateConfigItem );
-		},request),ESPARTO_SRC_WEB);	
+	_logUrl(request);
+	if(tab::nViewers() < ESPARTO_MAX_CLIENTS){
+		if(!_webAuth(request)) return;
+		SCI(ESPARTO_PRETTY_BOARD,hwPrettyName);
+		String duino(ARDUINO_BOARD);
+		duino.replace("ESP8266","");
+		duino.replace("_","");
+		duino.toLowerCase();
+		SCI(ESPARTO_DUINO_BOARD,CSTR(duino));
+		SCII(ESPARTO_MEM_SIZE,ESP.getFlashChipRealSize());		  
+		uint32_t pcCrit=(ESP.getSketchSize()*100)/CII(ESPARTO_MAX_FLASH);
+		SCIs(ESPARTO_SKETCH_SIZE,stringFromInt(ESP.getSketchSize())+" ("+stringFromInt(pcCrit)+"%%)");
+			 
+		SCIs(ESPARTO_FLASH_FREQ,stringFromInt(ESP.getFlashChipSpeed() / 1000000)+"MHz");
+		FlashMode_t ideMode = ESP.getFlashChipMode();
+		SCIs(ESPARTO_FLASH_MODE,(ideMode == FM_QIO ? "QIO" : ideMode == FM_QOUT ? "QOUT" : ideMode == FM_DIO ? "DIO" : ideMode == FM_DOUT ? "DOUT" : "UNKNOWN"));
+//
+		vector<string> fv=split(CSTR(ESP.getFullVersion()),"/");
+		SCIs(ESPARTO_SDK_VER,fv[0]);
+		SCIs(ESPARTO_CORE_VER,fv[1]);
+		vector<string> lw=split(fv[2],":");
+		SCIs(ESPARTO_LWIP_VER,lw[1]);
+//
+		SCI(ESPARTO_BOOT_REASON,CSTR(ESP.getResetReason()));	
+		request->send(SPIFFS,_tciWsHtm,_tciTextHtml, false, _uiTemplateConfigItem );
+	} else 	request->send(SPIFFS,"/busy.htm",_tciTextHtml, false, _uiTemplateConfigItem );
 }
 
 void ESPArto::_webServerInit(){
 	Esparto.reset();
-	_ws=new easyWebSocket("/ws",
-		[](const char* data){ asyncQueueFunction(bind(_handleWebSocketTXT,string(data)),ESPARTO_SRC_WEB,"ws"); }, // onData
-		[](){ asyncQueueFunction(_initialPins,ESPARTO_SRC_WEB,"home"); }
-		);		
-	Esparto.addHandler(static_cast<AsyncWebHandler*>(_ws));
-	
-	Esparto.on("/", HTTP_GET,[](AsyncWebServerRequest *request){ _webRoot(request);	});
-	
-	Esparto.on("/wemo", HTTP_GET,[](AsyncWebServerRequest *request){ request->send(200, "text/xml", _wemoXML); });	
-
-	Esparto.on("/upnp", HTTP_POST,
-         [](AsyncWebServerRequest *request){ request->send(200, CI(ESPARTO_TXT_HTM), "OK"); },NULL,
-         [](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
-				String s=StringFromBuff(data,len);
-				if(s.indexOf("SetBinary")!=-1){
-					asyncQueueFunction(bind([](String s){
-						int lextate=s.indexOf(">1<")!=-1 ? 1:0;
-						_defaultAlexa(lextate);				
-						},s),ESPARTO_SRC_ALEXA,"voiceCMD");					
-				}
-      });
-
-	AsyncWebHandler* override=addWebHandler();
-	if(override) Esparto.addHandler(override);	
-	
-	Esparto.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request){ _webRoot(request); });
-
-	Esparto.serveStatic("/", SPIFFS, "/").setCacheControl("max-age=31536000");
-	
-	Esparto.onNotFound(_rest);
-	
-	Esparto.begin();
-
-	if(_udp.listenMulticast(IPAddress(239,255,255,250), 1900)) _udp.onPacket(	[](AsyncUDPPacket packet) {
-		String msg(StringFromBuff(packet.data(),packet.length()));
-		if(msg.indexOf("M-SEARCH")!=-1 && msg.indexOf("Belkin")!=-1){ packet.printf(CSTR(_wemoReply), _wemoReply.length()); }		
+	_evts=new AsyncEventSource("/evt");
+	_evts->onConnect([](AsyncEventSourceClient *client){
+		EVENT("SSE Client %08x n=%d",client,client->lastId());
+		if(!client->lastId()) queueFunction(bind(_initialPins,client),nullptr,new spoolerClient(client));
+		else {
+			_forceClosed=false;
+			if(!tab::nViewers()) queueFunction(_rebuff,nullptr,new spoolerClient(client));
+#ifdef ESPARTO_DEBUG_PORT
+			else{
+				queueFunction(bind([](AsyncEventSourceClient *client){
+					cmaLink=(client->lastId()-reopen)/1000;
+					statistic& s=_statistics.front();
+					s.gather();
+					reopen=client->lastId();					
+					},client),nullptr,
+				new spoolerClient(client),"review");
+			}
+#endif				
+		}
 	});
-}
-
-void ESPArto::_wshCmds(string data){ _forEachTopic(bind([data](string t){ SOCKSEND(ESPARTO_AP_DYNP,"aso|%s|%s|%s",CSTR(data),CSTR(t),CSTR(t)); },_1)); }
-
-void ESPArto::_wshConfig(string data){
-	vector<string>    cfgData;
-	split(CSTR(data),'!',cfgData);
-	setConfigstring(CSTR(cfgData[0]),cfgData[1]);
-}
-
-void ESPArto::_wshDynPin(string data){
-	int pin=atoi(CSTR(data));
-	SOCKSEND0(ESPARTO_AP_DYNP,"%d.%d.%d",pin,_getDno(pin),_getType(pin));
-}
-
-void ESPArto::_wshGimme(string data){
-	if(_panes.count(data)){
-		uiPanel u=_panes[data];
-		_ws->setActivePane(u.pane);
-		USE_TP;
-		TP_SETNAME(CSTR(data));
-		u.f();
-	} else _ws->setActivePane(ESPARTO_AP_NONE);
-}
-
-void ESPArto::_wshInvoke(string data){
-	vector<string>    cfgData;
-	split(CSTR(data),'|',cfgData);
-	invokeCmd(String(CSTR(cfgData[0])),String(CSTR(cfgData[1])),ESPARTO_SRC_WEB,"uiInvoke"); // overload!!!!!!!!!!!	
-}
-
-void ESPArto::_wshKillPin(string data){	__killPin(atoi(CSTR(data))); }
-
-void ESPArto::_wshSpool(string data){
-	uint32_t s=_sources[atoi(CSTR(data))];
-	string sss="";
-	for(int i=0;i<_spoolers.size();i++) sss+="|"+string(((1 << i) & s) ? "1":"0");
-	SOCKSEND0(ESPARTO_AP_SPOOL,"sss|%d%s",s ? 0:1,CSTR(sss));
-}
-
-void ESPArto::_wshVarList(string data){
-	_forEachCI(bind([](string data,string k,string v){ if(k[0]!='$' || CII(ESPARTO_SYS_LOCKED)) SOCKSEND0(ESPARTO_AP_DYNP,"aso|%s|%s|%s",CSTR(data),CSTR(k),CSTR(k)); },data,_1,_2));
-}
-
-void ESPArto::_wsGearPane(){ for(auto const& s:_statistics) s->websockInitial(); }
-
-void ESPArto::_wsRunPane(){
-	SOCKSEND0(ESPARTO_AP_RUN,"clr|csel"); 
-	_forEachTopic([](string s) { SOCKSEND0(ESPARTO_AP_RUN,"aso|csel|%s|%s",CSTR(s),CSTR(s)); });	
-}
-
-void ESPArto::_wsToolPane(){
-	SOCKSEND0(ESPARTO_AP_TOOL,"clr|tool");
-	_forEachCI([](string k, string v){ if(k[0]!='$'|| CII(ESPARTO_SYS_LOCKED)) SOCKSEND0(ESPARTO_AP_TOOL,"tool|%s|%s",CSTR(k),CSTR(v)); });
-}
-
-#ifdef ESPARTO_DEBUG_PORT
-const array<string,ESPARTO_N_REASONS> ESPArto::_reasons={
-	"ESPARTO_BOOT_USERCODE",
-	"ESPARTO_BOOT_UI",
-	"ESPARTO_BOOT_MQTT",
-	"ESPARTO_BOOT_BUTTON",
-	"ESPARTO_FACTORY_RESET",
-	"ESPARTO_BOOT_UPGRADE",
-	"ESPARTO_BOOT_UNCONTROLLED"
-	};
+	Esparto.addHandler(_evts);	
+	Esparto.on("/",HTTP_GET,[](AsyncWebServerRequest *request){ _webRoot(request); });	
+	Esparto.on("/ota", HTTP_POST, [](AsyncWebServerRequest *request){ request->send(200,_tciTextHtml,"ok");	}, _handleUpdate); // tidy
+	Esparto.on("/ajax",HTTP_POST,_ajax);
+	Esparto.on("/rest",HTTP_GET,_rest);
+#ifdef ESPARTO_ALEXA_SUPPORT
+	if(_alexaCmd) _webServerInitAlexa();
+	else SCI(ESPARTO_ALEXA_NAME,CI(ESPARTO_DEVICE_NAME));
+#else
+	SCI(ESPARTO_ALEXA_NAME,CI(ESPARTO_DEVICE_NAME));
 #endif
-
-String ESPArto::_uiTemplateConfigItem(String var){
-	String rv;
-	rv=CIS(CSTR(var));
-#ifdef ESPARTO_DEBUG_PORT
-	if(var=="$22") rv=String(CSTR(_reasons[rv.toInt()]));
-#endif
-	return rv;
+	Esparto.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request){ _webRoot(request); });
+	Esparto.serveStatic("/", SPIFFS, "/").setCacheControl("max-age=31536000");
+	Esparto.onNotFound([](AsyncWebServerRequest * request) { _logUrl(request); request->send(404,_tciTextHtml, CSTR(ESPArto::_four04)); });	
+	Esparto.begin();
 }
+
+String ESPArto::_uiTemplateConfigItem(String var){ return String(CIS(CSTR(var))); }

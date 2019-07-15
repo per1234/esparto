@@ -2,9 +2,11 @@
  MIT License
 
 Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
-                      blog     https://8266iot.blogspot.com     
-                support group  https://www.facebook.com/groups/esp8266questions/
-                
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/ 
+        
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -41,7 +43,7 @@ ESPArto  Esparto;
  *      "Tact" style pushbutton on GPIO which pulls it to GND
  */
 #define PUSHBUTTON  0
-#define DBV         15  // debounce value in mSec
+#define DBV         20  // debounce value in mSec
 //
 //  Gets called when pin configuration changes
 //
@@ -57,14 +59,13 @@ void buttonPress(int hilo,int v2){
 }
 
 void setupHardware(){
-    Serial.begin(74880);
-    Serial.printf("Esparto %s\n",__FILE__);  
+    ESPARTO_HEADER(Serial);  
     Serial.printf("Esparto Debounced Example, pin=%d dbv=%dms\n",PUSHBUTTON,DBV); 
     Esparto.Output(BUILTIN_LED);                         // start with LED OFF
-    Esparto.Debounced(PUSHBUTTON,INPUT,DBV,buttonPress);           // 15ms of debouncing
-    //  sometime between 1:10s and 1:30 change timeout value to half 
+    Esparto.Debounced(PUSHBUTTON,INPUT,DBV,buttonPress); 
+    //  sometime between 1:10s and 1:30 change debounce value to 1/5th
     Esparto.onceRandom(70000,90000,[](){
-      Serial.printf("T=%d set debounce value to %d\n",millis(),DBV / 5);
+      Serial.printf("T=%d set debounce value to %d you will probably notice bouncing now\n",millis(),DBV / 5);
       Esparto.reconfigurePin(PUSHBUTTON,DBV / 5);
       });
 }

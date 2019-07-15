@@ -2,9 +2,11 @@
  MIT License
 
 Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
-                      blog     https://8266iot.blogspot.com     
-                support group  https://www.facebook.com/groups/esp8266questions/
-                
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/ 
+        
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -26,7 +28,7 @@ SOFTWARE.
 #include <ESPArto.h>
 ESPArto  Esparto;
 /*  
- *   Demonstrates Esparto "Filtered" pin, which is based on a Raw pin but filters only 1s or 0s
+ *   Demonstrates Esparto "Filtered" pin, which is based on a Raw pin but passes through only 1s or 0s
  *
  *   Also demonstrates:
  *    dynamic reconfiguration of initial pin parameters
@@ -46,7 +48,7 @@ void onPinConfigChange(uint8_t pin,int v1,int v2){
   } else Serial.printf("Pin %d??? how did THAT happen?\n",pin);
 }
 //
-//  Gets called only when state (v1) is th same as the Filter value LOW/HIGH
+//  Gets called only when state (v1) is the same as the Filter value LOW/HIGH
 //
 void buttonPress(int v1,int v2){
   static int prev=0;
@@ -58,10 +60,9 @@ void buttonPress(int v1,int v2){
 //    after 1 minute, changes to filtering only 1s
 //
 void setupHardware() {
-  Serial.begin(74880);
-  Serial.printf("Esparto %s\n",__FILE__);
+  ESPARTO_HEADER(Serial); 
   Esparto.Filtered(PUSHBUTTON,INPUT_PULLUP,LOW,buttonPress);
- //  after 60sec slow down frequency to every 10 seconds
+ //  after 60sec toggle filter state
   Esparto.once(60000,[](){
       Serial.printf("Let's change filter...press button a few more times\n");
       Esparto.reconfigurePin(PUSHBUTTON,HIGH);

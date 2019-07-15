@@ -2,8 +2,10 @@
  MIT License
 
 Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
-                      blog     https://8266iot.blogspot.com     
-                support group  https://www.facebook.com/groups/esp8266questions/
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/
                 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -46,35 +48,39 @@ SOFTWARE.
 //      otherwise you will have to watch the serial window and find the IP address
 //      then browse to http://<wha.tev.ver.IP>
 //
-//      LED will be flashing rapidly when WiFi is connected
+//      LED will be Solid WiFi is connected
 //      but will flash "S-O-S" in morse (... --- ... ) while disconnected
 //
-const   int PUSHBUTTON=0;
+ESPARTO_CONFIG_BLOCK cb={
+    {CONFIG(ESPARTO_SSID),"XXXXXXXX"},
+    {CONFIG(ESPARTO_PASSWORD),"XXXXXXXX"},
+    {CONFIG(ESPARTO_DEVICE_NAME),"blinky"},
+    {CONFIG(ESPARTO_WEB_USER),"admin"},
+    {CONFIG(ESPARTO_WEB_PASS),"admin"},   
+    {CONFIG(ESPARTO_NTP_SRV1),"0.fr.pool.ntp.org"},  
+    {CONFIG(ESPARTO_NTP_SRV2),"192.168.1.4"},
+    {CONFIG(ESPARTO_NTP_TZ),"2"}                         // +/- hours offset from GMT
+};  
 
-const char* yourSSID="LaPique";
-const char* yourPWD="";
-const char* yourDevice="testbed";
-
-ESPArto Esparto(yourSSID,yourPWD,yourDevice);
+ESPArto Esparto(cb);
 
 void onWiFiConnect(){
-  Serial.printf("WiFi connected as %s LED flashing v fast\n",THIS_IP);
-  Esparto.flashLED(75); 
+  Serial.printf("WiFi connected as %s\n",THIS_IP);
+  Esparto.stopLED(); 
 }
 
 void onWiFiDisconnect(){
   Serial.printf("WiFi not connected - sit and twiddle thumbs\n");
-  Esparto.flashPattern("...  ---  ...     ",200); // SOS
+  Esparto.flashMorse("...  ---  ...",120); // SOS
 }
 
 void setupHardware(){
-  Serial.begin(74880);   
-  Esparto.Output(BUILTIN_LED);
-  if(!Esparto.wifiConnected()) { // we are not yet connected, set intial slow flash
+  ESPARTO_HEADER(Serial);
+  if(!Esparto.wifiConnected()) { // we are not yet connected, set intial "disconnected" flash
     onWiFiDisconnect();       
   }
   Serial.printf("Esparto WiFi Warning %s\n",__FILE__);
-  Serial.printf("Wait till LED flashing rapidly, then disconnect or reboot router\n");
+  Serial.printf("Wait till LED stops, then disconnect or reboot router\n");
   Serial.printf("LED will flash SOS until WiFi restored\n");
   Serial.printf("LED (and all hardware) continues to function even without WiFi\n");
   Serial.printf("Also try starting with WiFi off\n");

@@ -2,9 +2,11 @@
  MIT License
 
 Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
-                      blog     https://8266iot.blogspot.com     
-                support group  https://www.facebook.com/groups/esp8266questions/
-                
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/       
+                      
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -31,24 +33,23 @@ SOFTWARE.
  *    all values are therefore available each time a sketch starts
  *    they are "write-through" i.e. they are saved as soon as they are modified
  *    
- *    Esparto uses several for its internal functioningL they are of the from $nn where nn is a number
+ *    Esparto uses several for its internal functioning: they are of the from $nn where nn is a number
  *    Do not change Esparto config items unless you know EXACTLY what you are doing, and DO NOT USE 
  *    $ for your own items
  *    
- *    Two callbacks make life easy: 
- *    a) addConfig allows you to add your items to the pool that Esparto
- *    automatically saves and restores
- *    b) onConfigItemChange is called with the name and new value of any item whose va;ue changes
+ *    A callbacks make life easy: 
+ *     onConfigItemChange is called with the name and new value of any item whose value changes
  *    
- *    Don't worry too much about ESPARTO_CFG_MAP and the syntax required. if you have used other languages
- *    think of it as an "associate array" or an indexed map
+ *    Don't worry too much about ESPARTO_CONFIG_BLOCK and the syntax required. if you have used other languages
+ *    think of it as an "associative array" or an indexed map
  *    
- *    You will need to run the program sevral times to see the changed values persist across boots
+ *    You will need to run the program several times to see the changed values persist across boots
+ *    (a medium press on the GPIO0 button will reboot, or type cmd/reboot on Serial input)
  *    
- *    All items are held internal as a std::string do not owrry if you don't know what that means.
+ *    All items are held internally as a std::string do not owrry if you don't know what that means.
  *    they can be considered in most cases just like an Arduino String
  *    
- *    On both cases the "C String" char* to the actual bytes can be retrieved using xxx.c_str()
+ *    In both cases the "C String" char* to the actual bytes can be retrieved using xxx.c_str()
  *    but this is a pain, so Esparto uses the handy CSTR( ) macro whenever a char* is required
  *    g.g. in print statments etc
  *    
@@ -56,24 +57,23 @@ SOFTWARE.
  *    
  *    stringFromInt  // for std::string {you can safely ignore this if you dont understand it)
  *    StringFromInt  // for Arduino String
- *    
- *    
+ *       
  */
 #include <ESPArto.h>
-ESPArto  Esparto;
 //
-//    Default configuration parameters
+//    Default configuration parameters must be dfeined BEFORE Esparto!
 //
-ESPARTO_CFG_MAP defaults={
+ESPARTO_CONFIG_BLOCK cb={
     {"blinkrate","125"},            // we are going to change this later
     {"up","100"},                    // values are always strings even if you want to interpret them later as numbers
     {"down","100"},                  // values are always strings even if you want to interpret them later as numbers
     {"big","1000"},                    // values are always strings even if you want to interpret them later as numbers
     {"little","1"},                  // values are always strings even if you want to interpret them later as numbers
     {"random","666"},              // values are always strings even if you want to interpret them later as numbers
-    {"esparto","version 3.0"}
-    };
-ESPARTO_CFG_MAP& addConfig(){  return defaults;  }
+    {"esparto","version 3.3"},
+    {"npress","0"}
+};
+ESPArto  Esparto(cb);     // start Esparto with config block
 
 void onConfigItemChange(const char* name,const char* value){
   Serial.printf("Config Item %s has been changed to \"%s\"\n",name,value);  
@@ -81,17 +81,17 @@ void onConfigItemChange(const char* name,const char* value){
 //
 // This user-defined callback gets called on every "short" press
 //
-void shortPress(int v1,int v2){
-  Serial.printf("Short press - button state is %d, was pressed for %d mSec\n",v1,v2);
-  digitalWrite(BUILTIN_LED,!digitalRead(BUILTIN_LED)); // toggle LED on each short press
+void shortPress(bool b){
+   Serial.printf("Short press - button state is %s\n",b ? "ON":"OFF");
+   digitalWrite(BUILTIN_LED,!digitalRead(BUILTIN_LED)); // toggle LED on each short press
+   Esparto.incConfigInt("npress"); // incrment the count each time
 }
 
 void setupHardware() {
-  Serial.begin(74880);
-  Serial.printf("Esparto %s\n",__FILE__);
-
+  ESPARTO_HEADER(Serial);
+  
   Esparto.Output(BUILTIN_LED); // its active LOW, and we start OFF
-  Esparto.std3StageButton(shortPress); // call shortPress (NOTE, NOT "shortPress()" ) this is a callback, just function NAME
+  Esparto.DefaultInput(20,shortPress); // call shortPress (NOTE, NOT "shortPress()" ) this is a callback, just function NAME
 
   Serial.println("Config map simple usage:");
   String rate=Esparto.getConfigString("blinkrate");
@@ -116,5 +116,6 @@ void setupHardware() {
   Esparto.setConfigString(CSTR(s1),s1); // new item s1="s1"
   std::string s2="s2";
   Esparto.setConfigstring("s2",s2); // new item s2="s2"
-  Serial.printf("Reboot (hold gpio0 low for > 2 sec) and see new values");
+  Serial.printf("Press the button a few times and see npress++\n");
+  Serial.printf("Reboot (hold gpio0 low for > 2 sec) and see new values\n");
 }

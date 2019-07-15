@@ -1,7 +1,13 @@
 #include <ESPArto.h>
-ESPArto Esparto("LaPique","","testbed");
+
+ESPArto Esparto({
+    {CONFIG(ESPARTO_SSID),"XXXXXXXX"},
+    {CONFIG(ESPARTO_PASSWORD),"XXXXXXXX"},
+    {CONFIG(ESPARTO_DEVICE_NAME),""},
+});
 
 void setupHardware(){
-  Esparto.DefaultOutput();
-  Esparto.std3StageButton();
+  ESPARTO_HEADER(Serial); 
+  Esparto.DefaultOutput();    
+  Esparto.DefaultInput(25);
 }

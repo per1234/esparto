@@ -1,8 +1,12 @@
 /*
  MIT License
 
-Copyright (c) 2018 Phil Bowles <esparto8266@gmail.com>
-
+Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/ 
+              
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -27,12 +31,11 @@ SOFTWARE.
 //  (a bit like a VU meter, but not as useful. More fun though!
 //
 //  Hardware required:
-//    sound sensor
+//    fast-signalling sensor  (e.g. sound) on D5
 //
 ESPArto Esparto;
 void setupHardware(){
-    Serial.begin(74880);
-    Serial.printf("Esparto %s\n",__FILE__);      
+    ESPARTO_HEADER(Serial);    
     Serial.printf("Esparto VU (very useless) Meter 1 hook up sound sensor and play LOUD music\n"); 
     Esparto.Output(BUILTIN_LED);                        // start with LED OFF
     Esparto.Raw(D5,INPUT_PULLUP,[](int v1,int v2){ if(v1) Esparto.pulseLED(1); });

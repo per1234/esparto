@@ -2,9 +2,11 @@
  MIT License
 
 Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
-                      blog     https://8266iot.blogspot.com     
-                support group  https://www.facebook.com/groups/esp8266questions/
-                
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/       
+                     
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -25,22 +27,9 @@ SOFTWARE.
 */
 
 /*
- *    Demonstrates Esparto's when and whenever functions
- *    These should be used sparingly (if ever) and certainly NEVER in production code
- *    While they are useful for development / debugging (operating like a "watchpoint")
- *    they are CPU-intensive an no substitute for a correct and easy to follow sketch
+ *    Demonstrates Esparto's  randomTimes, randomTimesRandom and nTimesRandom functions
  *    
- *    They operate when  the relevant condition evaluates to ZERO, (like a countdown timer)
- *    thus if some non-zero conditon is desired, the condition must be inverted / negated
- *    
- *    "when" is a simple single-shot conditon tester: when(conditioniszero,runfunction); 
- *    "whenever" will continue to run the function while the condition is true, so unless the 
- *    FIRST THING the function does is cancel / negate / invert the causing conditon, an 
- *    infinite loop will occur
- *    
- *    YOU HAVE BEEN WARNED
- *    
- *    based on example Timers4_chaining, need to see that first.
+ *    Based on example Timers4_chaining, need to see that first.
  *    
  *    Rather than call the "jackson 5" function once, it is called multiple times, at random
  *    
@@ -49,6 +38,11 @@ SOFTWARE.
  *      
  *    The values have been chosen to ensure "overlap" of the various copies of the function, so
  *    expect mixed / garbled outputs
+ *    
+ *    There is no practical purpose for this except to demnostrate the rnadom functions!
+ *        
+ *    NB THERE ARE MUCH BETTER WAYS TO DO MUCH OF THIS - THIS IS D E M O   CODE!!
+ *    ===========================================================================    
  *    
 */
 #include <ESPArto.h>
@@ -81,8 +75,7 @@ ESPARTO_FN_VOID  jackson5=[](){                          // ESPARTO_FN_VOID defi
 }; // end fn declaration
 
 void setupHardware() {
-  Serial.begin(74880);
-  Serial.printf("Esparto %s\n",__FILE__);
+  ESPARTO_HEADER(Serial);  
   Serial.printf("Keep one eye on the LED!\n");
   
   Esparto.Output(LED_BUILTIN);

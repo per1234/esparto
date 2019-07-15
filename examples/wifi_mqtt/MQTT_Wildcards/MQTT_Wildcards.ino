@@ -2,9 +2,11 @@
  MIT License
 
 Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
-                      blog     https://8266iot.blogspot.com     
-                support group  https://www.facebook.com/groups/esp8266questions/
-                
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/ 
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -75,64 +77,63 @@ SOFTWARE.
 //
 //    On each valid card, we publish the topic "dealt" woht a payload showinng value  + suit
 //
-const char* yourSSID="LaPique";
-const char* yourPWD="";
-const char* yourDevice="testbed";
-const char* yourMQTTIP="192.168.1.4";
-const int   yourMQTTPort=1883;
-const char* yourMQTTUser="";
-const char* yourMQTTPass="";
-
-ESPArto Esparto(yourSSID,yourPWD,yourDevice,yourMQTTIP,yourMQTTPort,yourMQTTUser,yourMQTTPass);
+ESPARTO_CONFIG_BLOCK cb={
+    {CONFIG(ESPARTO_SSID),"XXXXXXXX"},
+    {CONFIG(ESPARTO_PASSWORD),"XXXXXXXX"},
+    {CONFIG(ESPARTO_DEVICE_NAME),""},
+    {CONFIG(ESPARTO_ALEXA_NAME),"Three Point Three"},
+    {CONFIG(ESPARTO_WEB_USER),"admin"},
+    {CONFIG(ESPARTO_WEB_PASS),"admin"},   
+    {CONFIG(ESPARTO_MQTT_SRV),"192.168.1.4"},
+    {CONFIG(ESPARTO_MQTT_PORT),"1883"},
+    {CONFIG(ESPARTO_MQTT_USER),""},
+    {CONFIG(ESPARTO_MQTT_PASS),""},    
+    {CONFIG(ESPARTO_WILL_TOPIC),"lwt"},
+    {CONFIG(ESPARTO_WILL_MSG),"Esparto has crashed!"},
+    {CONFIG(ESPARTO_NTP_SRV1),"0.fr.pool.ntp.org"},  
+    {CONFIG(ESPARTO_NTP_SRV2),"192.168.1.4"},
+    {CONFIG(ESPARTO_NTP_TZ),"2"},                         // +/- hours offset from GMT
+//  
+//  Add your own configuration name/value pairs here: don't use "cmd" or "switch"
 //
-void flash(bool onoff){
-  if(onoff) Esparto.flashLED(Esparto.getConfigInt("blinkrate"));
-  else Esparto.stopLED();
-}
-//
-// We need this version as the Web UI command always comes to us with a vector of strings
-// We simply convert the payload of the web UI message (which should be 1 or 0!) to a bool
-//    as required by our "normal" flash routine
-//
-void preFlash(vector<string> vs){
-  flash(PAYLOAD_INT);
-}
-//
-//  What we want Alexa to know us as:
-//
-const char*  setAlexaDeviceName(){ return "salon kitty";  }
-//
-//  What we do when Alexa calls...(button sense is reversed as GPIO = active low
-//
-void  onAlexaCommand(bool b){ flash(b); }
-//
-//    Default configuration parameters
-//
-ESPARTO_CFG_MAP defaults={
-    {"blinkrate","125"},            // we are going to change this later
+    {"blinkrate","100"},                                  // we are going to change this later
     {"debounce","10"},
     {"bwf","BWF"}
-    };
-ESPARTO_CFG_MAP& addConfig(){  return defaults;  }
+};  
+ESPArto Esparto(cb);
+//
+/* 
+ *  This is our "thing", its what we do. We flash the builtin LED at the rate shown by the blinkrate variable
+ *  Everything else is automatic and "comes for free"
+*/
+thing variableSpeedBlinky([](bool on){
+  if(on) Esparto.flashLED(Esparto.getConfigInt("blinkrate"));
+  else Esparto.stopLED();
+});
 
 void onConfigItemChange(const char* id,const char* value){
-  Serial.printf("USER: CI %s changed to %s\n",id,value);
-  if(!strcmp(id,"blinkrate")){
-    if(Esparto.isFlashing()) flash(true);
-  }
+  Esparto.printf("USER: CI %s changed to %s\n",id,value);
+  if(!strcmp(id,"blinkrate")) if(Esparto.state()) Esparto.device(ON);
+}
+void onWiFiConnect(){
+  // these messages with the IP address in them cannot be put in setupHarware() as the WiFi
+  // may not have connected by then! This is the ONLY logical place for them
+  Esparto.printf(" * via the web UI in the run tab with a payload of 0 or 1\n");
+  Esparto.printf("  (browse to either http://%s.local or http://%s)\n",CI(ESPARTO_DEVICE_NAME),THIS_IP);
+  #ifdef ESPARTO_ALEXA_SUPPORT
+    if(Esparto.alexaInUse()) Esparto.printf(" * via voice command: \"Alexa! turn on \"%s\"\n", CI(ESPARTO_ALEXA_NAME));//
+  #endif
+  Esparto.printf(" * via REST-like web call: http://%s/rest/switch/0 or http://%s/switch/1\n",THIS_IP,THIS_IP);
 }
 
 void setupHardware(){
-  Serial.begin(74880); 
-  Serial.printf("Esparto MQTT Wildcards %s\n",__FILE__);
-  Serial.printf("Start the blinky any one of these ways:\n");
-  Serial.printf(" a) using button on GPIO0\n");
-  Serial.printf(" b) via the web UI in the run tab with a payload of 0 or 1\n");
-  Serial.printf(" c) via voice command: \"Alexa! turn on %s\"\n", setAlexaDeviceName());
-  Serial.printf(" d) via MQTT topic \"flash\" with a payload of 0 or 1\n");
+  ESPARTO_HEADER(Serial);
+  Serial.printf("Start the flashing one of many ways:\n");
+  Serial.printf(" * Serial console: switch/0 or switch/1\n");
+  Serial.printf(" * Button on GPIO0 (short press)\n");
   
-  Esparto.Output(BUILTIN_LED);         
-  Esparto.std3StageButton([](int i,int j){ flash(!Esparto.isFlashing()); }); // this just inverts the flashing state
+  Esparto.DefaultOutput(variableSpeedBlinky);         
+  Esparto.DefaultInput(25); // 25 is the debounce in ms: my chinese tact buttons are HORRIBLE. But cheap.
 }
 //
 //  MQTT
@@ -172,8 +173,8 @@ void setupHardware(){
 //  vs[5]="42"     in code, use int myInt=PARAM(5);    // 42
 //  vs[6]="666"    in code use int myPayload=PAYLOAD_INT; // 666
 //  
-void onMqttConnect(void){  
-  Esparto.subscribe("flash",preFlash);
+void onMqttConnect(void){ 
+  Serial.printf(" * via MQTT topic \"switch\" with a payload of 0 or 1\n");  
   Esparto.subscribe("wild/#",[](vector<string> vs){
         for(auto const& v:vs) Serial.printf("v: %s\n",CSTR(v)); // show input
         if(vs.size()==4){

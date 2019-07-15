@@ -1,7 +1,14 @@
 #include <ESPArto.h>
-ESPArto Esparto("LaPique","","testbed","192.168.1.4",1883);
+
+ESPArto Esparto({
+    {CONFIG(ESPARTO_SSID),"XXXXXXXX"},
+    {CONFIG(ESPARTO_PASSWORD),"XXXXXXXX"},
+    {CONFIG(ESPARTO_DEVICE_NAME),""}
+//    ,{CONFIG(ESPARTO_ALEXA_NAME),"SONOFF Basic"} // uncomment if using Amazon Echo (Dot)Alexa)
+});
+
 void setupHardware(){
-  Esparto.Output(BUILTIN_LED);          
-  Esparto.DefaultOutput(RELAY,HIGH,OFF,[](int v1, int v2){Esparto.digitalWrite(BUILTIN_LED,!v1); });    
-  Esparto.std3StageButton();
+  ESPARTO_HEADER(Serial); 
+  Esparto.DefaultOutput(new pinThing(12,HIGH,OFF,[](int a,int b){ Esparto.digitalWrite(BUILTIN_LED,!a); }));    
+  Esparto.DefaultInput(25); // ajdust value for ms debounce
 }

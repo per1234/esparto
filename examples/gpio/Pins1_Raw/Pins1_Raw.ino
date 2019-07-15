@@ -2,8 +2,10 @@
  MIT License
 
 Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
-                      blog     https://8266iot.blogspot.com     
-                support group  https://www.facebook.com/groups/esp8266questions/
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/ 
                 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +28,8 @@ SOFTWARE.
 #include <ESPArto.h>
 ESPArto  Esparto;
 //
+//   Demonstrates simplest GPIO type "Raw" which simply passes every transition through to the user
+//
 //  Hardware required:
 //    Pushbutton on GPIO0 which pulls it to GND when pressed
 //
@@ -42,7 +46,6 @@ void buttonPress(int v1,int v2){
 //    define a "Raw" button on GPIO0
 //
 void setupHardware() {
-  Serial.begin(74880);
-  Serial.printf("Esparto %s\n",__FILE__);
+  ESPARTO_HEADER(Serial);  
   Esparto.Raw(PUSHBUTTON,INPUT_PULLUP,buttonPress);
 }

@@ -1,19 +1,19 @@
+<!DOCTYPE html>
 <html>
    <head>
-	<title>%$24% [%$21%]</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title id="ptit">%$100%</title>
 	<link rel="stylesheet" type="text/css" href="esp.css">
 	<script src="grf.js"></script>
 	<script src="esp.js"></script>
-	<script src="ws.js"></script>
    </head>
    <body>
 		<div class="box">
-			<div>
-				<div id="bn">
-					<div id="bnb"><div id="lex">%$21%</div></div>
-				</div>
-				<div class="vn">Esparto v%$0%</div>
+			<div id="ioth">
+            <div id="dflt"><img id="dio" class="hand 0" src="/0.png" title="IoT 'Thing'"onclick="nike(99);"></div>
+				<div class="bn"><div id="lex">%$100%</div></div>
 			</div>
+         <div class="vn">Esparto v%$208%</div>
 		</div>
 		<div class="box" id="grass">
 			<table >
@@ -98,119 +98,134 @@
 				<td><div class="pin ld led-red"></div></td>
 			</tr>	
 			</table>
-		</div>
-		
+		</div>	
 	<div id="btns" class="box">
 		<div>
-			<div class="cmd"><img title="WiFi" class="hand wifi cfg"></div>				
-			<div class="cmd"><img title="System" class="hand gear cfg"></div>
-			<div class="cmd"><img title="%$24%" class="hand esp cfg"></div>
-			<div class="cmd"><img title="Config" class="hand tool cfg"></div>
-			<div class="cmd"><img title="Command" class="hand run cfg"></div>
-         <div class="cmd"><img title="Pins" class="hand dynp cfg"></div>	
-         <div class="cmd"><img title="Log" class="hand logs cfg"></div>	
-         <div class="cmd"><img title="Spool" class="hand spool cfg"></div>	
-			<div class="cmd"><span id="hs">&nbsp;</span></div>
-			<div class="cmd"><img title="Home" onclick="homefn();" class="hand home" id="home"></div>
-			<div class="cmd"><img title="Reboot" onclick="bootfn();" class="hand boot"></div>
-			<div class="cmd"><img onclick="factfn();" class="hand fact" title="*FACTORY RESET*"></div>
+			<div id="wifitab"><img title="WiFi" class="hand wifi"></div>				
+			<div id="mqtttab"><img title="MQTT" class="hand mqtt"></div>
+			<div id="geartab"><img title="System" class="hand gear"></div>
+			<div id="esptab"><img title="%$101%" class="hand esp"></div>
+			<div id="tooltab"><img title="Config" class="hand tool"></div>
+			<div id="runtab"><img title="Command" class="hand run"></div>
+         <div id="dynptab"><img title="Pins" class="hand dynp"></div>	
+         <div id="logstab"><img title="Log" class="hand logs"></div>	
+         <div id="rtctab"><img title="RTC" class="hand rtc"></div>	
+         <div id="urg"></div>
+         <div id="prog"><div id="pbar"></div></div>
 		</div>
-		<div id="lights">
-			<div class="cmd" id="mqtt0"><div id="mqtt" class="ld led-red"></div></div>
-			<div class="cmd" id="hb"><div class="heart"></div></div>
-         <div class="cmd"><div class="dk">&nbsp;UpTime:</div><div class="lt"><div id="upt" class="mut">0</div></div></div>
+      <hr id="huph">     
+		<div id="hup">
+			<div class="cmd" id="mq0" title="MQTT Status"><div id="mqLED" class="ld led-red"><span class="leg">m</span></div></div>
+			<div class="hand cmd" id="lx0" title="Alexa Status"><div id="lxLED" class="ld led-red" onclick="nike(50);"><span class="leg">a</span></div></div>
+         <div id="hart">
+            <div class="cmd" id="hb"><div class="heart"></div></div>
+         </div>
+         <div class="cmd"><span id="hs2"></span></div>
+         <div class="cmd"><div id="ck">00:00:00</div></div>
+         <div class="cmd"><div class="dk3">&nbsp;Up:</div><div id="ut">00d 00:00:00</div></div>
+         <div class="cmd"><div class="dk3">&nbsp;Views:</div><div class="dk3"id="nv">0</div></div>
+         <div class="cmd"><span id="hs">&nbsp;</span></div>
+         <div class="cmd"><img title="Reboot" onclick="nike(40);" class="hand boot"></div>
+         <div class="cmd"><img onclick="nike(64);" class="hand fact" title="*FACTORY RESET*"></div>            
 		</div>
 	</div>			
-						
+					
 	<div id="wifi" class="box eph wifi">
-		<div id="fb">
-			<form onsubmit="return changeDevice(event);">
- 				<input id="root" type="hidden" value="%$27%" />
-				<div class="fel"><label for="newname">Device:</label><input id="newname" required name="device" value="%$24%"></div>
-				<div class="fel"><label for="lexname">Alexa Name:</label><input id="lexname" required name="lex" value="%$21%"></div>
-				<div class="fel"><label for="ssid">SSID:</label><select id="ssid" required name="ssid"></select></div>
-				<div class="fel"><label for="pw">Psk:</label><input id="pw" type="password" name="pw" value="%$26%"></div>
-				<div class="fel"><label>&nbsp;</label><button type="submit">Update Details</button></div>
-			</form>
-		</div>
+      <form onsubmit="postForm(event);">
+         <input name="fid" type="hidden" value="wifi" />
+         <div class="fel"><label class="dk">Admin User:</label><input name="au" value="%$108%"></div>
+         <div class="fel"><label class="dk">Password:</label><input name="ap" type="password" value="%$109%"></div>         
+         <hr>
+         <div class="fel"><label class="dk" for="newname">Device:</label><input name="newname" required value="%$101%"></div>
+         <div id="lxinfo">
+            <div class="fel"><label class="dk" for="lexname">Alexa Name:</label><input id="lexname" name="lexname" required value="%$100%"></div>
+         </div>
+         <div class="fel"><label class="dk" for="ssidx">SSID:</label><select id="ssidx" required name="ssid"></select></div>     
+         <div class="fel"><label class="dk" for="pw">Password:</label><input type="password" name="pw" value="%$106%"></div>
+         <hr>            
+         <div class="fel"><label>&nbsp;</label><button type="submit">Update Details</button></div>
+      </form>
 	</div>
-	
+   
+	<div id="mqtt" class="box eph mqtt">
+      <form onsubmit="postForm(event);">
+         <input name="fid" type="hidden" value="mqtt" />
+         <div id="ml0" class="fel"><label class="dk" >Publish Stats:</label><div id="mlLED" class="sth hand ld led-red" onclick="mqttControl(this);" value="$11"></div></div>
+         <div id="mv0" class="fel"><label class="dk" >Publish Vars:</label><div id="mvLED" class="sth hand ld led-red" onclick="mqttControl(this);" value="$12"></div></div>
+         <hr>
+         <div class="fel"><label class="dk" for="mqi">MQTT IP:</label><input id="X102" name="mqi" value="%$102%"></div>
+         <div class="fel"><label class="dk" for="mqn">Port:</label><input id="X104" numeric name="mqn" value="%$104%"></div>                
+         <div class="fel"><label class="dk" for="mqu">MQTT User:</label><input id="X105" name="mqu" value="%$105%"></div>
+         <div class="fel"><label class="dk" for="mqp">Password:</label><input id="X103" name="mqp" type="password" value="%$103%"></div>   
+         <div class="fel"><label class="dk" for="mwt">Will Topic:</label><input id="X110" name="mwt" value="%$110%"></div>
+         <div class="fel"><label class="dk" for="mwm">Will Msg:</label><input id="X111" name="mwm" value="%$111%"></div>   
+         <div class="fel"><label>&nbsp;</label><button type="submit">Change Broker</button></div>
+      </form>
+	</div>
+   
 	<div id="esp" class="box eph esp">
-			<div ><div class="dk">Board:</div>&nbsp;<div class="lt">%$36%</div></div>
-			<div ><div class="dk">Chip :</div>&nbsp;<div class="lt">%$23%</div></div>
-			<div ><div class="dk">IP   :</div>&nbsp;<div id="IP" class="lt">%$3%</div></div>
-			<div ><div class="dk">Flash:</div>&nbsp;<div class="lt">%$33%</div></div>
-			<div ><div class="dk">NBoot:</div>&nbsp;<div class="lt">%$1%</div></div>
-			<div ><div class="dk">Code :</div>&nbsp;<div class="lt">%$22%</div></div>
+			<div ><div class="dk">Device</div>&nbsp;<div class="lt">%$101%</div></div>
+			<div ><div class="dk">Board</div>&nbsp;<div class="lt">%$207%</div></div>
+			<div ><div class="dk">Topic</div>&nbsp;<div class="lt">%$203%</div></div>
+			<div ><div class="dk">Chip</div>&nbsp;<div class="lt">%$202%</div></div>
+			<div ><div class="dk">IP</div>&nbsp;<div id="IP" class="lt">%$205%</div></div>
+         <hr>
+			<div ><div class="dk">Lwip</div>&nbsp;<div class="lt">%$204%</div></div>
+			<div ><div class="dk">Sdk</div>&nbsp;<div class="lt">%$213%</div></div>
+			<div ><div class="dk">Core</div>&nbsp;<div class="lt">%$214%</div></div>
+         <hr>
+			<div ><div class="dk">Flash</div>&nbsp;<div class="lt">%$206%</div></div>
+			<div ><div class="dk">Flash Freq</div>&nbsp;<div class="lt">%$211%</div></div>
+			<div ><div class="dk">Flash Mode</div>&nbsp;<div class="lt">%$212%</div></div>
+         <hr>
+			<div ><div class="dk">Max SPIFFS</div>&nbsp;<div class="lt">%$210%</div></div>
+			<div ><div class="dk">Max OTA</div>&nbsp;<div class="lt">%$209%</div></div>
+			<div ><div class="dk">Sketch</div>&nbsp;<div class="lt">%$215%</div></div>
+         <hr>
+			<div ><div class="dk">NBoot</div>&nbsp;<div class="lt">%$200%</div></div>
+			<div ><div class="dk">Code</div>&nbsp;<div class="lt">%$201%</div></div>
+     
+       <form id="ota" enctype="multipart/form-data" method="post">
+            <hr>
+            <div class="bn"><div class="bnb">Updates</div></div>
+            <hr>
+            <div class="fel"><label class="dk" >SPIFFS</label><input id="ota100" omax="" name="spf" type="file" /></div>
+            <div class="fel"><label>&nbsp;</label><button cmd="100" onclick="fup(this);" type="submit">"Update SPIFFS"</button></div>
+            <br>
+            <div class="fel"><label class="dk" >Firmware</label><input id="ota0" omax="" name="ota" type="file" /></div>
+            <div class="fel"><label>&nbsp;</label><button cmd="0" onclick="fup(this);" type="submit" >"Update Firmware"</button></div>
+      </form>    
 	</div>
 	
-	<div id="gear" class="box eph gear">
-			<div class="sth">
-					<div class="stm">ADC:</div><div class="right"><div id="adc" class="lt std">0</div></div>
-					<div class="stt">min:</div><div class="right"><div id="adcmin" class="lt std">0</div></div>
-					<div class="stt">max:</div><div class="right"><div id="adcmax" class="lt std">0</div></div>
-			</div>
-			<div class="can"><canvas id="ga" width=360 height=100></canvas></div>
-			
-			<div class="sth">
-					<div class="stm">HEAP:</div><div class="right"><div id="heap" class="lt std">0</div></div>
-					<div class="stt">min:</div><div class="right"><div id="heapmin" class="lt std">0</div></div>
-					<div class="stt">max:</div><div class="right"><div id="heapmax" class="lt std">0</div></div>
-			</div>
-			<div class="can"><canvas id="gh" width=360 height=100></canvas></div>
-			
-			<div class="sth">
-					<div class="stm">Q:</div><div class="right"><div id="Q" class="lt std">0</div></div>
-					<div class="stt">min:</div><div class="right"><div id="Qmin" class="lt std">0</div></div>
-					<div class="stt">max:</div><div class="right"><div id="Qmax" class="lt std">0</div></div>
-			</div>
-			<div class="can"><canvas id="gq" width=360 height=100></canvas></div>
-			
-			<div class="sth">
-					<div class="stm">Pins:</div><div class="right"><div id="pps" class="lt std">0</div></div>
-					<div class="stt">min:</div><div class="right"><div id="ppsmin" class="lt std">0</div></div>
-					<div class="stt">max:</div><div class="right"><div id="ppsmax" class="lt std">0</div></div>
-			</div>
-			<div class="can"><canvas id="gp" width=360 height=100></canvas></div>
-         
-			<div class="sth">
-					<div class="stm">CPU%:</div><div class="right"><div id="load" class="lt std">0</div></div>
-					<div class="stt">min:</div><div class="right"><div id="loadmin" class="lt std">0</div></div>
-					<div class="stt">max:</div><div class="right"><div id="loadmax" class="lt std">0</div></div>
-			</div>
-			<div class="can"><canvas id="gl" width=360 height=100></canvas></div>
-			
-	</div>
+	<div id="gear" class="box eph gear"></div>
 	
-	<div id="tool" class="box eph tool">
-	</div>
+	<div id="tool" class="box eph tool"></div>
 		
 	<div id="run" class="box eph run">
 		<div id="tcmd">
-			<div ><div class="dk">Topics:</div>&nbsp;<div class="lt"><select id="csel" required onchange="selchange(event);"></select></div></div>
+			<div ><div class="dk">Topics:</div>&nbsp;<div class="lt"><select id="csel" required onchange="selchange(event);">       
+         </select></div></div>
 			<div ><div class="dk">Topic:</div>&nbsp;<div class="lt"><input id="invoke" required></div></div>
 			<div ><div class="dk">Payload:</div>&nbsp;<div class="lt"><input id="payload"></div></div>
-			<div ><div class="dk">&nbsp;</div>&nbsp;<div class="lt"><button onclick="doit(event);" id="doit">Simulate MQTT</button></div></div>
+			<div ><div class="dk">&nbsp;</div>&nbsp;<div class="lt"><button onclick="doInvoke(event);" id="doit">Simulate MQTT</button></div></div>
 		</div>
 	</div>
-   
+<!--   
    <div id="dynp" class="box eph dynp">
    	<div id="dfd">
-			<form onsubmit="return dynamicPin(event);">
+			<form onsubmit="postForm(event);">
+            <input name="fid" type="hidden" value="dynp" />
             <fieldset id="fsp" disabled>
                <legend>GPIO Pin</legend>
-               <div class="fel">
-                  <label for="dpsel">Pin</label>
-                  <input id="dpsel" name="dynpin" disabled required value="click red pin #"/>
-               </div>
+               <div class="fel"><label for="dpsel">Pin</label><input id="dpsel" name="dpa" disabled required value="click red pin #"/></div>
                <div class="fel">
                   <label for="selstyle">Type</label>
-                  <select id="selstyle" name="style" onChange="dpstyleChange(this);">
+                  <select id="selstyle" name="dpb" onChange="dpstyleChange(event.target);">
                      <option value="0" selected>[select pin type]</option>                    
                      <option value="3">DEBOUNCED</option>
                      <option value="12">DEFAULT OUTPUT</option>
                      <option value="7">ENCODER</option>
-                     <option value="8">ENCODER_AUTO</option>
+                     <option value="8">ENCODER AUTO</option>
                      <option value="4">FILTERED</option>	
                      <option value="5">LATCHING</option>
                      <option value="2">OUTPUT</option>
@@ -218,7 +233,7 @@
                      <option value="1">RAW</option>
                      <option value="9">REPORTING</option>
                      <option value="6">RETRIGGERING</option>
-                     <option value="13">STD 3-STAGE</option>                     
+                     <option value="13">DEFAULT INPUT</option>                     
                      <option value="10">TIMED</option>
                   </select>
                </div>
@@ -227,10 +242,10 @@
             </fieldset>
             <fieldset id="fsa" disabled>
                <legend>Action</legend>
-               <input type="hidden" name="hax" value="ax">
+               <input type="hidden" name="dph" value="ax">
                <div class="fel">
                   <label for="axion">On Change</label>
-                  <select id="axion" name="axion">                   
+                  <select id="axion" name="dpi">                   
                      <option value= "0">[when pin changes...]</option>
                      <option value= "1">No Action</option>
                      <option value= "3">Output Passthru</option>
@@ -244,6 +259,7 @@
                      <option value= "11">Sub from Var</option>
                      <option value= "8">Command</option>                                                                              
                      <option value= "12">Flash LED</option>
+                     <option value= "16">Pulse LED</option>
                      <option value= "13">Flash LED PWM</option>
                      <option value= "14">Flash LED Pattern</option>
                      <option value= "15">Stop LED Flash</option>
@@ -257,55 +273,42 @@
                <div>
                      <span class="sm">&nbsp;</span>
                      <span>&nbsp;&nbsp;&nbsp;YES</span>
-                     <input id="dpky" type="radio" name="dpkeep" value="1"></input>
+                     <input id="dpky" type="radio" name="dpx" value="1"></input>
                      <span>NO</span>
-                     <input id="dpkn" type="radio" name="dpkeep" value="0" checked></input> 
+                     <input id="dpkn" type="radio" name="dpx" value="0" checked></input> 
                </div>
                <div>
                      <span class="sm">&nbsp;</span>
-                     <span class="sm"><button type="submit">Create Pin</button></span>
+                     <span class="sm"><button id="crp" type="submit">Create Pin</button></span>
                </div>
             </fieldset>
 			</form>
 		</div>   
 	</div>
-   
+ -->  
 	<div id="logs" class="box eph logs">
       <textarea id="clog"></textarea>
 	</div>
-   
-	<div id="spool" class="box eph spool">
- 			<form onsubmit="return spool(event);">
-            <fieldset>
-               <legend>Event Source</legend>   
-               <div class="fel">
-                  <select id="ssrc" onChange="spoolChange(this);">
-                     <option value= "777">[select a source]</option>                        
-                     <option value= "0">Scheduler / Timers</option>
-                     <option value= "1">GPIO</option>
-                     <option value= "2">MQTT</option>
-                     <option value= "3">Web UI</option>
-                     <option value= "4">Web REST</option>
-                     <option value= "5">Alexa</option>
-                     <option value= "6">User Invoke</option>
-                     <option value= "7">Synthetic</option>
-                 </select>
-               </div>
-            </fieldset>
-            <fieldset>
-               <legend>Spool Destinations</legend>              
-               <div class="fel">
-                  <label>SERIAL</label>  <input class="chx" type="checkbox" value="1" />
-                  <label>LOG</label>     <input class="chx" type="checkbox" value="2" />
-                  <label>PUBLISH</label> <input class="chx" type="checkbox" value="4" />
-                  <label>RAW DATA</label> <input class="chx" type="checkbox" value="8" />
-               </div>
-               <div class="fel">
-                     <label for="sbtn">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label><span id="sbtn" class="sm"><button type="submit">Change Spool</button></span>
-               </div>
-            </fieldset>
-         </form>     
+   <div id="rtc" class="box eph rtc">
+		<div ><div class="dk">Date</div>&nbsp;<div class="lt">%$216%</div></div>
+      <form onsubmit="postForm(event);">
+         <input name="fid" type="hidden" value="rtc" />
+         <div class="fel"><label class="dk" for="srv1">Server 1</label><input id="X113" required name="srv1" value="%$113%"></div>
+         <div class="fel"><label class="dk" for="srv2">Server 2</label><input id="X114" required name="srv2" value="%$114%"></div>                
+         <div class="fel"><label class="dk" for="tz">TZ +/- GMT</label><input id="X112" numeric required name="tz" value="%$112%"></div>
+         <div class="fel"><label>&nbsp;</label><button type="submit">Change NTP</button></div>
+      </form>
+      <hr>
+      <div>Scheduled Alarms</div>
+      <div id="rtca">
+         <div><input id="rtct" type="time"></div>
+         <div id="rtcl" class="hand ld led-red" onclick="rtcl(this);"></div>
+         <div><input id="rtcd" type="checkbox"><label for="rtcd">Daily</label></div>
+         <div  class="hand" onclick="addAlarm();" id="rtcx">+</div>
+      </div>
+      <div id="shed"></div>
 	</div>
+      
    <div id="donate" class="box">
       <center>
          Buying me a coffee helps keep me motivated to keep Esparto bug-free and er ...plain "free". It's a lot of work. If it has helped you, I'd appreciate a small sign
@@ -315,10 +318,10 @@
 <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" />
 <img alt="" border="0" src="https://www.paypal.com/en_FR/i/scr/pixel.gif" width="1" height="1" />
 </form>
-<div id="linx">
-<a href="https://8266iot.blogspot.com" target="_blank">Tips, Hints, More Info</a><span class="lnk">&nbsp;</span>
-<a href="https://www.facebook.com/groups/esp8266questions/" target="_blank">Facebook Help Forum</a><span class="lnk">&nbsp;</span>
-<a href="https://www.github.com/philbowles/esparto/" target="_blank">Github</a>
+<div>
+   <div class="lnk"><a href="https://8266iot.blogspot.com" rel="noopener" target="_blank">Tips / Hints / More Info</a></div>
+   <div class="lnk"><a href="https://www.facebook.com/groups/597324830744576/" rel="noopener" target="_blank">Facebook Help Forum</a></div>
+   <div class="lnk"><a href="https://www.github.com/philbowles/esparto/" rel="noopener" target="_blank">Github Repository</a></div>
 </div>
       </center>
    </div>

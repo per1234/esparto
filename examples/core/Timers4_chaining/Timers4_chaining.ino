@@ -2,9 +2,11 @@
  MIT License
 
 Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
-                      blog     https://8266iot.blogspot.com     
-                support group  https://www.facebook.com/groups/esp8266questions/
-                
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/       
+                     
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -35,6 +37,10 @@ SOFTWARE.
  *    The whole of the above is itself "wrapped" in a funtion that cna then be started randomly
  *    
  *    Also pulses LED in short blips in time with the serial output
+ *    
+ *    
+ *    NB THERE ARE MUCH BETTER WAYS TO DO MUCH OF THIS - THIS IS D E M O   CODE!!
+ *    ===========================================================================
  *    
  */
 #include <ESPArto.h>
@@ -67,8 +73,7 @@ ESPARTO_FN_VOID  jackson5=[](){                          // ESPARTO_FN_VOID defi
 }; // end fn declaration
 
 void setupHardware() {
-  Serial.begin(74880);
-  Serial.printf("Esparto %s\n",__FILE__);
+  ESPARTO_HEADER(Serial);
   Serial.printf("Keep one eye on the LED!\n");
   
   Esparto.Output(LED_BUILTIN);

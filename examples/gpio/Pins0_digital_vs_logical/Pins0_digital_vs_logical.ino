@@ -2,8 +2,10 @@
  MIT License
 
 Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
-                      blog     https://8266iot.blogspot.com     
-                support group  https://www.facebook.com/groups/esp8266questions/
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/ 
                 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -63,8 +65,7 @@ ESPArto Esparto;
 bool  LEDisON=false;
 
 void setupHardware(){
-  Serial.begin(74880); 
-  Serial.printf("Esparto GPIO digital / logical Write example %s\n",__FILE__);
+  ESPARTO_HEADER(Serial);
   Esparto.Output(BUILTIN_LED); // defaults to active LOW, initially OFF
 //  Esparto.Output(BUILTIN_LED,LOW,OFF); // exactly the same as above
   Esparto.logicalWrite(BUILTIN_LED,ON); // will light LED

@@ -1,8 +1,12 @@
 /*
  MIT License
 
-Copyright (c) 2018 Phil Bowles
-
+Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/
+                			  
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -22,81 +26,29 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #include <ESPArto.h>
-
-const array<int,ESPARTO_STYLE_MAX> ESPArto::_npList={
-	-1, // unused
-	0, // raw
-	2, // output
-	1, // debounce
-	1, // filter
-	1, // latch
-	2, // retrigger
-	1, // encoder
-	5, // encoder auto
-	2, // reporting
-	1, // timed
-	2, // polled
-	2, // dfltout
-	1, // std3stage
-	-1, // encoder_b - never happens
-	-1 // ThreeStage
-	}; // fix this disaster-in-waiting
-
-#ifdef ESPARTO_DEBUG_PORT
-const char* ESPArto::types[]={
-	" ",
-	"BOOT",
-	"RX",
-	"TX",
-	"GPIO",
-	"WAKE",
-	"ADC",
-	"LD",
-	"BN",
-	"RY",
-	"NONAME"
-	};
-	
-const char* ESPArto::styles[]={
-	" ",
-	"RAW",
-	"OUTPUT",
-	"DBOUNCE",
-	"FILTER",
-	"LATCH",
-	"RETRIGR",
-	"ENCODER",
-	"ENCAUTO",
-	"REPORT",
-	"TIMED",
-	"POLLED",
-	"DFLTOUT",
-	"STD3STG",
-	"ENCOD_B",
-	"3-STAGE"
-};
-#endif
-
-void hwPin::root(uint8_t _p,uint8_t mode,int _style,ESPARTO_FN_SV cb){
-	p=_p;
-	style=_style;
-	callback=cb;
-	pinMode(_p,mode);
-}
-				
-void hwPin::defaultCooked(int v1,int v2){
-	ESPArto::__showPin(p+ESPARTO_MAX_PIN,v1);
-	callback(v1,v2);								
-}
-	
+//
+//			hwPin			
+//			
+void hwPin::defaultCooked(int v1,int v2) { callback(v1,v2); }
+		
 void hwPin::registerChange(uint8_t hilo){
 	uint32_t now=micros();
 	uint32_t delta=now - previous;
 	previous=now;
 	state=hilo;
 	ESPArto::_sigmaPins++; 
-	ESPArto::__showPin(p,state);
+	dirty=true;
+	sigma++;
 	stateChange(state,delta);					
+}
+
+void hwPin::root(uint8_t _p,uint8_t mode,int _style,ESPARTO_FN_SV cb){
+	p=_p;
+	style=_style;
+	type=ESPArto::_spPins[p].type;
+	D=ESPArto::_spPins[p].D;
+	callback=cb;
+	pinMode(_p,mode);
 }
 
 void hwPin::run(){
@@ -107,206 +59,268 @@ void hwPin::run(){
 			if(count++ < maxRate) registerChange(instant);
 			else {
 				throttled=true;
-				SOCKSEND0(ESPARTO_AP_NONE,"adc|%d|blk|wht",p);
-				ESPArto::once(ESPARTO_PIN_HOLD,[this](){
-					throttled=false;
-					SOCKSEND0(ESPARTO_AP_NONE,"adc|%d|wht|blk",p);
-				});				
+				ESPArto::once(ESPARTO_PIN_HOLD,[this](){ throttled=false; },nullptr,nullptr,21);
 			}	
 		}
 	}
 }
+//
+//			_smoothed
+//
+void _smoothed::stateChange(int v1,int v2){
+	if(!bouncing){
+		savedState=v1;
+		bouncing=ESPArto::once(dbus,
+			bind([this](uint32_t start){
+				bouncing=0;
+				if(state==savedState) debouncedChange(state,millis() - start);
+			},millis()),nullptr,nullptr,22);
+	}
+}
 
-spPolled::~spPolled(){ Esparto.cancel(timer); }
+_smoothed::~_smoothed(){ ESPArto::cancel(bouncing); }
+//
+//			spDefaultInput
+//
+spDefaultInput::spDefaultInput(ESPARTO_FN_SV shorty,uint32_t _dbv):		
+	spMultiStage(0,INPUT,(_dbv ? _dbv:CII(ESPARTO_GPIO0_DBV)),100,
+				bind(&spDefaultInput::progress,this,_1,_2),
+				{
+					{ESPARTO_PUSH_MEDIUM,	bind(&spDefaultInput::getShorty,this,shorty,_1,_2)},
+					{ESPARTO_PUSH_LONG,		bind([](int,int){ ESPArto::reboot(); },_1,_2)},				
+					{0,						bind([](int,int){ ESPArto::factoryReset(); },_1,_2)}
+				}
+				) {
+	style=ESPARTO_STYLE_DFLTIN;
+	ESPArto::Output(BUILTIN_LED);
+#ifdef ESPARTO_ALEXA_SUPPORT
+	if(ESPArto::_alexaCmd) { // insert MD as no 2 and add T0 offset to all subsequent
+		ESPARTO_STAGE_TABLE::iterator sti=st.begin();
+		uint32_t t0=sti->first;
+		for(++sti; sti!=st.end(); ++sti) if(sti->first) sti->first+=t0;
+		st.insert(++st.begin(),make_pair(2*t0,bind([](int,int){ ESPArto::_makeDiscoverable(); },_1,_2)));
+	}
+#endif
+}
+
+int spDefaultInput::getPinValue() const { return ESPArto::_core->status(); }
+
+void spDefaultInput::getShorty(ESPARTO_FN_SV f,int a,int b){
+	ESPArto::_core->toggle();
+	bool state=ESPArto::_core->status();
+	EVENT("BUTTON %s",state ? "ON":"OFF");
+	f(state,b);
+}
+
+void spDefaultInput::progress(int v1,int v2) const {
+	#ifdef ESPARTO_ALEXA_SUPPORT
+		static	int offset=ESPArto::_alexaCmd ? 0:1;
+	#else
+		static	int offset=1;
+	#endif	
+	switch(v1+offset){
+	#ifdef ESPARTO_ALEXA_SUPPORT		
+		case 0:
+			ESPArto::flashMorse(".",100,BUILTIN_LED); // echo, geddit?
+			break;
+	#endif	
+		case 1:
+			ESPArto::flashLED(ESPARTO_DEFIN_MEDIUM);
+			break;
+		case 2:
+			ESPArto::flashLED(ESPARTO_DEFIN_LONG);
+			break;			
+	}
+}
+//
+//			spEncoder
+//
+spEncoder::spEncoder(uint8_t _pA,uint8_t _pB,uint8_t _mode,ESPARTO_FN_SV _callback): hwPin(_pA,_mode,ESPARTO_STYLE_ENCODER,_callback) {						
+	ESPArto::_pinMap[_pB]=pinB=new hwPin(_pB,_mode,ESPARTO_STYLE_ENCODER_B,bind(&spEncoder::stateChange,this,_1,_2));
+}
+#ifdef ESPARTO_CONFIG_DYNAMIC_PINS
+	spEncoder::~spEncoder(){ ESPArto::__killPinCore(pinB); }	
+#endif
+
+void spEncoder::encoderCallback(int value) /* const */ {
+//	ESPArto::__showPin(pinB->p+ESPARTO_MAX_PIN,value);
+	defaultCooked(value,micros());
+}
+//
+//			spMultiStage
+//
+void spMultiStage::sequencer(int s,int t){
+	if(s==active) {
+		if(t > st[stage].first){
+			if(stage < (st.size()-1)) progress(stage++,t);							
+		}									
+	}
+	else {
+		st[stage].second(s,t);
+		stage=0;
+	}		
+}
+//
+//			spPolled
+//
+spPolled::~spPolled(){ ESPArto::cancel(timer); }
 
 void spPolled::setTimer(uint32_t freq){
-	timer=Esparto.every(freq,(bind([this]( ){
+	timer=ESPArto::every(freq,bind([this]( ){
 				uint32_t instant=adc ? analogRead(p):digitalRead(p);
 				if(lastpoll!=instant){
 					lastpoll=instant;
 					defaultCooked(instant,micros());									
 				}
-			})),ESPARTO_SRC_GPIO,STAIN_TIMER("spPoll"));  		
+			}
+	),nullptr,nullptr,31);
 }
 
 void spPolled::reconfigure(int v1, int v2){
-	Esparto.cancel(timer);
+	ESPArto::cancel(timer);
 	setTimer(v1);
 }
-
-_smoothed::~_smoothed(){ Esparto.cancel(bouncing); }
-
-void _smoothed::stateChange(int v1,int v2){
-	if(!bouncing){
-		savedState=v1;
-		startTime=millis();
-		ESPARTO_FN_VOID f=bind([this]( ){
-				bouncing=0;
-				if(state==savedState) {
-					uint32_t delta=millis() - startTime;
-					debouncedChange(state,delta);
-					}
-		});
-		bouncing=Esparto.once(dbus,f,nullptr,ESPARTO_SRC_GPIO,STAIN_TIMER("_smooth"));
-	}
-}
-
-spReporting::~spReporting(){ Esparto.cancel(timer); }
+//
+//			spReporting
+//
+spReporting::~spReporting(){ ESPArto::cancel(timer); }
 
 void spReporting::endTiming(){
-	Esparto.cancel(timer);
+	ESPArto::cancel(timer);
 	fincr=0;
-	}
+}
 
 void spReporting::startTiming(){
-	timer=Esparto.every(freq,(bind([this]( ){
+	timer=ESPArto::every(freq,bind([this]( ){
 			fincr+=freq;
-			defaultCooked(state,fincr);
-			})),ESPARTO_SRC_GPIO,STAIN_TIMER("spRprt"));    	
+			defaultCooked(bouncing ? !savedState:state,fincr); // this was a fun bug to find!
+			}
+	),nullptr,nullptr,32);
 }
 
-spRetriggering::~spRetriggering(){ Esparto.cancel(timer); }
-
+void spReporting::debouncedChange(int v1,int v2){
+	uint32_t msDown=0;
+	if(startTime) {
+		msDown=(previous-startTime)/1000;
+		startTime=0;
+		endTiming();
+	}
+	else {
+		startTime=previous;
+		startTiming();
+	}
+	if(twoState || msDown) defaultCooked(v1,msDown);
+}
+//
+//			spRetriggering
+//
 void spRetriggering::stateChange(int hilo,int delta){
 	if(hilo==active){
-		if(timer) {
-			Esparto.cancel(timer);
-			timer=0;
-		}
-		else sendSignal(hilo); 
-		ESPARTO_FN_VOID f=bind([this]( ){
+		if(timer) timer=ESPArto::cancel(timer);
+		else sendSignal(hilo);
+		timer=ESPArto::once(timeout,bind([this]( ){
 				timer=0;
 				if(state!=active) sendSignal(state);
-			});
-		timer=Esparto.once(timeout,f,nullptr,ESPARTO_SRC_GPIO,STAIN_TIMER("spTrig"));
+			}
+		),nullptr,nullptr,23);
 	} else if(!timer) sendSignal(hilo); 
 }
-
-void spEncoder::encoderCallback(int value){
-	ESPArto::__showPin(pinB->p+ESPARTO_MAX_PIN,value);
-	defaultCooked(value,micros());
-}
-
-spEncoder::~spEncoder(){ ESPArto::__killPinCore(pinB); }
-
-spEncoder::spEncoder(uint8_t _pA,uint8_t _pB,uint8_t _mode,ESPARTO_FN_SV _callback): hwPin(_pA,_mode,ESPARTO_STYLE_ENCODER,_callback) {						
-	Esparto._spPins[_pB].h=pinB=new hwPin(_pB,_mode,ESPARTO_STYLE_ENCODER_B,bind(&spEncoder::stateChange,this,_1,_2));
-}
-
-void spDefaultOutput::digitalWrite(uint8_t hilo){
-	if(hilo!=state){
-		spOutput::digitalWrite(hilo);
-		ESPArto::publish("state",!hilo);
-	}
-}
-
-spDefaultOutput::spDefaultOutput(uint8_t _p,bool active,uint8_t initial,ESPARTO_FN_SV callback): spOutput( _p, active, initial,callback){
-	style=ESPARTO_STYLE_DEFOUT;
-	ESPARTO_FN_MSG cmd=bind([this](vector<string> vs){ logicalWrite(PAYLOAD_INT); },_1);
-	ESPArto::addCmd("switch",cmd);
-	ESPArto::_autoSubSwitch=bind([](ESPARTO_FN_MSG cmd){ ESPArto::subscribe("switch",cmd); },cmd);
-	defLex=ESPArto::_defaultAlexa;
-	ESPArto::_defaultAlexa=[this](bool b){		
-					logicalWrite(b);
-					defLex(b);					
-					};
-	ESPArto::_gpio0Default=bind([this](int v1,int v2){ logicalWrite(!getPinValue()); },_1,_2);
-}
+spRetriggering::~spRetriggering(){ ESPArto::cancel(timer); }
+//
+//			ESPArto pin stuff
+//
+#ifdef ESPARTO_CONFIG_DYNAMIC_PINS
 
 void ESPArto::__killPinCore(hwPin* h){
 	uint8_t p=h->p;
+	stopLED(p);
 	delete h;
-	_spPins[p].h=nullptr;
-	SOCKSEND0(ESPARTO_AP_NONE,"kil|%d",p);
-	stopLED(p); 
+	_pinMap.erase(p);
 }
 
-void ESPArto::__killPin(uint8_t pin){ if(hwPin* h=_isSmartPin(pin)) if(h->getStyle()!=ESPARTO_STYLE_ENCODER_B) __killPinCore(h); }
+void ESPArto::__killPin(uint8_t pin){ if(hwPin* h=_isSmartPin(pin)) if(h->style!=ESPARTO_STYLE_ENCODER_B) __killPinCore(h); }
+#endif
 
-void ESPArto::_pinsLoop(){
-	for(int i=0;i<ESPARTO_MAX_PIN;i++) {
-		hwPin* p=_spPins[i].h;
-		if(p){
-			p->run();
-			if(_syncClock) p->count=0;
-		}
-	}
-}
 void ESPArto::_uCreatePin(uint8_t _p,int _style,uint8_t _mode,ESPARTO_FN_SV _callback,...){
 	va_list args;
 	va_start(args, _callback);
-	if(!_isSmartPin(_p)){
+	if(((_p < ESPARTO_MAX_PIN) &&  _spPins[_p].type!=ESPARTO_TYPE_CANTUSE) && (!_isSmartPin(_p))){
 		switch(_style){
-			case ESPARTO_STYLE_STD3STAGE:
-				std3StageButton(_gpio0Default,va_arg(args,int));
+			case ESPARTO_STYLE_DFLTIN:
+				_pinMap[_p]=new spDefaultInput(_callback,va_arg(args,int));
 				break;			
 			case ESPARTO_STYLE_OUTPUT:
-				_spPins[_p].h=new spOutput(_p,va_arg(args,int),va_arg(args,int),_callback);
-				break;
-			case ESPARTO_STYLE_DEFOUT:
-				_spPins[_p].h=new spDefaultOutput(_p,va_arg(args,int),va_arg(args,int),_callback);
+				_pinMap[_p]=new spOutput(_p,va_arg(args,int),va_arg(args,int),_callback);
 				break;
 			case ESPARTO_STYLE_RAW:
-				_spPins[_p].h=new hwPin(_p,_mode,_style,_callback);
+				_pinMap[_p]=new hwPin(_p,_mode,_style,_callback);
 				break;
 			case ESPARTO_STYLE_DEBOUNCED:
-				_spPins[_p].h=new _smoothed(_p,_mode,va_arg(args,int),_style,_callback);
+				_pinMap[_p]=new _smoothed(_p,_mode,va_arg(args,int),_style,_callback);
 				break;
 			case ESPARTO_STYLE_FILTERED:
-				_spPins[_p].h=new spFiltered(_p,_mode,va_arg(args,int),_callback);
+				_pinMap[_p]=new spFiltered(_p,_mode,va_arg(args,int),_callback);
 				break;
 			case ESPARTO_STYLE_LATCHING:
-				_spPins[_p].h=new spLatching(_p,_mode,va_arg(args,int),_callback);
+				_pinMap[_p]=new spLatching(_p,_mode,va_arg(args,int),_callback);
+				break;
+			case ESPARTO_STYLE_NLATCH:
+				_pinMap[_p]=new spCircularLatch(_p,_mode,va_arg(args,int),UINT_MAX,_callback);
+				break;
+			case ESPARTO_STYLE_CIRCLATCH:
+				_pinMap[_p]=new spCircularLatch(_p,_mode,va_arg(args,int),va_arg(args,int),_callback);
 				break;
 			case ESPARTO_STYLE_RETRIGGERING:
-				_spPins[_p].h=new spRetriggering(_p,_mode,va_arg(args,int),_callback,va_arg(args,int));
+				_pinMap[_p]=new spRetriggering(_p,_mode,va_arg(args,int),_callback,va_arg(args,int));
 				break;
 			case ESPARTO_STYLE_ENCODER:
 				{
 				int _pB=va_arg(args,int);
-				if(!_isSmartPin(_pB)) _spPins[_p].h=new spEncoder(_p,_pB,_mode,_callback);
+				if(!_isSmartPin(_pB)) _pinMap[_p]=new spEncoder(_p,_pB,_mode,_callback);
 				}
 				break;
 			case ESPARTO_STYLE_ENCODER_AUTO:
 				{
 				int _pB=va_arg(args,int);
-				if(!_isSmartPin(_pB)) _spPins[_p].h=new spEncoderAuto(_p,_pB,_mode,_callback,va_arg(args,int),va_arg(args,int),va_arg(args,int),va_arg(args,int));
+				if(!_isSmartPin(_pB)) _pinMap[_p]=new spEncoderAuto(_p,_pB,_mode,_callback,va_arg(args,int),va_arg(args,int),va_arg(args,int),va_arg(args,int));
 				}
 				break;
 			case ESPARTO_STYLE_REPORTING:
-				_spPins[_p].h=new spReporting(_p,_mode,va_arg(args,int),va_arg(args,int),_callback,va_arg(args,int));
+				_pinMap[_p]=new spReporting(_p,_mode,va_arg(args,int),va_arg(args,int),_callback,va_arg(args,int));
 				break;
 			case ESPARTO_STYLE_TIMED:
-				_spPins[_p].h=new spTimed(_p,_mode,va_arg(args,int),_callback,va_arg(args,int));
+				_pinMap[_p]=new spTimed(_p,_mode,va_arg(args,int),_callback,va_arg(args,int));
 				break;
 			case ESPARTO_STYLE_POLLED:
-				_spPins[_p].h=new spPolled(_p,_mode,va_arg(args,int),_callback,va_arg(args,int));
+				_pinMap[_p]=new spPolled(_p,_mode,va_arg(args,int),_callback);
 				break;
 		}		
 	}	
 	va_end (args);
 }
 
-uint8_t ESPArto::_getDno(uint8_t i){ return _spPins[i].D; }
-
-bool ESPArto::_getPinActive(uint8_t i){
-	if(hwPin* h=_isSmartPin(i)) return h->getActive();
-	return false;
-}
-
-int	ESPArto::_getStyle(uint8_t i){
-	if(hwPin* h=_isSmartPin(i)) return h->getStyle();	
-	return 0;
-}
-
-uint8_t	ESPArto::_getType(uint8_t i){ return _spPins[i].type; }		
-
-hwPin* ESPArto::_isOutputPin(uint8_t i){
+hwPin* ESPArto::_isOutputPin(uint8_t i) {
 	hwPin* h=_isSmartPin(i);
-	if(h && (h->getStyle()==ESPARTO_STYLE_OUTPUT || h->getStyle()==ESPARTO_STYLE_DEFOUT)) return h;
+	if(h && (h->style==ESPARTO_STYLE_OUTPUT || h->style==ESPARTO_STYLE_DEFOUT)) return h;
 	return nullptr;
 }				
 
-hwPin* ESPArto::_isSmartPin(uint8_t i){ return _isUsablePin(i) ? _spPins[i].h:nullptr; }
-
-bool ESPArto::_isUsablePin(uint8_t i){ return (i < ESPARTO_MAX_PIN) &&  _spPins[i].type!=ESPARTO_TYPE_CANTUSE; }
+hwPin* ESPArto::_isSmartPin(uint8_t i) { return _pinMap.count(i) ? _pinMap[i]:nullptr; }
+//
+//		thing / pinThing
+//
+void thing::turn(bool b){
+	act(b);
+	logicalState=b;
+	ESPArto::publish("state",b);
+#ifdef ESPARTO_VBAR_ON_SWITCH
+	ESPArto::vBar(b ? "#290":"#f22");
+#endif
+}
+		
+pinThing::pinThing(uint8_t p,bool active,ESPARTO_LOGICAL_STATE initial,ESPARTO_FN_SV plus):
+	thing(bind([](uint8_t p,bool b){ ESPArto::logicalWrite(p,b); },p,_1)){
+		ESPArto::Output(p,active,initial,bind([](ESPARTO_FN_SV plus, int a, int b){ plus(a,b); },plus,_1,_2));
+		logicalState=initial;
+		ESPArto::_pinMap[p]->style=ESPARTO_STYLE_DEFOUT;
+}

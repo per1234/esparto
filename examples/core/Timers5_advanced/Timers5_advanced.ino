@@ -2,9 +2,11 @@
  MIT License
 
 Copyright (c) 2019 Phil Bowles <esparto8266@gmail.com>
-                      blog     https://8266iot.blogspot.com     
-                support group  https://www.facebook.com/groups/esp8266questions/
-                
+   github     https://github.com/philbowles/esparto
+   blog       https://8266iot.blogspot.com     
+   groups     https://www.facebook.com/groups/esp8266questions/
+              https://www.facebook.com/Esparto-Esp8266-Firmware-Support-2338535503093896/       
+                     
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -27,7 +29,11 @@ SOFTWARE.
 /*
  *    Demonstrates Esparto's wide variety of timing functions and the ability to chain, mix and match
  *    to build up complex timing sequences without the need for delay() millis() or other sub-standard 
- *    techniques *    
+ *    and error-prone techniques *    
+ *    
+ *    NB THERE ARE MUCH BETTER WAYS TO DO MUCH OF THIS - THIS IS D E M O   CODE!!
+ *    ===========================================================================
+ *    
  */
 #include <ESPArto.h>
 ESPArto  Esparto;
@@ -60,7 +66,7 @@ void pulsePin(uint8_t pin,unsigned int ms,bool active){
 #define GAP DIT*2.5
 #define PAUSE 3*DAH
 
-void SOS(){
+void SOS(){ // use Esparto Morse functions in real life
   Esparto.every(5000,[](){
     Esparto.nTimes( 3, GAP, bind(pulsePin,LED_BUILTIN,DIT,LOW),
 //    onComplete...
@@ -79,13 +85,13 @@ void SOS(){
 }
 
 void setupHardware() {
-  static uint32_t edwin;
-  static uint32_t marvin;
-  static uint32_t heartbeat;
+  ESPARTO_HEADER(Serial);  
+  
+  static ESPARTO_TIMER edwin;
+  static ESPARTO_TIMER marvin;
+  static ESPARTO_TIMER heartbeat;
   
   static uint32_t j=10;
-  Serial.begin(74880);
-  Serial.printf("Esparto %s\n",__FILE__);
 
   Esparto.Output(LED_BUILTIN);
   
@@ -165,11 +171,11 @@ void setupHardware() {
     // ..including the one flashing the builtin in led
     Esparto.onceRandom(65000,70000,[](){
       Serial.println("No more, please!");
-      Esparto.queueFunction([](){ Serial.printf("Silence is golden - until the next time! FH=%d\n",ESP.getFreeHeap()); });
-    // and FINALLY(?) after a couple of minutes silence, let's run this whole thing again....
+     // and FINALLY(?) after a couple of minutes silence, let's run this whole thing again....
       Esparto.cancelAll([](){ 
         j=10; // or Edwin Starr will be walking backwards!
         Esparto.once(90000,setupHardware); 
         });
+     Esparto.queueFunction([](){ Serial.printf("Silence is golden - until the next time! FH=%d\n",ESP.getFreeHeap()); });
   });
 }
