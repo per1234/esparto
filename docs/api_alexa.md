@@ -17,7 +17,7 @@ If you only have one device (maybe 2 or 3) then enter the name in the CONFIG BLO
 ```cpp
 ESPARTO_CONFIG_BLOCK cb={
     ...
-    {CONFIG(ESPARTO_ALEXA_NAME),"Do Your Thing"}, // SEE DEVICE NAMING BELOW 
+    {CONFIG(ESPARTO_ALEXA_NAME),"Do Your Thing"}, // SEE DEVICE NAMING BELOW
     ...
  };  
 ```
@@ -57,7 +57,7 @@ What follows will be also be true if at any subsequent time you change the Alexa
 
 Any time the deive is in this mode, two things are visible:
 
-* the built-in LED flashes a single short blip (Actually a Morse code "E" or "Echo" - get it? :) 
+* the built-in LED flashes a single short blip (Actually a Morse code "E" or "Echo" - get it? :)
 
 * the "a" LED to the left of the heartbeat goes red.
 
@@ -111,6 +111,7 @@ void onClockTick(uint32_t);
 ```
 
 **Example:**
+
 ***
 
 ## useAlexa

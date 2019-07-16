@@ -1,18 +1,18 @@
-# Esparto v3.3 is a rapid development framework, synchronous task queue and GPIO manager with a rich webUI for ESP8266 devices.
+# Esparto v3.3 is a rapid development framework, synchronous task queue and GPIO manager with a rich webUI for ESP8266 devices
 
-## Click Image for youtube introduction worth 21,686 words...
+## Click Image for youtube introduction worth 21,686 words
 
 [![Youtube Introduction](https://img.youtube.com/vi/phi1V2tMpEU/0.jpg)](https://youtu.be/phi1V2tMpEU)
 
 ## What's new
 
-**N.B.** As always there may well be some broekn links here as I "backfill" the latest documentation over the next few days...but you can get the code and start playing right now.
+**N.B.** As always there may well be some brbroken links here as I "backfill" the latest documentation over the next few days...but you can get the code and start playing right now.
 
 There have been numerous changes since the (disastrous: apologies) v3.2 The best thing to do is watch the video, but the major ones are:
 
 ### Internals
 
-NEW
+#### NEW
 
 * Automatic NTP synchronisation
 * New timers "at" and "daily" which take absolute clock time
@@ -26,21 +26,21 @@ NEW
 * Amazon echo v3 support added
 * Default "on/off" and the concept of a "thing"
 
-CHANGED
+#### CHANGED
 
 * Initialisation now groups all parameters into a "config block"
 * Dynamic pin updates are now a compile-time option, not well tested and should be considered experimental
 * Amazon echo "pairing" has major changes (see its own section XXX)
 * Major changes to DefaultInput / DefaultOutput + "thing" functions
 
-REMOVED
+#### REMOVED
 
 * The "spooling" concept and related API calls are removed
 * "3StageButton" removed, use MultiStage or DefaultInput
 
 ### Externals
 
- webUI
+#### webUI
 
 * Real (clock) time shown
 * Now has basic auth, default login is admin/admin
@@ -49,7 +49,7 @@ REMOVED
 * New RTC / Timers tab allows NT configuration and setting alarms
 * Default on/off button if using DefaultInput / DefaultOutput
 
-MQTT
+#### MQTT
 
 * Some commands have changed parameter layouts / payloads
 * New commands to support new features
@@ -92,16 +92,16 @@ It makes short work of creating anything from a simple "blinky" to drop-in firmw
 
 Esparto has been tested on a variety of hardware. It will probably run on anything with an ESP8266 in it, but the official at-a-glance list is:
 
-*	ESP-01 [ No OTA ] But why would you bother when there's...)
-*	ESP-01S
-*	Wemos D1
-*	Wemos D1 mini 
-*	Wemos D1 lite (and thus probably any other ESP8285 device)
-*	Wemos D1 pro
-*	NodeMCU 0.9 (v1.0 pretty certain - need beta tester...)
-*	SONOFF Basic
-*	SONOFF S20
-*	SONOFF SV
+* ESP-01 [ No OTA ] But why would you bother when there's...)
+* ESP-01S
+* Wemos D1
+* Wemos D1 mini
+* Wemos D1 lite (and thus probably any other ESP8285 device)
+* Wemos D1 pro
+* NodeMCU 0.9 (v1.0 pretty certain - need beta tester...)
+* SONOFF Basic
+* SONOFF S20
+* SONOFF SV
 
 ***
 
@@ -129,7 +129,9 @@ void setupHardware(){
     Esparto.Latching(PUSHBUTTON,INPUT,15,buttonPress); // 15ms of debouncing
 }
 ```
+
 At the other end of the spectrum, a fully-functional MQTT / Alexa / web UI / web Rest / physical button controlled firmware for a SONOFF Basic or S20 can be built with only a constructor and 2 Esparto API calls:
+
 ```cpp
 #include <ESPArto.h>
 
@@ -141,13 +143,14 @@ ESPArto Esparto({
 });
 
 void setupHardware(){
-  ESPARTO_HEADER(Serial); 
+  ESPARTO_HEADER(Serial);
   Esparto.DefaultOutput(new pinThing(12,HIGH,OFF,
-  	[](int a,int b){ Esparto.digitalWrite(BUILTIN_LED,!a); 
-  }));    
+    [](int a,int b){ Esparto.digitalWrite(BUILTIN_LED,!a);
+  }));
   Esparto.DefaultInput(25); // ajdust value for ms debounce
 }
 ```
+
 This also includes the ability to reboot the SONOFF (with a "medium press" > 2sec) or factory reset  ("long press" > 5 sec) .
 
 More importantly the main design goal of Esparto is 24/7 hardware functionality with no reboots, no matter what the network does. Hardware is fully functional after typically < 0.6sec from power on, irrespective of network state. Any network outages are gracefully recovered - without rebooting - when the network becomes available again, ensuring zero hardware "downtime".
@@ -189,6 +192,8 @@ All but the the last require their own sections later in the document.
 | onReboot | Badly named, should be “justBeforeReboot” can be initiated by webUi, MQTT command, physical hardware on GPIO0 | None | On exit from your code, the device will reboot (soft reset) |
 | onFactoryReset | Badly named, should be “justBeforeFactoryReset” can be initiated by webUi, MQTT command, physical hardware on GPIO0 | None | On exit from your code, the device will “hard reset” to factory settings, i.e. all configuration data and saved WiFI connections will be lost |
 | userLoop | Once per main loop cycle, after all other actions complete | None | This is included merely for future expansion. If you think you need to use it, you are almost certainly wrong: contact the author. |
+***
+
 Most commonly you will define GPIOs for input and output in setupHardware. Each of these may have its own callback for when activity occurs on the pin, though many pin types have a great amount of automatic functionality already built-in. In many common scenarios, there will be little for your code to do.
 Next in the `onMqttConnect` callback you will subscribe to your own topics which are specific to your app (if any). Each topic will need its own callback which Esparto will execute whenever a user publishes that topic. Esparto comes with a lot of MQTT functionality already built-in.
 
@@ -199,6 +204,7 @@ Esparto also publishes frequent statistics and / or GPIO status if required and 
 In summary, you "plug in" short pieces of user code (callbacks) that make up the specifics of your app into the appropriate place in Esparto's lifecycle to respond to the relevant real-world events.
 This enables extremely rapid development of "bomb-proof" code using mutiple simultaneous complex sensors / actuators. Say goodbye to WDT resets and "random" crashes (which - of course - are never actually random, but caused by bugs in your code)
 ***
+
 # Main Features
 
 ## Ease of use
@@ -217,12 +223,12 @@ This enables extremely rapid development of "bomb-proof" code using mutiple simu
 * Many flexible GPIO options pre-configured e.g. fully debounced rotary encoder support with a single line of code
 * Create MQTT controlled firmware in only a few lines of code
 * User code hugely simplified, consisting mainly of short callback functions
-* Several flexible asynchronous LED flashing functions including slow PWM, arbitrary pattern e.g. "... --- ..." for SOS, 
+* Several flexible asynchronous LED flashing functions including slow PWM, arbitrary pattern e.g. "10001100100101",
 
 ## "Industrial strength"
 
 * 24/7 Hardware functionality, irrespective of network status
-* Captive portal AP mode for initial configuration 
+* Captive portal AP mode for initial configuration
 * Copes resiliently with WiFi outage or total network loss, reconnecting automatically without requiring reboot
 * OTA updates (except ESP-01)
 * Main-loop synchronous queue avoids common WDT resets
@@ -234,31 +240,31 @@ This enables extremely rapid development of "bomb-proof" code using mutiple simu
 
 # Installation
 
-## :computer: Install (or upgrade to) 
+## :computer: Install (or upgrade to)
 
-* Arduino IDE 1.8.9 https://www.arduino.cc/en/Main/Software
-* ESP8266 core 2.5.2 https://github.com/esp8266/arduino
+* Arduino IDE 1.8.9 <https://www.arduino.cc/en/Main/Software>
+* ESP8266 core 2.5.2 <https://github.com/esp8266/arduino>
 
-## :books: Install the following third-party libraries 
+## :books: Install the following third-party libraries
 
 Arduino's own site has a good tutorial on adding 3rd-party libraries: <https://www.arduino.cc/en/Guide/Libraries>
 
-* ESPAsyncTCP 1.1.0 <https://github.com/me-no-dev/ESPAsyncTCP>
-* ESPAsyncUDP  1.0.0 <https://github.com/me-no-dev/ESPAsyncUDP>
+* ESPAsyncTCP <https://github.com/me-no-dev/ESPAsyncTCP>
+* ESPAsyncUDP <https://github.com/me-no-dev/ESPAsyncUDP>
 * ESPAsyncWebserver - There have been a number of issue with this (otherwise) great library. Until those issues are fully resolved you will need to a) uninstall any previous copy you hvae and b) install the patched "fork": <https://github.com/philbowles/ESPAsyncWebServer>
 
 * PubSubClient v2.6 <https://github.com/knolleary/pubsubclient.> Be careful: there are two or three MQTT client libraries out there for Arduino - do not be tempted to use any other than the above: they simply won't work.
 
-## :hammer_and_wrench: Install required tools 
+## :hammer_and_wrench: Install required tools
 
 * Sketch data uploader <https://github.com/esp8266/arduino-esp8266fs-plugin>
 
 * Exception decoder <https://github.com/me-no-dev/EspExceptionDecoder> This last item is optional - until your code crashes! When (not _if_) it does so, you will need to provide the author with a decoded stack dump, and this is the tool to do it. See the issues / support section coming up.
 Spoiler alert: No support will be given to exception / crash issues without a decoded stack dump, so you really should install this.
 
-## :herb: Install Esparto v3 itself 
+## :herb: Install Esparto v3 itself
 
-## :open_file_folder: Copy the data folder to the root folder of any sketch you write that uses WiFi or MQTT 
+## :open_file_folder: Copy the data folder to the root folder of any sketch you write that uses WiFi or MQTT
 
 This also applies to the sample sketches: Any that use WiFi / MQTT _must_ have the data folder copied to their root folder.
 
@@ -273,7 +279,7 @@ There is also a youtube channel with instructional videos being added (slowly)
 
  [Youtube channel (instructional videos)](https://www.youtube.com/channel/UCYi-Ko76_3p9hBUtleZRY6g)
 
-## :pushpin: Decide what GPIOs you will be using.
+## :pushpin: Decide what GPIOs you will be using
 
 For each GPIO you use you need to decide which Esparto pin type best matches your requirements. Having done this, write a callback routine that takes two int values: `void myGPIOCallback(int i1, int i2){ ...do something... }` In all cases, i1 is the state of the pin that caused the callback event, usually 1 or 0. In many cases i2 is the micros() value of when the event occured.
 
@@ -303,7 +309,7 @@ void myTopic2(vector<string> vs){ handle topic2 }
 
 Full description of the callback and its parameters are given here: [Command handling & MQTT messaging](/api_mqtt.md)
 
-## :heavy_check_mark: Final check:
+## :heavy_check_mark: Final check
 
 You should now have:
 
@@ -325,7 +331,7 @@ In theory, you should only ever need to do this once to each new device.
 
 Now, you need to perform _*the most important step*_ before running Esparto:
 
-:electric_plug: :recycle: _*UNPLUG THE DEVICE OR OTHERWISE POWER IT OFF*_
+:electric_plug: :recycle: _*UNPLUG THE DEVICE OR OTHERWISE POWER IT OFF*_ ( [see why here](<https://github.com/esp8266/Arduino/issues/1017>) )
 
 Wait a second or two, and plug the device back in, not forgetting to reopen the Serial monitor window of the IDE if you need to see diagnostic messages.
 This step is required (not just for Esparto) due to a bug in the ESP8266 firmware which can (and frequently _does_) cause crash / reboot the first time (and only the first time) after a Serial flash upload.
@@ -387,6 +393,7 @@ Many commands will respond to MQTT (if in use) the payload is shown in [ square 
 | cmd/time/daily |  | hh:mm:ss,{0|1} |  | Set daily alarm |
 | cmd/time/set |  | n =mS since 00:00 |  | Arbitrarily set time (mS since midnight) |
 | cmd/time/sync |  |  |  | Force NTP sync |
+
 *Examples:*
 
 * MQTT command testbed/cmd/pin/set/4 with payload of "1" sets GPIO3 HIGH and Esparto publishes testbed/gpio/4 ["1"]
@@ -427,6 +434,7 @@ The heart should "beat" once per second, to show the MCU is functioning correctl
 * Make sure your Alexa name is easy to pronounce and hard to mis-hear.
 
 ***
+
 ## GPIO Panel
 
 ![Esparto Logo](/assets/v3gpio.jpg)
@@ -439,6 +447,7 @@ The heart should "beat" once per second, to show the MCU is functioning correctl
 * For non-programmers, GPIO pins can be added on the [Pins Tab](/README.md#pins-tab) although with (of course) more limited functionality than creating them via code
 
 ***
+
 ## CPU Tab
 
 ![Esparto Logo](/assets/v3cpu.jpg)
@@ -446,9 +455,10 @@ The heart should "beat" once per second, to show the MCU is functioning correctl
 ## Notes on CPU Tab
 
 * This will mostly be used by developers to make sure their Esparot code behaves properly and co-operates well with other tasks, Especially those that Esparto needs to function.
-Detailed analysis is a very complex topic and will be the subject of an upcoming Youtube video, as it is far easier to explain while watching real-life apps, especially how to spot potential problems wiht your code
+Detailed analysis is a very complex topic and will be the subject of an upcoming Youtube video, as it is far easier to explain while watching real-life apps, especially how to spot potential problems with your code
+
 * The graphs start from the right-hand side each time you revisit the tab
-* Setting the system variable ESPARTO_LOG_STATS to 1 causes Esparto to send all the CPU stats to MQTT 1x per second 
+* Setting the system variable ESPARTO_LOG_STATS to 1 causes Esparto to send all the CPU stats to MQTT 1x per second
 
 ***
 
@@ -564,7 +574,7 @@ Slower responses (if any at all) will be recieved by those:
 
 * Telling me "but this code works on Arduino UNO" the answer will be - without fail - "Run it on an Arduino UNO then".
 
-* Telling me "I can't send the code , it's closed-source / proprietary / confidential". Let's let that sink in for a bit: YOU are writing code that YOU are making money off, using MY code that you got FOR FREE, and you want ME to fix YOUR problem FOR FREE and without looking at the code...? If you really are in that situation, I am happy to sign any NDA / disclaimer you wish and get paid market rate for my time. 
+* Telling me "I can't send the code , it's closed-source / proprietary / confidential". Let's let that sink in for a bit: YOU are writing code that YOU are making money off, using MY code that you got FOR FREE, and you want ME to fix YOUR problem FOR FREE and without looking at the code...? If you really are in that situation, I am happy to sign any NDA / disclaimer you wish and get paid market rate for my time.
 
 * Statements such as "My sketch doesn't work" will be met - without fail - with "Mine all do" unless sufficient information is also supplied for me to diagnose the problem.(see above)
 * I am not an agent for Arduino, Espressif or any other company, nor am I an electronics or programming consultant offering free advice. I will answer only issues relating to the use of Esparto v3.0 on supported hardware.
@@ -618,7 +628,7 @@ Below (a surprisingly low) 20ish messages per second, the heap stays fairly stat
 Now imagine you connect e.g. a sound sensor to a Raw GPIO then play Motorhead's "Ace of Spades" into it at (of course) volume 11. Tests on some cheap Chinese offerings have shown anything up to 14,000 transitions per sec (14kHz input signal) will occur.
 
 Without _some_ form of limiting, this type of input will cause problems.
- 
+
 Any solution is only partial, because we can't "magic up" a ton more SRAM and even if we could, we would still hit a limit at _some_ point. While there is some scientific debate about how many frames per second the human eye can perceive, it is a couple of orfders of magnitude less than 14kHz! Movie film usually runs at 24fps so anything above that is wasted anyway, so if we are wanting to watch GPIO, we need to basically throw away anything over that figure.
 
 Esparto limits the total throughput to the web UI to about 20 messages per second - above that and the heap starts steadily dying. This is for _all_ pins so if you have many, you are not going to get real-time flashing.
@@ -657,7 +667,7 @@ If you want to be able to use OTA, then make sure you comment out ``#define ESPA
 
 ## Setting up automatic OTA server
 
-T.B.A. in the meanwhile, see: 
+T.B.A. in the meanwhile, see:
 
 <https://www.instructables.com/id/Set-Up-an-ESP8266-Automatic-Update-Server>
 
