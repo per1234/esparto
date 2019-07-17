@@ -459,11 +459,9 @@ void ESPArto::_timeKeeper(){
 
 ESPArto::ESPArto(ESPARTO_CONFIG_BLOCK cb): AsyncWebServer(80) {
 	Serial.begin(74880);
-//	Serial.println(F("CONFIG BLOCK:"));
-//	for(auto const& c:cb) Serial.printf("CI:%s=%s\n",CSTR(c.first),CSTR(c.second));
 	if(SPIFFS.begin()){
 		_Q.reserve(ESPARTO_Q_MAX); //
-		if(cb.size()) _config.insert(cb.begin(),cb.end());
+		for(auto const& c:cb) _config[c.first]=c.second;
 		_readConfig();
 		setConfigInt(ESPARTO_CHIP_ID,ESP.getChipId(),"%06X");
 		if(!_configItemEmpty(ESPARTO_DEVICE_NAME)) SCIs(ESPARTO_DEVICE_NAME,string("ESPARTO-")+CIs(ESPARTO_CHIP_ID));		

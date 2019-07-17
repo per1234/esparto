@@ -43,7 +43,7 @@ ESPARTO_CONFIG_BLOCK cb={
     {CONFIG(ESPARTO_WEB_PASS),"admin"}, // can omit
     {CONFIG(ESPARTO_NTP_SRV1),"time1.google.com"}, // can omit 
     {CONFIG(ESPARTO_NTP_SRV2),"time2.google.com"}, // can omit
-    {CONFIG(ESPARTO_NTP_TZ),"0"}    // +/- hours offset from GMT
+    {CONFIG(ESPARTO_NTP_OFFSET),"0"}    // +/- hours offset from GMT
 };  
 ```
 

@@ -4,10 +4,15 @@
             "name": "Win32",
             "includePath": [
                 "C:\\Users\\phil\\AppData\\Local\\Arduino15\\packages\\esp8266\\tools\\**",
-                "C:\\Users\\phil\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\2.5.2\\**"
+                "C:\\Users\\phil\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\2.5.2\\**",
+                "C:\\Users\\phil\\Documents\\Arduino\\libraries\\**",
+                "C:/Users/phil/AppData/Local/Arduino15/packages/esp8266/hardware/esp8266/2.5.2/tools/sdk/libc/xtensa-lx106-elf/include/**",
+                "C:/Users/phil/AppData/Local/Arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/2.5.0-3-20ed2b9/lib/gcc/xtensa-lx106-elf/4.8.2/include-fixed"
             ],
             "forcedInclude": [],
-            "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.21.27702/bin/Hostx64/x64/cl.exe"
+            "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.21.27702/bin/Hostx64/x64/cl.exe",
+            "cppStandard": "c++11",
+            "cStandard": "c99"
         }
     ],
     "version": 4

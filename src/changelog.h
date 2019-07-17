@@ -1,4 +1,4 @@
-#define ESPARTO_VN "3.3.0"
+#define ESPARTO_VN "3.3.1"
 /*
 	Authors:
 						PMB	Phil Bowles		<esparto8266@gmail.com>
@@ -7,6 +7,8 @@
 		safeThing stop h/w + restart durign spiff uploads
 
 	Changelog:
+					3.3.1	Bugfix: NTP issues
+					
 					3.3.0
 							concept of the "thing" default buttons
 							ground-up rewrite of scheduler + locking - mutex to avoid wdt resets

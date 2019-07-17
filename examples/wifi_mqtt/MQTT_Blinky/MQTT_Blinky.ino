@@ -71,7 +71,7 @@ ESPARTO_CONFIG_BLOCK cb={
     {CONFIG(ESPARTO_WILL_MSG),"Esparto has crashed!"},
     {CONFIG(ESPARTO_NTP_SRV1),"0.fr.pool.ntp.org"},  
     {CONFIG(ESPARTO_NTP_SRV2),"192.168.1.4"},
-    {CONFIG(ESPARTO_NTP_TZ),"2"},                         // +/- hours offset from GMT
+    {CONFIG(ESPARTO_NTP_OFFSET),"2"},                         // +/- hours offset from GMT
 //  
 //  Add your own configuration name/value pairs here: don't use "cmd" or "switch"
 //
@@ -102,7 +102,7 @@ void onWiFiConnect(){
   #ifdef ESPARTO_ALEXA_SUPPORT
     if(Esparto.alexaInUse()) Serial.printf(" * via voice command: \"Alexa! turn on \"%s\"\n", CI(ESPARTO_ALEXA_NAME));//
   #endif
-  Serial.printf(" * via REST-like web call: http://%s/rest/switch/0 or http://%s/switch/1\n",THIS_IP,THIS_IP);
+  Serial.printf(" * via REST-like web call: http://%s/rest/cmd/switch/0 or http://%s/cmd/switch/1\n",THIS_IP,THIS_IP);
 }
 
 void onWiFiDisconnect(){

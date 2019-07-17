@@ -58,7 +58,7 @@ ESPARTO_CONFIG_BLOCK cb={
     {CONFIG(ESPARTO_WEB_PASS),"admin"},   
     {CONFIG(ESPARTO_NTP_SRV1),"0.fr.pool.ntp.org"},  
     {CONFIG(ESPARTO_NTP_SRV2),"192.168.1.4"},
-    {CONFIG(ESPARTO_NTP_TZ),"2"}                         // +/- hours offset from GMT
+    {CONFIG(ESPARTO_NTP_OFFSET),"2"}                         // +/- hours offset from GMT
 };  
 
 ESPArto Esparto(cb);

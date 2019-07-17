@@ -27,7 +27,7 @@ SOFTWARE.
 */
 #include <ESPArto.h>
 #include "utils.h"
-#include "sntp.h"
+//#include "sntp.h"
 
 extern void			onConfigItemChange(const char* id,const char* value);
 extern void			onOtaEnd(int);
@@ -146,8 +146,8 @@ void ESPArto::_changeDevice(vector<string> vs){
 
 void ESPArto::_changeNTP(vector<string> vs){
 	EVENT("NTP set: GMT=%+d Srv1=%s Srv2=%s",atoi(CSTR(vs[0])),CSTR(vs[1]),CSTR(vs[2]));
-	if(vs[0]!=CI(ESPARTO_NTP_TZ)||vs[1]!=CI(ESPARTO_NTP_SRV1)||vs[2]!=CI(ESPARTO_NTP_SRV2)){
-		SCIs(ESPARTO_NTP_TZ,vs[0]);
+	if(vs[0]!=CI(ESPARTO_NTP_OFFSET)||vs[1]!=CI(ESPARTO_NTP_SRV1)||vs[2]!=CI(ESPARTO_NTP_SRV2)){
+		SCIs(ESPARTO_NTP_OFFSET,vs[0]);
 		SCIs(ESPARTO_NTP_SRV1,vs[1]);
 		SCIs(ESPARTO_NTP_SRV2,vs[2]);
 		_useNTP(atoi(CSTR(vs[0])),CSTR(vs[1]),CSTR(vs[2]));
@@ -212,7 +212,7 @@ void ESPArto::_gotIP() {
 //
 //	setup RTC (..and resynch fn)
 //
-	_useNTP(CII(ESPARTO_NTP_TZ),CI(ESPARTO_NTP_SRV1),CI(ESPARTO_NTP_SRV2));
+	_useNTP(CII(ESPARTO_NTP_OFFSET),CI(ESPARTO_NTP_SRV1),CI(ESPARTO_NTP_SRV2));
 	queueFunction(_timeKeeper); // sets up _tpIfH4
 
 	ArduinoOTA.setHostname(CSTR(host));
