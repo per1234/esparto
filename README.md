@@ -251,7 +251,7 @@ Arduino's own site has a good tutorial on adding 3rd-party libraries: <https://w
 
 * ESPAsyncTCP <https://github.com/me-no-dev/ESPAsyncTCP>
 * ESPAsyncUDP <https://github.com/me-no-dev/ESPAsyncUDP>
-* ESPAsyncWebserver - There have been a number of issue with this (otherwise) great library. Until those issues are fully resolved you will need to a) uninstall any previous copy you hvae and b) install the patched "fork": <https://github.com/philbowles/ESPAsyncWebServer>
+* ESPAsyncWebserver - There have been a number of issues with this (otherwise) great library. Until those issues are fully resolved you will need to a) uninstall any previous copy you have and b) install the patched "fork": <https://github.com/philbowles/ESPAsyncWebServer>
 
 * PubSubClient v2.6 <https://github.com/knolleary/pubsubclient.> Be careful: there are two or three MQTT client libraries out there for Arduino - do not be tempted to use any other than the above: they simply won't work.
 
@@ -429,27 +429,29 @@ All of the images that follow are collected together into a handy PDF "cheat she
 
 ![UI ESP](/assets/v33UIesp.jpg)
 
-
 ## Config (tool) Tab
 
 ![UI Tool](/assets/v33UItool.jpg)
 
 ## Run Tab
 
-![UI Run](/assets/v33UIrun.jpg)
+![UI Run](/assets/v33Ulrun.jpg)
 
 ## Log Tab
 
-![UI Log](/assets/v33UIlog.jpg)
+![UI Log](/assets/v33Ullog.jpg)
 
 ## RTC Tab
 
-![UI RTC](/assets/v33UIrtc.jpg)
+![UI RTC](/assets/v33Ulrtc.jpg)
 
+***
 
 # Known Issues
 
-* Communication with the UI is a "broadcast only" technique. When your netwoek is busy, messages can get "lost" and occasinally may not reflect the true state of the device. For example the progress bar on OTA update mya ppear to "stick" at 90-percent as the last 2 or 3 mesages are discarded. It is rare, but if in doubt, simply refresh your page. A fix for this is "in the pipeline"
+* CORS problems if webUI is accessed via name.local vs IP address. This is being fixed as we speak
+
+* Communication with the UI is a "broadcast only" technique. When your network is busy, messages can get "lost" and occasinally may not reflect the true state of the device. For example the progress bar on OTA update mya ppear to "stick" at 90-percent as the last 2 or 3 mesages are discarded. It is rare, but if in doubt, simply refresh your page. A fix for this is "in the pipeline"
 
 * Complete "senior moment" - forgot to add cmd/pin/morse etc: will be added in next "point release"
 
