@@ -451,11 +451,11 @@ All of the images that follow are collected together into a handy PDF "cheat she
 
 * CORS problems if webUI is accessed via name.local vs IP address. This is being fixed as we speak
 
-* Communication with the UI is a "broadcast only" technique. When your network is busy, messages can get "lost" and occasinally may not reflect the true state of the device. For example the progress bar on OTA update mya ppear to "stick" at 90-percent as the last 2 or 3 mesages are discarded. It is rare, but if in doubt, simply refresh your page. A fix for this is "in the pipeline"
+* Communication with the UI is a "broadcast only" technique. When your network is busy, messages can get "lost" and occasionally may not reflect the true state of the device. For example the progress bar on OTA update may appear to "stick" at 90-percent as the last 2 or 3 mesages are discarded. It is rare, but if in doubt, simply refresh your page. A fix for this is "in the pipeline"
 
 * Complete "senior moment" - forgot to add cmd/pin/morse etc: will be added in next "point release"
 
-* Depending on the speed of your browser and/or your network, it can take several attempts to load the webUI cleanly after first flash. All of the image graphics have a long cache period, so clearing your brower's cache frequently will make this matter worse. Be patient. Try a few times. Once its fully loaded and cached, its pretty quick!
+* Depending on the speed of your browser and/or your network, it can take several attempts to load the webUI cleanly after first flash. All of the image graphics have a long cache period, so clearing your browser's cache frequently will make this matter worse. Be patient. Try a few times. Once its fully loaded and cached, its pretty quick!
 
 * The web UI is capable of handling multiple viewers (see video) but that doesn't mean that it's a good idea, so restrict yourself to a single browser. Opening two or more browers onto the same MCU can crash it as the free heap is exhausted
 
@@ -535,21 +535,21 @@ In summary I am happy to try to help, provided you show willing by reading the d
 
 The API is broken down by functional area. It is described here in the order a beginner might start experimentation, but certainly "ground up" as far as understanding and mastering Esparto. Try as far as possible to adhere to that order.
 
-* [Contructor and utilities](/api_utils.md)
+* [Contructor and utilities](/docs/api_utils.md)
 
-* [Simple LED Flashing functions](/api_flash.md)
+* [Simple LED Flashing functions](/docs/api_flash.md)
 
-* [LifeCycle callbacks](/api_cycle.md)
+* [LifeCycle callbacks](/docs/api_cycle.md)
 
-* [Timers, task scheduling, configuration](/api_timer.md)
+* [Timers, task scheduling, configuration](/docs/api_timer.md)
 
-* [GPIO Handling](/api_gpio.md)
+* [GPIO Handling](/docs/api_gpio.md)
 
-* [Command handling & MQTT messaging](/api_mqtt.md)
+* [Command handling & MQTT messaging](/docs/api_mqtt.md)
 
-* [Amazon echo (Alexa) handling](/api_alexa.md)
+* [Amazon echo (Alexa) handling](/docs/api_alexa.md)
 
-* [Miscellaneous, Advanced, Diagnostics etc](/api_expert.md) TBA
+* [Miscellaneous, Advanced, Diagnostics etc](/docs/api_expert.md) TBA
 
 ***
 
@@ -579,7 +579,7 @@ Any solution is only partial, because we can't "magic up" a ton more SRAM and ev
 
 Esparto limits the total throughput to the web UI to about 20 messages per second - above that and the heap starts steadily dying. This is for _all_ pins so if you have many, you are not going to get real-time flashing.
 
-Esparto also provides the ability to "throttle" individual GPIO pins. see [throttlePin](/api_gpio.md#throttlePin) and example sketch [gpio/Pins14_Throttling](/examples/gpio/Pins14_Throttling/Pins14_Throttling.ino)
+Esparto also provides the ability to "throttle" individual GPIO pins. see [throttlePin](/docs/api_gpio.md#throttlePin) and example sketch [gpio/Pins14_Throttling](/examples/gpio/Pins14_Throttling/Pins14_Throttling.ino)
 
 It is up to you to set a suitable value _*if*_ you want to be able to call up the web UI. If you don't then you can let through as many transitions per second as Esparto will allow, but of course then as soon as you open the web UI, all hell might break loose if your code is taking up all the system resources in handling 14000 transitions per second...
 
@@ -604,6 +604,23 @@ The standard IDE does not come with hardware definitions for SONOFFs or the ESP-
 If you want to be able to use OTA, then make sure you comment out ``#define ESPARTO_LOG_EVENTS`` in config.h or the binary will probably be too big
 
 ***
+
+## Recommended Build settings (mostly) to save RAM
+
+For boards in the Arduino IDE, the following settings are recommended to save RAM, especially if you will be wanting to OTA your binaries:
+
+* Debug Level: "NoAssert-NDEBUG"
+* lwIP Variant: "v2 Lower Memory (no features)"
+* Exceptions: "Disabled"
+* SSL Support: "Basic SSL Cipjers (lower ROM use)
+
+If you feel brave enough, edit your boards.txt and add:
+
+`< whatever your board>.build.float=`
+
+To save about another 10k
+
+If using the generic boards, always select the nonos=SDK 2.2.1 (legacy) until the later version are more stable.
 
 ## Detailed monitoring of "gear" tab / heap usage
 
