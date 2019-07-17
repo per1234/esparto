@@ -419,91 +419,33 @@ All of the images that follow are collected together into a handy PDF "cheat she
 
 ## Default view (WiFi Tab)
 
-![Esparto Logo](/assets/v3default.jpg)
+![UI WiFi](/assets/v33UIwifi.jpg)
 
-## Common controls
+## Gear Tab
 
-The row of icons each represent a different tab. Clicking takes you to the relevant tab, descriptions of which follow here.
-The heart should "beat" once per second, to show the MCU is functioning correctly. If there is a (hopefully) green light to its left, that shows a good link to MQTT. If the light is red, MQTT is unavailable. No light will be shown if you decide not use MQTT
+![UI Gear](/assets/v33UIgear.jpg)
 
-(see the advanced topics section) [Throttling](../README.md#throttling)
+## ESP Tab
 
-## Notes on WiFi tab
+![UI ESP](/assets/v33UIesp.jpg)
 
-* If you enter incorrect credentials, Esparto will enter AP mode after 3 minutes (or immediately on a brand new MCU)
-* Make sure your Alexa name is easy to pronounce and hard to mis-hear.
-
-***
-
-## GPIO Panel
-
-![Esparto Logo](/assets/v3gpio.jpg)
-
-## Notes on GPIO Panel
-
-* The grey unusable pins are usually the ones that are used by the external SPI Flash on most ESP8266 boards
-* For the meaning of "raw" and "cooked" see: [Raw and Cooked Pins](/api_gpio.md#important-concepts-raw-vs-cooked-states)
-* GPIO numbers go black when GPIO pin is "throttled" and return to white when throttling clears. This is related to, but not the same as the web UI throttling on the previous screen, see [GPIO Throttling](/api_gpio.md#important-concepts-throttling)
-* For non-programmers, GPIO pins can be added on the [Pins Tab](/README.md#pins-tab) although with (of course) more limited functionality than creating them via code
-
-***
-
-## CPU Tab
-
-![Esparto Logo](/assets/v3cpu.jpg)
-
-## Notes on CPU Tab
-
-* This will mostly be used by developers to make sure their Esparot code behaves properly and co-operates well with other tasks, Especially those that Esparto needs to function.
-Detailed analysis is a very complex topic and will be the subject of an upcoming Youtube video, as it is far easier to explain while watching real-life apps, especially how to spot potential problems with your code
-
-* The graphs start from the right-hand side each time you revisit the tab
-* Setting the system variable ESPARTO_LOG_STATS to 1 causes Esparto to send all the CPU stats to MQTT 1x per second
-
-***
-
-## Info Tab
-
-![Esparto Logo](/assets/v3arto.jpg)
-
-## Notes on Info Tab
-
-* Chip is the standard "last 6 of MAC address". If no device name given, defaults to e.g. ESPARTO-0BC939
-* When falling back to AP mode, SSID will be e.g. ESPARTO-0BC939 and password ESPARTO-0BC939
-
-***
 
 ## Config (tool) Tab
 
-![Esparto Logo](/assets/v3tool.jpg)
-
-## Notes on Config Tab
-
-* This is the visual front-end to the  [configuration system](/api_timer.md#the-configuration-system)
-* Value is updated as soon as you exit the field
-* Your code is notified and can react instantly
-* New value published to MQTT
-* New value saved and takes precedence on next reboot
-
-***
+![UI Tool](/assets/v33UItool.jpg)
 
 ## Run Tab
 
-![Esparto Logo](/assets/v3run.jpg)
-
-## Notes on Run Tab
-
-* This is where you come if you are not running your own MQTT broker as every command Esparto "listens for" can be "inserted" through this tab rather than arriving genuinely from MQTT and _should_ behave identically with the genuine article from MQTT
-
-***
+![UI Run](/assets/v33UIrun.jpg)
 
 ## Log Tab
 
-![Esparto Logo](/assets/v3spool.jpg)
+![UI Log](/assets/v33UIlog.jpg)
 
-## Notes on Log and Spool Tabs
+## RTC Tab
 
-***
+![UI RTC](/assets/v33UIrtc.jpg)
+
 
 # Known Issues
 
