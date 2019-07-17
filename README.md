@@ -6,7 +6,7 @@
 
 ## What's new
 
-**N.B.** As always there may well be some brbroken links here as I "backfill" the latest documentation over the next few days...but you can get the code and start playing right now.
+**N.B.** As always there may well be some broken links here as I "backfill" the latest documentation over the next few days...but you can get the code and start playing right now.
 
 There have been numerous changes since the (disastrous: apologies) v3.2 The best thing to do is watch the video, but the major ones are:
 
@@ -458,6 +458,8 @@ All of the images that follow are collected together into a handy PDF "cheat she
 * Depending on the speed of your browser and/or your network, it can take several attempts to load the webUI cleanly after first flash. All of the image graphics have a long cache period, so clearing your brower's cache frequently will make this matter worse. Be patient. Try a few times. Once its fully loaded and cached, its pretty quick!
 
 * The web UI is capable of handling multiple viewers (see video) but that doesn't mean that it's a good idea, so restrict yourself to a single browser. Opening two or more browers onto the same MCU can crash it as the free heap is exhausted
+
+***
 
 # Common Causes of Error
 
