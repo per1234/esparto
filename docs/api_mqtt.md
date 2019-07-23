@@ -13,6 +13,7 @@ For each topic you subscribe to, you must define a callback function.
 # The command callback function
 
 **Example:**
+
 ```cpp
 void myCmd(vector<string> vs){ do some stuff }
 ```
@@ -47,11 +48,11 @@ It is important to remember that there are a number of different routes into you
 
 <http://192.168.1.100/rest/cmd/lights/1>
 
-In this case, vs[0] will contain "192.168.1.100". 
+In this case, vs[0] will contain "192.168.1.100".
 
 Or your own code can call `Esparto.invokeCmd("cmd/lights","0");` in which case, vs[0] will contain "invoke". Inside your callback, vs[0] always gives you an idea of where the command started out from.
 
-Also, it is possible when subscribing, to override the automatic prefix of device name. This can be very useful in adding flexibilty to your IOT network. 
+Also, it is possible when subscribing, to override the automatic prefix of device name. This can be very useful in adding flexibility to your IOT network.
 
 Imagine you would like to be able to address all of your devices at the same time, i.e. when you publish all/cmd/lights/1 you want _everything_ to turn on. We will see how to do that later, but in _that_ case, vs[0] would contain "all"
 
@@ -110,7 +111,7 @@ invokeCmd(String topic,String payload="",const char* name="invoke");
 
 **Example:** `Esparto.invokeCmd("cmd/config/set/blinkrate","1000")` // Set variable "blinkrate" to 1000
 
-N.B. In 99.9% of cases, there is an Esparto function that does the same thing as whatever you invoke...it is always better to use the function, for clarity and efficiency. The above eample is the same as:
+N.B. In 99.9% of cases, there is an Esparto function that does the same thing as whatever you invoke...it is always better to use the function, for clarity and efficiency. The above example is the same as:
 
 `Esparto.setConfigInt("blinkrate",1000);`
 
@@ -123,7 +124,7 @@ void publish(String topic,String payload="",bool retained=false); // Esparto.pub
 
 void publish(String topic,int payload,bool retained=false); // Esparto.publish(myTemperature,25,true); Topic in String "myTemperature", payload=25, retained
 
-void publish(const char* topic,const char* payload="",bool retained=false); // Esparto.publish("anyold/info","and more to follow"); 
+void publish(const char* topic,const char* payload="",bool retained=false); // Esparto.publish("anyold/info","and more to follow");
 
 void publish(const char* topic,int payload,bool retained=false); // Esparto.publish("temp/lounge",25);
 
@@ -166,6 +167,7 @@ Esparto.subscribe("wild/#",myMQTTCallback3); // respond to "testbed/wild/wild/we
 ***
 
 (c) 2019 Phil Bowles
+
 * esparto8266@gmail.com
 * [Youtube channel (instructional videos)](https://www.youtube.com/channel/UCYi-Ko76_3p9hBUtleZRY6g)
 * [Blog](https://8266iot.blogspot.com)

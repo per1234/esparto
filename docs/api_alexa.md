@@ -2,7 +2,7 @@
 
 # Introduction
 
-If you do not have an echo, or you do not want Espsrto to react to one that you have, you must go to the config.h file and remove the line that says:
+If you do not have an echo, or you do not want Esparto to react to one that you have, you must go to the config.h file and remove the line that says:
 
 `#define ESPARTO_ALEXA_SUPPORT`
 
@@ -30,7 +30,7 @@ Call `useAlexa` from `setupHardware`. This overrides any other option and ensure
 
 ## Managing multiple devices
 
-If you have many devices this becomes impractical and requires recompiles for every device, error-prone edits and/or multiple OTA binaries which can rapidly esalate out of control.
+If you have many devices this becomes impractical and requires a recompile for every device, error-prone edits and/or multiple OTA binaries which can rapidly escalate out of control.
 
 Esparto solves this problem by allowing - _one time only_ - a blank ESPARTO_ALEXA_NAME. It has to be present, but be blank, which is not the same as not having one at all:
 
@@ -49,19 +49,19 @@ This allows a single binary which can be deployed to all devices. Each device th
 * web Rest: http://whatever IP/rest/cmd/echo/rename/Robotic Brain Surgeon
 * webUI default WiFi tab: enter new name and click "update details"
 
-Once named, this then becomes the name by whcih Alexa will activate the device atfer she has discovered it.
+Once named, this then becomes the name by which Alexa will activate the device after she has discovered it.
 
 ## Discovery
 
 What follows will be also be true if at any subsequent time you change the Alexa name. The device is in "pairing" or discovery mode and yiu must tell Alexa: "Discover devices".
 
-Any time the deive is in this mode, two things are visible:
+Any time the device is in this mode, two things are visible:
 
 * the built-in LED flashes a single short blip (Actually a Morse code "E" or "Echo" - get it? :)
 
 * the "a" LED to the left of the heartbeat goes red.
 
-Once alexa has discovered the device, the echo flahser stops and the webuI "a" LED goes green.
+Once alexa has discovered the device, the echo flasher stops and the web UI "a" LED goes green.
 
 ## Initiating discovery mode
 
@@ -96,7 +96,7 @@ If it is factory reset, it will come back up as ESPARTO-17D848 and will again re
 
 ## useAlexa
 
-Called once per second after time has been set. (See also onRTC). The current value of seconds since midnight is provided. That value is not highly accurate as it will "drift" if the CPU is very busy on onther tasks. It is more for information than any form of timing.
+Called once per second after time has been set. (See also onRTC). The current value of seconds since midnight is provided. That value is not highly accurate as it will "drift" if the CPU is very busy on other tasks. It is more for information than any form of timing.
 
 All processes requiring timing should use on of the standardEsparto timers described in blah
 
@@ -116,7 +116,7 @@ void onClockTick(uint32_t);
 
 ## useAlexa
 
-Called once per second after time has been set. (See also onRTC). The current value of seconds since midnight is provided. That value is not highly accurate as it will "drift" if the CPU is very busy on onther tasks. It is more for information than any form of timing.
+Called once per second after time has been set. (See also onRTC). The current value of seconds since midnight is provided. That value is not highly accurate as it will "drift" if the CPU is very busy on other tasks. It is more for information than any form of timing.
 
 All processes requiring timing should use on of the standardEsparto timers described in blah
 
