@@ -84,7 +84,9 @@ function addDynpHandlers(){
 
 function ajaxPOST(url,params={}){
   var http = new XMLHttpRequest();
-  var fullurl="http://"+document.getElementById("IP").innerHTML+"/ajax/"+url+"/";
+//  var fullurl="http://"+document.getElementById("IP").innerHTML+"/ajax/"+url+"/";
+  var fullurl="http://"+window.location.hostname+"/ajax/"+url+"/";
+  
   http.addEventListener("load", function(e){
     source.addEventListener('exec', preDespatch);
     jsonDespatch(e.currentTarget.responseText);
@@ -436,9 +438,11 @@ function doVbar(data){ grfs.forEach(function(x){ x.strike(data.c); }); }
 
 function doVset(data){
   var t=document.getElementById(data.name);
-  t.value=data.value;
-  t.setAttribute("class","big red");
-  setTimeout(function(){ t.removeAttribute("class"); }, 125);  
+  if(t){
+    t.value=data.value;
+    t.setAttribute("class","big red");
+    setTimeout(function(){ t.removeAttribute("class"); }, 125);      
+  }
 }
 
 function dpAxionChange(e){

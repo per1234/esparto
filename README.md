@@ -6,6 +6,8 @@
 
 ## What's new
 
+3.3.2 Bugfix Exception(28) in early examples
+
 **N.B.** As always there may well be some broken links here as I "backfill" the latest documentation over the next few days...but you can get the code and start playing right now.
 
 There have been numerous changes since the (disastrous: apologies) v3.2 The best thing to do is watch the video, but the major ones are:
@@ -448,8 +450,6 @@ All of the images that follow are collected together into a handy PDF "cheat she
 ***
 
 # Known Issues
-
-* CORS problems if webUI is accessed via name.local vs IP address. This is being fixed as we speak
 
 * Communication with the UI is a "broadcast only" technique. When your network is busy, messages can get "lost" and occasionally may not reflect the true state of the device. For example the progress bar on OTA update may appear to "stick" at 90-percent as the last 2 or 3 mesages are discarded. It is rare, but if in doubt, simply refresh your page. A fix for this is "in the pipeline"
 
