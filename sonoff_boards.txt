@@ -20,9 +20,9 @@ sonoffbasic.build.stdcpp_lib=-lstdc++
 sonoffbasic.upload.resetmethod=none
 
 sonoffbasic.build.sslflags=-DBEARSSL_SSL_BASIC
-sonoffbasic.build.flash_mode=dio
+sonoffbasic.build.flash_mode=dout
 sonoffbasic.build.flash_freq=40
-sonoffbasic.build.flash_flags=-DFLASHMODE_DIO
+sonoffbasic.build.flash_flags=-DFLASHMODE_DOUT
 
 sonoffbasic.menu.baud.115200=115200
 sonoffbasic.menu.baud.115200.upload.speed=115200
@@ -68,9 +68,9 @@ sonoffsv.build.stdcpp_lib=-lstdc++
 sonoffsv.upload.resetmethod=none
 
 sonoffsv.build.sslflags=-DBEARSSL_SSL_BASIC
-sonoffsv.build.flash_mode=dio
+sonoffsv.build.flash_mode=dout
 sonoffsv.build.flash_freq=40
-sonoffsv.build.flash_flags=-DFLASHMODE_DIO
+sonoffsv.build.flash_flags=-DFLASHMODE_DOUT
 
 sonoffsv.menu.baud.115200=115200
 sonoffsv.menu.baud.115200.upload.speed=115200
@@ -117,9 +117,9 @@ esp01s.build.stdcpp_lib=-lstdc++
 esp01s.upload.resetmethod=none
 
 esp01s.build.sslflags=-DBEARSSL_SSL_BASIC
-esp01s.build.flash_mode=dio
+esp01s.build.flash_mode=dout
 esp01s.build.flash_freq=40
-esp01s.build.flash_flags=-DFLASHMODE_DIO
+esp01s.build.flash_flags=-DFLASHMODE_DOUT
 
 esp01s.menu.baud.115200=115200
 esp01s.menu.baud.115200.upload.speed=115200
