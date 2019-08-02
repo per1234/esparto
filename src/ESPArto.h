@@ -48,16 +48,18 @@ SOFTWARE.
 using namespace std;
 using namespace std::placeholders;
 
-#define ESPARTO_HEADER(x) x.begin(74880); \
-  x.println(F(" _____                      _                _____  _____"));\
-  x.println(F("| ____|___ _ __   __ _ _ __| |_ ___   __   _|___ / |___ /"));\
-  x.println(F("|  _| / __| '_ \\ / _` | '__| __/ _ \\  \\ \\ / / |_ \\   |_ \\ "));\
-  x.println(F("| |___\\__ \\ |_) | (_| | |  | || (_) |  \\ V / ___) | ___) |"));\
-  x.println(F("|_____|___/ .__/ \\__,_|_|   \\__\\___/    \\_/ |____(_)____/")); \
-  x.println(F("          |_| ")); \ 
-  x.printf("%s\n",__FILE__);\
-  x.printf("%s\n\n",CSTR(ESP.getFullVersion()));
- 
+#define ESPARTO_HEADER(x)                                                             \
+	x.begin(74880);                                                                   \
+	x.println(F(" _____                      _                _____  _____"));        \
+	x.println(F("| ____|___ _ __   __ _ _ __| |_ ___   __   _|___ / |___ /"));        \
+	x.println(F("|  _| / __| '_ \\ / _` | '__| __/ _ \\  \\ \\ / / |_ \\   |_ \\ ")); \
+	x.println(F("| |___\\__ \\ |_) | (_| | |  | || (_) |  \\ V / ___) | ___) |"));    \
+	x.println(F("|_____|___/ .__/ \\__,_|_|   \\__\\___/    \\_/ |____(_)____/"));    \
+	x.println(F("          |_| "));                                                   \
+	x.printf("%s\n", __FILE__);\
+	x.printf("%s\n", CSTR(ESP.getFullVersion()));\
+	x.printf("EVN=%s\n\n", ESPARTO_VN);
+
 #define CI(x) ESPArto::getConfig(x)
 #define CII(x) ESPArto::getConfigInt(x)
 #define CIs(x) ESPArto::getConfigstring(x)
